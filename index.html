@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DIIP — DRS Implementation Intelligence Platform · Vision Portal</title>
+  <meta name="description" content="Interactive Product Vision Portal for the DRS Implementation Intelligence Platform (DIIP)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23138a69'/><text x='50' y='68' font-size='54' text-anchor='middle' fill='%23eafff7' font-family='Arial' font-weight='bold'>D</text></svg>" />
+</head>
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="logo">D</div>
+        <div class="brand-text">
+          <strong>DIIP</strong>
+          <span>DRS Implementation Intelligence</span>
+        </div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" aria-label="Menu">☰</button>
+        <div class="breadcrumb" id="breadcrumb"></div>
+        <div class="search">
+          <span>🔍</span>
+          <input id="global-search" placeholder="Search modules…" aria-label="Search modules" />
+        </div>
+        <div class="env-pill">Vision Portal</div>
+        <div class="avatar">PM</div>
+      </header>
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="m-head">
+        <div class="m-ic" id="modal-ic">🤝</div>
+        <div><h3 id="modal-title">Stakeholder</h3><p id="modal-sub"></p></div>
+        <button class="m-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="m-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

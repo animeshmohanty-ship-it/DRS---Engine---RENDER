@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRS Intelligence Platform — Unified Blueprint</title>
+<style>
+  :root{
+    --bg:#0a0e17;
+    --card:#131c30;
+    --card2:#172139;
+    --line:#243352;
+    --ink:#eaf0ff;
+    --muted:#9fb0d0;
+    --accent:#3ddc97;     /* green - platform / outcomes */
+    --accent2:#5b8cff;    /* blue - structure */
+    --accent3:#ffb24d;    /* amber - DMS engine */
+    --gate:#ff6b8b;       /* pink - decision gates */
+    --chip:#1c2942;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#0a0e17,#090d15 45%,#0a0f18);color:var(--ink);line-height:1.55;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 26px}
+
+  /* nav */
+  nav.top{position:sticky;top:0;z-index:50;background:rgba(9,13,21,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav.top .wrap{display:flex;align-items:center;gap:16px;height:58px;overflow-x:auto}
+  nav.top .brand{font-weight:800;letter-spacing:.4px;white-space:nowrap}
+  nav.top .brand span{color:var(--accent)}
+  nav.top .links{display:flex;gap:4px}
+  nav.top .links a{font-size:12px;color:var(--muted);padding:6px 10px;border-radius:8px;white-space:nowrap;transition:.18s}
+  nav.top .links a:hover{color:var(--ink);background:var(--chip)}
+
+  /* hero */
+  header.hero{padding:70px 0 40px;background:
+    radial-gradient(900px 380px at 82% -10%,rgba(91,140,255,.18),transparent 60%),
+    radial-gradient(700px 340px at 0% 0%,rgba(61,220,151,.13),transparent 55%);
+    border-bottom:1px solid var(--line)}
+  .eyebrow{display:inline-block;font-size:11.5px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);
+    border:1px solid rgba(61,220,151,.35);padding:5px 12px;border-radius:99px;margin-bottom:20px}
+  header.hero h1{font-size:clamp(30px,5vw,52px);margin:0 0 12px;line-height:1.07;letter-spacing:-.6px}
+  header.hero h1 b{color:var(--accent2)}
+  header.hero p.lead{font-size:17px;color:var(--muted);max-width:780px;margin:0 0 28px}
+
+  /* north star */
+  .northstar{margin-top:8px;background:linear-gradient(90deg,rgba(255,178,77,.12),rgba(91,140,255,.10));
+    border:1px solid rgba(255,178,77,.4);border-radius:16px;padding:22px 26px}
+  .northstar .tag{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent3);font-weight:800}
+  .northstar .formula{font-size:clamp(15px,2.4vw,22px);font-weight:700;margin:10px 0 8px;letter-spacing:-.2px}
+  .northstar .formula em{color:var(--accent3);font-style:normal}
+  .northstar .formula b{color:var(--accent)}
+  .northstar p{margin:0;color:var(--muted);font-size:13.5px}
+
+  .stat-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:14px 18px;min-width:120px}
+  .stat b{display:block;font-size:24px;color:var(--accent);line-height:1}
+  .stat span{font-size:12px;color:var(--muted)}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:24px;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  /* nesting explainer */
+  section{padding:50px 0;border-bottom:1px solid rgba(36,51,82,.5)}
+  .section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+  .kicker{font-size:12px;color:var(--accent3);font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+  h2{font-size:clamp(23px,3.3vw,33px);margin:4px 0 6px;letter-spacing:-.4px}
+  .sub{color:var(--muted);max-width:820px;margin:0 0 22px;font-size:15px}
+
+  .nest{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .nestcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .nestcard h4{margin:0 0 12px;font-size:15px}
+  .nestcard.platform{border-left:4px solid var(--accent2)}
+  .nestcard.dms{border-left:4px solid var(--accent3)}
+  .nestlist{display:flex;flex-direction:column;gap:7px}
+  .nestlist div{background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}
+  .nestnote{margin-top:16px;background:rgba(91,140,255,.08);border:1px dashed rgba(91,140,255,.4);border-radius:10px;padding:12px 14px;font-size:13px;color:#c5d4ff}
+
+  /* layer block */
+  .layer-block{margin-top:14px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card)}
+  .layer-head{display:flex;align-items:center;gap:18px;padding:18px 22px;background:linear-gradient(90deg,rgba(91,140,255,.14),transparent)}
+  .layer-head .lnum{font-size:30px;font-weight:800;color:var(--accent2);min-width:42px;text-align:center}
+  .layer-head h3{margin:0;font-size:20px}
+  .layer-head p{margin:3px 0 0;color:var(--muted);font-size:13.5px}
+  .layer-body{padding:8px 22px 22px}
+
+  /* stage */
+  .stage{border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:14px;background:var(--card2);position:relative}
+  .stage:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(var(--accent),var(--accent2));border-radius:3px 0 0 3px}
+  .stage.dmswf:before{background:linear-gradient(var(--accent3),#ff8a3d)}
+  .stage .stag{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:800;color:var(--accent2)}
+  .stage.dmswf .stag{color:var(--accent3)}
+  .badge{font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:99px;border:1px solid currentColor}
+  .badge.wf{color:var(--accent3)}
+  .badge.new{color:var(--accent)}
+  .badge.star{color:#ffd479}
+  .stage h4{margin:7px 0 11px;font-size:17px;color:var(--ink)}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .flow span{background:var(--chip);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:12px;color:#cfdaf2}
+  .flow span.hl{border-color:rgba(61,220,151,.5);color:var(--accent)}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:6px}
+  .meta .m{font-size:12.5px;color:var(--muted)}
+  .meta .m b{color:#cdd8f0;font-weight:600}
+  .ai{margin-top:12px;background:rgba(91,140,255,.08);border:1px dashed rgba(91,140,255,.38);border-radius:9px;padding:9px 12px;font-size:12.5px;color:#c5d4ff}
+  .ai b{color:var(--accent2)}
+  .newnote{margin-top:10px;background:rgba(61,220,151,.07);border:1px dashed rgba(61,220,151,.4);border-radius:9px;padding:9px 12px;font-size:12.5px;color:#bff0d6}
+  .newnote b{color:var(--accent)}
+
+  /* gate */
+  .gate{display:flex;align-items:center;gap:14px;margin:16px 0;padding:14px 18px;border-radius:12px;
+    background:rgba(255,107,139,.09);border:1px solid rgba(255,107,139,.45)}
+  .gate .gicon{font-size:20px}
+  .gate .gtitle{font-weight:800;color:var(--gate);font-size:14px}
+  .gate .gq{color:var(--muted);font-size:13px;margin-top:2px}
+  .gate .gout{margin-left:auto;font-size:12px;color:#ffd1da;background:rgba(255,107,139,.13);border:1px solid rgba(255,107,139,.4);border-radius:8px;padding:6px 11px;white-space:nowrap}
+
+  /* geography variants */
+  .geo-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:14px}
+  .geo{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .geo h5{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:7px}
+  .geo h5 .pin{width:8px;height:8px;border-radius:50%;background:var(--accent3)}
+  .chain{display:flex;flex-direction:column;gap:5px}
+  .chain .node{background:var(--chip);border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:12px;position:relative}
+  .chain .node:not(:last-child):after{content:"↓";position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);color:var(--accent);font-size:11px}
+  .chain .node.end{border-color:rgba(61,220,151,.5);color:var(--accent)}
+
+  /* t-minus */
+  .tminus{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .tminus .t{flex:1;min-width:120px;background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:11px 12px;text-align:center}
+  .tminus .t b{display:block;color:var(--accent3);font-size:14px}
+  .tminus .t span{font-size:11.5px;color:var(--muted)}
+  .tminus .t.go{border-color:var(--gate);background:rgba(255,107,139,.1)}
+  .tminus .t.go b{color:var(--gate)}
+
+  /* metrics two col */
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .metricbox{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .metricbox h5{margin:0 0 10px;font-size:14px}
+  .metricbox.lead h5{color:var(--accent2)}
+  .metricbox.lag h5{color:var(--accent)}
+  .metricbox .pills{display:flex;flex-wrap:wrap;gap:6px}
+  .metricbox .pills span{background:var(--chip);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:11.5px;color:#cfdaf2}
+
+  /* cadence */
+  .cadence{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:6px}
+  .cad{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .cad b{color:var(--accent3);font-size:13px;display:block;margin-bottom:5px}
+  .cad span{font-size:12.5px;color:var(--muted)}
+
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .pillrow span{background:var(--chip);border:1px solid var(--line);border-radius:99px;padding:6px 13px;font-size:12.5px;color:#cfdaf2}
+
+  /* dashboards */
+  .dash{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
+  .dash div{background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:11px;text-align:center;font-size:12.5px}
+
+  /* flywheel flow */
+  .flowmap{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;font-family:"Cascadia Code",Consolas,monospace;font-size:13px;line-height:1.9;overflow-x:auto;color:#cdd8f0}
+  .flowmap .g{color:var(--gate);font-weight:700}
+  .flowmap .o{color:var(--accent3);font-weight:700}
+  .flowmap .gr{color:var(--accent);font-weight:700}
+  .flowmap .b{color:var(--accent2);font-weight:700}
+  .flowmap .arr{color:#5a6f95}
+
+  footer{padding:44px 0 60px;color:var(--muted);font-size:13px;text-align:center}
+  footer b{color:var(--ink)}
+
+  @media (max-width:760px){.nest,.twocol{grid-template-columns:1fr}}
+  @media print{nav.top{position:static}body{background:#fff;color:#111}}
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand">DRS<span>·</span>Unified Blueprint</div>
+    <div class="links">
+      <a href="#north">North Star</a>
+      <a href="#nest">Nesting</a>
+      <a href="#l1">L1 Config</a>
+      <a href="#l2">L2 Geography</a>
+      <a href="#l3">L3 Implementation</a>
+      <a href="#l4">L4 Execution</a>
+      <a href="#l5">L5 Performance</a>
+      <a href="#cross">Cross-cutting</a>
+      <a href="#flow">Full Flow</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Unified DRS Operating System</span>
+    <h1>One unified system to launch &amp; scale<br><b>every DRS geography</b></h1>
+    <p class="lead">Five platform layers and seventeen stages, driven by a marketing engine of nine workflows, seven decision gates, a T-minus launch system, defined roles and a fixed cadence — every part pointing at a single North Star.</p>
+
+    <div class="northstar" id="north">
+      <div class="tag">★ The one number everything serves — DRS Adoption Index</div>
+      <div class="formula">(<em>Public Awareness</em> × <em>Stakeholder Alignment</em> × <em>Return Participation</em>) ÷ <b>(Trust &amp; Friction Barriers)</b></div>
+      <p>Every stage, dashboard and AI action below exists to move one of these four terms. This is the headline of the whole platform.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><b>5</b><span>Platform Layers</span></div>
+      <div class="stat"><b>17</b><span>Stages</span></div>
+      <div class="stat"><b>9</b><span>DMS Workflows</span></div>
+      <div class="stat"><b>7</b><span>Decision Gates</span></div>
+      <div class="stat"><b>∞</b><span>Reusable Blueprints</span></div>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot" style="background:var(--accent2)"></i> Platform structure</span>
+      <span><i class="dot" style="background:var(--accent3)"></i> DMS engine (WF1–WF9)</span>
+      <span><i class="dot" style="background:var(--gate)"></i> Decision gate (go/no-go)</span>
+      <span><i class="dot" style="background:var(--accent)"></i> Core capability</span>
+    </div>
+  </div>
+</header>
+
+<!-- NESTING -->
+<section id="nest">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">The Key Reconciliation</span></div>
+    <h2>Two 5-layer models — one sits inside the other</h2>
+    <p class="sub">They are not rivals. The <b>Platform layers</b> describe how the software is organised. The <b>DMS layers</b> describe how a launch is run. The DMS engine lives inside Platform Layer 3 and drives Layer 4.</p>
+    <div class="nest">
+      <div class="nestcard platform">
+        <h4>🟦 Platform Layers — the shell</h4>
+        <div class="nestlist">
+          <div><b>1.</b> Project Configuration</div>
+          <div><b>2.</b> Geography Intelligence</div>
+          <div><b>3.</b> Implementation Intelligence &nbsp;←&nbsp; <span style="color:var(--accent3)">DMS lives here</span></div>
+          <div><b>4.</b> Execution Intelligence</div>
+          <div><b>5.</b> Performance Intelligence</div>
+        </div>
+      </div>
+      <div class="nestcard dms">
+        <h4>🟧 DMS Layers — the marketing engine</h4>
+        <div class="nestlist">
+          <div><b>A.</b> Evidence</div>
+          <div><b>B.</b> Coalition</div>
+          <div><b>C.</b> Narrative</div>
+          <div><b>D.</b> Public Adoption</div>
+          <div><b>E.</b> Trust &amp; Optimization</div>
+        </div>
+      </div>
+    </div>
+    <div class="nestnote">In one line: <b>“The platform has 5 layers; its core marketing engine has its own 5 layers and 9 workflows that drive launch and execution.”</b></div>
+  </div>
+</section>
+
+<!-- LAYER 1 -->
+<section id="l1">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">Platform Layer 1</span></div>
+    <h2>Project Configuration</h2>
+    <p class="sub">Make the platform configurable to any geography — and bake in ownership from day one.</p>
+
+    <div class="layer-block">
+      <div class="layer-head"><div class="lnum">1</div><div><h3>Project Configuration</h3><p>Configurable project · roles · readiness definition</p></div></div>
+      <div class="layer-body">
+        <div class="stage">
+          <span class="stag">Stage 1 · Platform Foundation</span>
+          <h4>Create a Configurable Project</h4>
+          <div class="flow">
+            <span>Project Details</span><span>Domestic / International</span><span>Country</span><span>State / Region</span>
+            <span>Implementation Model</span><span>Timeline</span><span>Budget</span><span>Team &amp; Roles (RACI)</span>
+            <span>Objectives</span><span>Success Criteria</span><span class="hl">Min-Viable-Readiness Definition</span><span class="hl">Dashboard</span>
+          </div>
+          <div class="newnote"><b>Roles &amp; RACI defined at setup:</b> Director Marketing · DMS Pod Lead · Marketing / Gov-Affairs / Comms / Ops Heads · Retail/Partner · Data Team · Leadership — with escalation rules.</div>
+          <div class="ai"><b>AI:</b> suggest implementation model · timeline · required modules · the role map.</div>
+        </div>
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 1 · Geography Selection</div><div class="gq">Is this geography worth launching? — thesis, regulatory context, feasibility</div></div>
+          <div class="gout">Select / Defer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYER 2 -->
+<section id="l2">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">Platform Layer 2</span></div>
+    <h2>Geography Intelligence</h2>
+    <p class="sub">The hierarchy reshapes itself per region — your platform’s biggest original idea; DMS has no equivalent, so it stays.</p>
+
+    <div class="layer-block">
+      <div class="layer-head"><div class="lnum">2</div><div><h3>Geography Intelligence</h3><p>Dynamic hierarchy · localization gate</p></div></div>
+      <div class="layer-body">
+        <div class="stage">
+          <span class="stag">Stage 2 · Dynamic Geography Engine</span>
+          <h4>Geography → Outlet (auto-adapting hierarchy)</h4>
+          <div class="flow">
+            <span>Country</span><span>State</span><span>Admin Hierarchy</span><span>Business Hierarchy</span><span>Population</span>
+            <span>Consumption</span><span>Tourism</span><span>Retail Landscape</span><span>Hotels</span><span>Restaurants</span>
+            <span>Institutions</span><span>Commercial Clusters</span><span class="hl">Outlet Mapping</span>
+          </div>
+          <div class="geo-cols">
+            <div class="geo"><h5><span class="pin"></span>Goa</h5><div class="chain"><div class="node">State</div><div class="node">District</div><div class="node">Taluka</div><div class="node">Village Panchayat</div><div class="node">Village</div><div class="node end">Outlet</div></div></div>
+            <div class="geo"><h5><span class="pin"></span>Tamil Nadu</h5><div class="chain"><div class="node">State</div><div class="node">District</div><div class="node">Corporation</div><div class="node">Zone</div><div class="node">Ward</div><div class="node end">Outlet</div></div></div>
+            <div class="geo"><h5><span class="pin"></span>United Kingdom</h5><div class="chain"><div class="node">Country</div><div class="node">Nation</div><div class="node">County</div><div class="node">Town</div><div class="node end">Store</div></div></div>
+          </div>
+          <div class="newnote"><b>Localization is a hard gate:</b> mandatory languages per geography (Goa = English, Konkani, Marathi, Hindi). Public awareness cannot scale until these exist.</div>
+          <div class="ai"><b>AI:</b> priority talukas · high-consumption areas · tourism hotspots · recommended rollout sequence.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYER 3 -->
+<section id="l3">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">Platform Layer 3 · ← the DMS engine lives here</span></div>
+    <h2>Implementation Intelligence</h2>
+    <p class="sub">Build the evidence, the coalition, the story and the plan before you go public. DMS sub-layers A–D run through here.</p>
+
+    <div class="layer-block">
+      <div class="layer-head"><div class="lnum">3</div><div><h3>Implementation Intelligence</h3><p>Evidence → Coalition → Narrative → GTM plan</p></div></div>
+      <div class="layer-body">
+
+        <!-- Evidence -->
+        <div class="stage dmswf">
+          <span class="stag">Stage 3 · DMS Sub-Layer A · Evidence <span class="badge wf">WF1</span></span>
+          <h4>Market Intelligence — Research Impact Assessment</h4>
+          <div class="flow">
+            <span>Research</span><span>Market Assessment</span><span>Environmental Impact</span><span>Economic Impact</span><span>Policy Research</span>
+            <span>Intl. Benchmarks</span><span>Competitor Study</span><span>Consumer Behaviour</span><span>Waste Ecosystem</span><span>ESG</span>
+            <span>Opportunity Assessment</span><span class="hl">Business Case</span><span class="hl">Proof-Point Bank</span>
+          </div>
+          <div class="newnote"><b>Key assets:</b> Proof-Point Bank · Behaviour-barrier insights · <b>Claims Guardrails</b> (what can be legally / credibly promised).</div>
+          <div class="meta">
+            <div class="m"><b>Scores:</b> Market Readiness · Implementation Complexity · Opportunity</div>
+          </div>
+          <div class="ai"><b>AI:</b> whitepapers · case studies · impact reports · research summaries.</div>
+        </div>
+
+        <!-- Coalition -->
+        <div class="stage dmswf">
+          <span class="stag">Stage 4 · DMS Sub-Layer B · Coalition <span class="badge wf">WF2</span></span>
+          <h4>Stakeholder Intelligence — Mapping</h4>
+          <div class="flow">
+            <span>Govt: Departments → Officials → Approvals → Documents</span>
+            <span>PIBO: Brands · Retail · Hotels · Restaurants · Municipality · Panchayat · Collectors · NGOs · Media · Universities · Influencers</span>
+          </div>
+          <div class="meta"><div class="m">Every record holds: <b>Support · Influence · Interest · Engagement · Meetings · Follow-ups · Documents · Comms History</b></div></div>
+          <div class="newnote"><b>Formal outputs:</b> Influence Matrix · Champion List · Blocker Log — each scored on influence × stance × desired role.</div>
+          <div class="ai"><b>AI:</b> next meeting · talking points · stakeholder priority · similar stakeholders from past projects.</div>
+        </div>
+
+        <div class="stage">
+          <span class="stag">Stage 5 · Resistance Intelligence <span class="badge new">blockers &amp; friction</span></span>
+          <h4>Resistance Intelligence</h4>
+          <div class="flow">
+            <span>Government</span><span>Retail</span><span>Consumer</span><span>Brand</span><span>Media</span><span>Political</span><span>Operational</span>
+          </div>
+          <div class="meta"><div class="m">Per item: <b>Root Cause → Impact → Probability → Severity → Mitigation → Owner → Status → Review Date</b></div></div>
+          <div class="newnote"><b>Ingests:</b> stakeholder concern logs · misinformation incidents · friction barriers — the single “what could block adoption” engine. Outputs: Resistance Index · Sentiment Map · Heat Map · Trend.</div>
+          <div class="ai"><b>AI:</b> predict future resistance · suggest mitigation pre-emptively.</div>
+        </div>
+
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 2 · Stakeholder Readiness</div><div class="gq">Are launch-critical stakeholders aligned? — influence matrix, champion list, concern log</div></div>
+          <div class="gout">Proceed / Engage more</div>
+        </div>
+
+        <!-- Narrative -->
+        <div class="stage dmswf">
+          <span class="stag">Stage 6 · DMS Sub-Layer C · Narrative <span class="badge wf">WF3 + WF4</span></span>
+          <h4>DRS Marketing Core — Narrative &amp; Alignment</h4>
+          <div class="flow">
+            <span class="hl">Narrative House</span><span>Persona Messaging Matrix</span><span class="hl">FAQ Kit</span><span>Whitepapers / Op-eds</span>
+            <span>Roundtable Briefs</span><span>Localized Message Bank</span><span>Workshops</span><span>Briefing Kits</span>
+            <span>Demonstration Visits</span><span class="hl">Commitment Tracker</span><span>Concern Log</span>
+          </div>
+          <div class="meta"><div class="m">Each workflow carries: <b>Objectives · Activities · Deliverables · Templates · Budget · Timeline · Owners · Dependencies · KRAs · KPIs · Reports · Lessons Learned</b></div></div>
+          <div class="ai"><b>AI:</b> campaigns · FAQs · PR · whitepapers · op-eds · presentations · reports.</div>
+        </div>
+
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 3 · Narrative Approval</div><div class="gq">Is the story clear and evidence-backed? — research brief, proof-points, stakeholder input</div></div>
+          <div class="gout">Approve / Revise</div>
+        </div>
+
+        <!-- GTM -->
+        <div class="stage dmswf">
+          <span class="stag">Stage 7 · DMS Sub-Layer D · GTM Planning</span>
+          <h4>Go-To-Market Engine</h4>
+          <div class="flow">
+            <span>Segmentation</span><span>Target Personas</span><span>Positioning</span><span>Messaging</span><span>Channels</span>
+            <span>Campaign Calendar</span><span>Budget</span><span>Execution</span><span>Monitoring</span><span class="hl">Optimization</span>
+          </div>
+          <div class="ai"><b>AI:</b> campaign ideas · content · localization · budget optimization.</div>
+        </div>
+
+        <div class="stage">
+          <span class="stag">Stage 8 · Acquisition Engine</span>
+          <h4>Acquisition Engine — full B2B funnel</h4>
+          <div class="flow">
+            <span>Universe (Govt · PIBO · Brands · Retail · Hotels · Restaurants · Bars · Beach Shacks · Casinos · Schools · Colleges · Municipality · Panchayat · CSR · NGOs · Collectors · Recyclers)</span>
+          </div>
+          <div class="flow">
+            <span>Priority</span><span>Target</span><span>Contact</span><span>Meeting</span><span>Proposal</span><span>Negotiation</span>
+            <span>Approval</span><span>Agreement</span><span>Onboarding</span><span class="hl">Activation</span>
+          </div>
+          <div class="ai"><b>AI:</b> lead score · priority · suggested follow-up · meeting summaries.</div>
+        </div>
+
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 4 · Awareness Scale-Up</div><div class="gq">Can public communication begin? — FAQ kit, retail readiness, operational readiness, localization done</div></div>
+          <div class="gout">Scale / Hold</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYER 4 -->
+<section id="l4">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">Platform Layer 4</span></div>
+    <h2>Execution Intelligence</h2>
+    <p class="sub">Go public, run the ground game, and keep the promise operationally true. DMS sub-layers D–E run here.</p>
+
+    <div class="layer-block">
+      <div class="layer-head"><div class="lnum">4</div><div><h3>Execution Intelligence</h3><p>Public adoption · launch · trust &amp; operations</p></div></div>
+      <div class="layer-body">
+
+        <div class="stage dmswf">
+          <span class="stag">Stage 9 · DMS Sub-Layer D · Public Adoption <span class="badge wf">WF5</span></span>
+          <h4>Consumer Engagement — Awareness</h4>
+          <div class="flow">
+            <span>Awareness</span><span>Education</span><span>School</span><span>College</span><span>Community</span><span>Retail</span>
+            <span>Airport</span><span>Tourism</span><span>Digital</span><span>CSR</span><span>Feedback</span><span>Sentiment</span><span class="hl">Behaviour Change</span>
+          </div>
+          <div class="newnote"><b>Behaviour Barriers as first-class objects:</b> barrier → evidence → audience → message → owner. The core mechanism of the behavioural-change philosophy.</div>
+        </div>
+
+        <div class="stage">
+          <span class="stag">Stage 10 · Communication &amp; BTL</span>
+          <h4>Communication &amp; Below-The-Line</h4>
+          <div class="flow"><span>Internal</span><span>Government</span><span>Retail</span><span>Consumer</span><span>Media</span><span>Brand</span><span>Partner</span></div>
+          <div class="flow"><span>BTL Planning</span><span>Calendar</span><span>Vendor</span><span>Material</span><span>Execution</span><span>Attendance</span><span>Bottle Collection</span><span class="hl">ROI</span><span>Reports</span></div>
+        </div>
+
+        <div class="stage">
+          <span class="stag">Stage 11 · Infrastructure</span>
+          <h4>Infrastructure Planning</h4>
+          <div class="flow"><span>Site Identification</span><span>Survey</span><span>Power</span><span>Internet</span><span>Permission</span><span>Installation</span><span>Commissioning</span><span>Maintenance</span><span class="hl">Machine Analytics</span></div>
+        </div>
+
+        <div class="stage dmswf">
+          <span class="stag">Stage 6b · Launch Readiness <span class="badge wf">WF6</span> <span class="badge star">★ signature</span></span>
+          <h4>The T-Minus Launch Engine</h4>
+          <div class="tminus">
+            <div class="t"><b>T-90</b><span>Awareness foundation</span></div>
+            <div class="t"><b>T-60</b><span>Retail onboarding</span></div>
+            <div class="t"><b>T-30</b><span>Mass media</span></div>
+            <div class="t"><b>T-15</b><span>Machine demos</span></div>
+            <div class="t go"><b>Launch</b><span>Day events</span></div>
+            <div class="t"><b>T+14</b><span>Reputation + collection review</span></div>
+          </div>
+          <div class="newnote">Each milestone has Owner · Status · go/no-go confidence score. <b>Rule:</b> communication readiness must never exceed operational readiness.</div>
+        </div>
+
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 5 · Launch Go / No-Go</div><div class="gq">Is the public promise operationally ready? — readiness tracker, T-minus status, rapid-response protocol</div></div>
+          <div class="gout">Go / Conditions / Delay</div>
+        </div>
+
+        <div class="stage dmswf">
+          <span class="stag">Stage 7b · DMS Sub-Layer E · Trust <span class="badge wf">WF7</span></span>
+          <h4>Reputation Management — Resistance Intelligence, post-launch</h4>
+          <div class="flow"><span>Media Monitoring</span><span>Social Listening</span><span>Misinformation Detection</span><span class="hl">Rapid Response Brief (SLA)</span><span>Retail Testimonials</span><span>Milestone Comms</span><span>Route Issues to Owners</span></div>
+        </div>
+
+        <div class="stage dmswf">
+          <span class="stag">Stage 12 · Operations → feeds <span class="badge wf">WF8</span></span>
+          <h4>Operations &amp; Collection Optimization</h4>
+          <div class="flow"><span>Bottle Return</span><span>Validation</span><span>Refund</span><span>Collection</span><span>Sorting</span><span>Transport</span><span>Recycler</span><span>PCR</span><span>Brand</span><span>Reporting</span></div>
+          <div class="flow"><span>→ Return patterns</span><span>Low-performing locations</span><span>Friction points</span><span>Behaviour nudges</span><span>Updated retail/machine comms</span></div>
+        </div>
+
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 6 · Post-Launch Optimization</div><div class="gq">What must improve first? — collection dashboard, friction log, sentiment</div></div>
+          <div class="gout">Pick workflow to fix</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYER 5 -->
+<section id="l5">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">Platform Layer 5</span></div>
+    <h2>Performance Intelligence</h2>
+    <p class="sub">Measure, learn, and turn proof into the next geography.</p>
+
+    <div class="layer-block">
+      <div class="layer-head"><div class="lnum">5</div><div><h3>Performance Intelligence</h3><p>Analytics · metrics · amplification · knowledge</p></div></div>
+      <div class="layer-body">
+
+        <div class="stage">
+          <span class="stag">Stage 13 · Analytics</span>
+          <h4>11 Role-Based Dashboards — all roll up to the Adoption Index</h4>
+          <div class="dash">
+            <div>Executive</div><div>Project</div><div>Marketing</div><div>Stakeholder</div><div>Government</div><div>Acquisition</div>
+            <div>BTL</div><div>Infrastructure</div><div>Operations</div><div>Finance</div><div>Knowledge</div>
+          </div>
+          <div class="newnote">Every dashboard filters dynamically by <b>geography + implementation model</b>.</div>
+        </div>
+
+        <div class="stage">
+          <span class="stag">Stage 14 · Metrics Engine <span class="badge new">leading vs lagging</span></span>
+          <h4>Metrics Engine</h4>
+          <div class="meta"><div class="m">Every module exposes: <b>Objective · KRA · KPI · Formula · Data Source · Frequency · Target · Actual · Variance · Trend · Owner</b></div></div>
+          <div class="twocol">
+            <div class="metricbox lead"><h5>Leading (predictive)</h5><div class="pills"><span>Stakeholders mapped/briefed</span><span>Champion commitments</span><span>Concerns resolved</span><span>Message comprehension</span><span>Retail readiness</span><span>Launch-readiness score</span></div></div>
+            <div class="metricbox lag"><h5>Lagging (outcome)</h5><div class="pills"><span>Containers returned</span><span>Return rate</span><span>Active users</span><span>Repeat returns</span><span>Retail participation</span><span>Cost per container</span><span>Sentiment trend</span></div></div>
+          </div>
+        </div>
+
+        <div class="stage dmswf">
+          <span class="stag">Stage 6c · Narrative Amplification <span class="badge wf">WF9</span></span>
+          <h4>Turn proof into the next geography</h4>
+          <div class="flow"><span>Milestones</span><span>Case Studies</span><span>PR</span><span>Social Proof</span><span>Equip stakeholders with proof</span><span class="hl">Package learnings → next geography</span></div>
+        </div>
+
+        <div class="gate">
+          <span class="gicon">🚦</span>
+          <div><div class="gtitle">GATE 7 · Amplification</div><div class="gq">Is there credible proof to share? — milestone data, testimonials</div></div>
+          <div class="gout">Amplify / Wait</div>
+        </div>
+
+        <div class="stage">
+          <span class="stag">Stage 15 · Knowledge Hub</span>
+          <h4>The cloning mechanism</h4>
+          <div class="pillrow">
+            <span>SOP Library</span><span>Playbooks</span><span>Templates</span><span>Government Documents</span><span>Campaign Assets</span>
+            <span>Case Studies</span><span>Research Papers</span><span>Lessons Learned</span><span>Best Practices</span><span style="border-color:rgba(61,220,151,.5);color:var(--accent)">Reusable Geography Templates</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CROSS-CUTTING -->
+<section id="cross">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">Run across all five layers</span></div>
+    <h2>Two cross-cutting systems</h2>
+
+    <div class="stage" style="margin-top:18px">
+      <span class="stag">Stage 16 · AI Copilot</span>
+      <h4>Embedded everywhere — not a chatbot</h4>
+      <div class="pillrow">
+        <span>Research summarization</span><span>Case-study retrieval</span><span>Stakeholder insights</span><span>Meeting summaries</span>
+        <span>GTM drafting</span><span>Campaign / FAQ / PR generation</span><span>KPI explanations</span><span>Trend analysis</span>
+        <span>Resistance prediction</span><span>Report &amp; presentation generation</span><span>Knowledge search</span>
+      </div>
+      <div class="ai"><b>Principle:</b> AI advises and accelerates; approvals and execution stay with the human teams.</div>
+    </div>
+
+    <div class="stage" style="margin-top:14px">
+      <span class="stag">Stage 17 · Governance &amp; Cadence <span class="badge star">★ rituals engine</span></span>
+      <h4>The cadence that keeps communication and operations in sync</h4>
+      <div class="cadence">
+        <div class="cad"><b>Daily</b><span>T-7 → T+14 launch-window check-in: issues, sentiment, escalations, rapid-response approvals.</span></div>
+        <div class="cad"><b>Weekly</b><span>DMS workflow standup: readiness, narrative gaps, biggest friction barrier, next actions → weekly dashboard.</span></div>
+        <div class="cad"><b>Biweekly</b><span>Workflow improvement review: fix the one workflow dragging adoption.</span></div>
+        <div class="cad"><b>Monthly</b><span>System-health review: Adoption Index trend, architecture changes, geography priority.</span></div>
+        <div class="cad"><b>Quarterly</b><span>Geography performance review + playbook update for the next launch.</span></div>
+      </div>
+      <div class="newnote"><b>Escalation rules</b> route to Director Marketing / DMS Pod Lead / Comms Head / Ops Head depending on the trigger.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FULL FLOW -->
+<section id="flow">
+  <div class="wrap">
+    <div class="section-head"><span class="kicker">End to End</span></div>
+    <h2>The full flow — with gates and the flywheel</h2>
+    <p class="sub">From a spotted opportunity to a reusable blueprint that seeds the next geography. The loop closes and compounds.</p>
+    <div class="flowmap">
+<span class="o">Opportunity</span>
+   <span class="arr">↓</span>   <span class="g">GATE 1 · Geography Selection</span>
+<span class="b">Configure</span>    Project  ·  Roles &amp; RACI  ·  Implementation Model
+   <span class="arr">↓</span>
+<span class="b">Geography</span>   Dynamic Hierarchy  +  Localization
+   <span class="arr">↓</span>
+<span class="o">Evidence</span>    <span class="o">WF1</span>  Market &amp; Research Intelligence
+   <span class="arr">↓</span>
+<span class="o">Coalition</span>   <span class="o">WF2</span>  Stakeholder  +  Resistance Intelligence
+   <span class="arr">↓</span>   <span class="g">GATE 2 · Stakeholder Readiness</span>
+<span class="o">Narrative</span>   <span class="o">WF3</span>  Narrative &amp; FAQ  <span class="arr">→</span>  <span class="o">WF4</span>  Alignment
+   <span class="arr">↓</span>   <span class="g">GATE 3 · Narrative Approval</span>
+<span class="o">Plan</span>        Go-To-Market  <span class="arr">→</span>  Acquisition
+   <span class="arr">↓</span>   <span class="g">GATE 4 · Awareness Scale-Up</span>
+<span class="o">Public</span>      <span class="o">WF5</span>  Consumer Awareness  <span class="arr">→</span>  Comms &amp; BTL  <span class="arr">→</span>  Infrastructure
+   <span class="arr">↓</span>
+<span class="o">Launch</span>      <span class="o">WF6</span>  T-minus Engine  (T-90 <span class="arr">→</span> T+14)
+   <span class="arr">↓</span>   <span class="g">GATE 5 · Launch Go / No-Go</span>
+<span class="o">Trust</span>       <span class="o">WF7</span>  Reputation  <span class="arr">←→</span>  Operations  <span class="arr">→</span>  <span class="o">WF8</span>  Optimization
+   <span class="arr">↓</span>   <span class="g">GATE 6 · Post-Launch Optimization</span>
+<span class="o">Measure</span>     Analytics &amp; Metrics  <span class="arr">→</span>  <span class="gr">DRS Adoption Index</span>
+   <span class="arr">↓</span>
+<span class="o">Amplify</span>     <span class="o">WF9</span>  Narrative Amplification
+   <span class="arr">↓</span>   <span class="g">GATE 7 · Amplification</span>
+<span class="o">Capture</span>     Knowledge Hub  <span class="arr">→</span>  <span class="gr">Reusable Geography Blueprint</span>
+   <span class="arr">↓</span>
+   <span class="arr">└──────────►</span>  <span class="o">flywheel restarts at WF1 for the next geography</span>
+    </div>
+    <div class="nestnote" style="margin-top:18px">Running underneath all of it: <b>AI Copilot</b> (advises) + <b>Governance Cadence</b> (daily → quarterly), with every metric pointing at the <b>DRS Adoption Index</b>.</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>DRS Intelligence Platform — Unified Blueprint</b><br>
+    5 platform layers · 17 stages · 9 DMS workflows · 7 decision gates · 1 North Star · ∞ reusable blueprints.<br>
+    <span style="opacity:.6">Tip: press Ctrl / Cmd + P to export as PDF.</span>
+  </div>
+</footer>
+
+</body>
+</html>

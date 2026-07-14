@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRS ⇄ Marketplace — Parallel View</title>
+<style>
+  :root{
+    --bg:#0a0e17; --card:#121b2e; --card2:#16203a; --line:#243352;
+    --ink:#eaf0ff; --muted:#9fb0d0; --chip:#1b2840;
+    --drs:#3ddc97; --mp:#4db8ff; --gate:#ff6b8b; --phase:#ffb24d;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:linear-gradient(180deg,#0a0e17,#090d15 45%,#0a0f18);color:var(--ink);line-height:1.5}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 22px}
+
+  nav.top{position:sticky;top:0;z-index:60;background:rgba(9,13,21,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav.top .wrap{display:flex;align-items:center;gap:14px;height:60px;flex-wrap:wrap}
+  nav.top .brand{font-weight:800;letter-spacing:.4px;white-space:nowrap}
+  nav.top .legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+  nav.top .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  nav.top .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:var(--chip);color:var(--muted);font:inherit;font-size:12px;font-weight:600;
+    padding:8px 12px;border-radius:9px;cursor:pointer;transition:.2s}
+  .btn:hover{color:var(--ink);border-color:var(--mp)}
+
+  header.hero{padding:54px 0 30px;border-bottom:1px solid var(--line);
+    background:radial-gradient(820px 360px at 12% -10%,rgba(61,220,151,.14),transparent 58%),
+               radial-gradient(820px 360px at 88% -10%,rgba(77,184,255,.14),transparent 58%)}
+  .eyebrow{display:inline-block;font-size:11.5px;letter-spacing:3px;text-transform:uppercase;color:var(--phase);
+    border:1px solid rgba(255,178,77,.4);padding:5px 12px;border-radius:99px;margin-bottom:16px}
+  header.hero h1{font-size:clamp(26px,4.6vw,46px);margin:0 0 12px;line-height:1.08;letter-spacing:-.5px}
+  header.hero h1 .a{color:var(--drs)} header.hero h1 .b{color:var(--mp)}
+  header.hero p.lead{font-size:16px;color:var(--muted);max-width:860px;margin:0 0 22px}
+  .principle{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
+  .principle .p{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13px;color:#cdd8f0;max-width:560px}
+  .principle .p b{color:var(--phase)}
+
+  .vsum{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+  .vsum .v{border-radius:14px;padding:16px 18px;border:1px solid var(--line)}
+  .vsum .v.drs{background:rgba(61,220,151,.07);border-color:rgba(61,220,151,.35)}
+  .vsum .v.mp{background:rgba(77,184,255,.07);border-color:rgba(77,184,255,.35)}
+  .vsum .v h3{margin:0 0 4px;font-size:16px}
+  .vsum .v.drs h3{color:var(--drs)} .vsum .v.mp h3{color:var(--mp)}
+  .vsum .v p{margin:0;font-size:13px;color:var(--muted)}
+  .vsum .v .nums{display:flex;gap:18px;margin-top:10px}
+  .vsum .v .nums b{font-size:20px} .vsum .v .nums span{font-size:11.5px;color:var(--muted);display:block}
+
+  section{padding:38px 0 60px}
+  .kicker{font-size:12px;color:var(--phase);font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+  h2{font-size:clamp(21px,3vw,29px);margin:5px 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--muted);max-width:840px;margin:0 0 8px;font-size:14.5px}
+
+  /* column headers */
+  .colhead{display:grid;grid-template-columns:1fr 120px 1fr;gap:12px;margin:18px 0 6px;position:sticky;top:60px;z-index:40;
+    background:rgba(9,13,21,.92);backdrop-filter:blur(8px);padding:10px 0}
+  .colhead .ch{font-weight:800;font-size:14px;text-align:center;padding:8px;border-radius:10px}
+  .colhead .ch.drs{color:var(--drs);background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.4)}
+  .colhead .ch.mp{color:var(--mp);background:rgba(77,184,255,.1);border:1px solid rgba(77,184,255,.4)}
+  .colhead .ch.mid{color:var(--phase);font-size:11px;letter-spacing:1px;text-transform:uppercase;align-self:center}
+
+  /* phase band */
+  .band{border:1px solid var(--line);border-radius:14px;margin-top:12px;background:var(--card);overflow:hidden;transition:.2s}
+  .band.open{border-color:var(--phase)}
+  .band-head{display:grid;grid-template-columns:1fr 120px 1fr;gap:12px;align-items:stretch;cursor:pointer}
+  .band-head .side{padding:14px 16px}
+  .band-head .side.drs{border-right:1px solid var(--line)}
+  .band-head .side.mp{border-left:1px solid var(--line)}
+  .band-head:hover{background:var(--card2)}
+  .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:99px;border:1px solid currentColor;margin-bottom:6px}
+  .tag.drs{color:var(--drs)} .tag.mp{color:var(--mp)}
+  .side .name{font-size:14.5px;font-weight:700}
+  .side.mp{text-align:right}
+  .side.empty .name{color:var(--muted);font-weight:500;font-style:italic}
+  .side.empty small{color:#6f80a0;font-size:11px}
+  .mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(255,178,77,.06)}
+  .mid .pn{font-size:16px;font-weight:800;color:var(--phase)}
+  .mid .pl{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);text-align:center;line-height:1.3}
+  .mid .chev{width:18px;height:18px;color:var(--muted);transition:.25s;margin-top:2px}
+  .band.open .mid .chev{transform:rotate(180deg);color:var(--phase)}
+
+  .band-body{display:none;border-top:1px solid var(--line)}
+  .band.open .band-body{display:grid;grid-template-columns:1fr 1fr;gap:0;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .detail{padding:16px 18px}
+  .detail.drs{border-right:1px solid var(--line);background:rgba(61,220,151,.03)}
+  .detail.mp{background:rgba(77,184,255,.03)}
+  .detail h5{margin:0 0 8px;font-size:11px;letter-spacing:.8px;text-transform:uppercase}
+  .detail.drs h5{color:var(--drs)} .detail.mp h5{color:var(--mp)}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .flow span{background:var(--chip);border:1px solid var(--line);border-radius:7px;padding:4px 9px;font-size:12px;color:#cfdaf2}
+  .flow span.out{border-color:rgba(255,178,77,.45);color:var(--phase)}
+  .sublabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:10px 0 5px}
+  .ai{margin-top:10px;background:rgba(91,140,255,.08);border:1px dashed rgba(91,140,255,.35);border-radius:9px;padding:8px 11px;font-size:12px;color:#c5d4ff}
+  .ai b{color:#9db8ff}
+  .gate{margin-top:10px;background:rgba(255,107,139,.08);border:1px solid rgba(255,107,139,.4);border-radius:9px;padding:8px 11px;font-size:12px}
+  .gate b{color:var(--gate)} .gate .rec{color:#ffd1da;margin-left:4px}
+  .detail .none{color:var(--muted);font-size:12.5px;font-style:italic;padding:6px 0}
+
+  footer{padding:30px 0 60px;color:var(--muted);font-size:13px;text-align:center;border-top:1px solid var(--line)}
+  footer b{color:var(--ink)}
+
+  @media (max-width:820px){
+    .colhead,.band-head{grid-template-columns:1fr 70px 1fr}
+    .band.open .band-body{grid-template-columns:1fr}
+    .detail.drs{border-right:0;border-bottom:1px solid var(--line)}
+    .side.mp{text-align:left}
+  }
+  @media print{nav.top,.colhead{position:static}.band-body{display:grid!important;grid-template-columns:1fr 1fr!important}.mid .chev{display:none}body{background:#fff;color:#111}}
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand">DRS <span style="color:var(--muted)">⇄</span> Marketplace</div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--drs)"></i> DRS — your plan</span>
+      <span><i class="dot" style="background:var(--mp)"></i> Marketplace — AI MOS</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" onclick="toggleAll(true)">Expand all</button>
+    <button class="btn" onclick="toggleAll(false)">Collapse all</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Same operating model · Two verticals · Side by side</span>
+    <h1><span class="a">DRS</span> and <span class="b">Marketplace</span>, in parallel</h1>
+    <p class="lead">Two verticals running on the same marketing operating model — shown side by side, each keeping its <b>own native stages</b>. DRS keeps your 5-layer / 16-stage plan exactly as you and your Director built it. Marketplace keeps the AI MOS 10-stage model. They are aligned by phase where they correspond — and where DRS goes deeper, that depth is shown honestly.</p>
+    <div class="principle">
+      <div class="p"><b>Not connected — just mapped.</b> Nothing flows between the two verticals. This view only lines them up phase-by-phase to show the same motion expressed in each.</div>
+    </div>
+
+    <div class="vsum">
+      <div class="v drs">
+        <h3>DRS — your plan</h3>
+        <p>Five-Layer Architecture · behaviour-change &amp; public-acceptance depth.</p>
+        <div class="nums"><div><b>5</b><span>Layers</span></div><div><b>16</b><span>Stages</span></div><div><b>+DMS</b><span>WF1–WF9 in Stage 6</span></div></div>
+      </div>
+      <div class="v mp">
+        <h3>Marketplace — AI MOS</h3>
+        <p>Claude-first 10-stage model · two-sided B2B liquidity.</p>
+        <div class="nums"><div><b>10</b><span>Stages</span></div><div><b>10</b><span>Gates</span></div><div><b>90/10</b><span>Claude / Human</span></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The parallel</div>
+    <h2>Phase-by-phase alignment <span style="font-size:13px;color:var(--muted);font-weight:400">— click any phase to expand both sides</span></h2>
+    <p class="sub">Left = DRS (your stages). Right = Marketplace (AI MOS stages). Centre = the shared phase. Some phases exist on only one side — that is the point: each vertical keeps its own shape.</p>
+
+    <div class="colhead">
+      <div class="ch drs">DRS — your plan</div>
+      <div class="ch mid">Phase</div>
+      <div class="ch mp">Marketplace — AI MOS</div>
+    </div>
+
+    <!-- PHASE 1 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 1 · Stage 1</span><div class="name">Platform Foundation</div></div>
+        <div class="mid"><div class="pn">1</div><div class="pl">Business<br>Foundation</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 1</span><div class="name">Business Intelligence</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Platform Foundation</h5>
+          <div class="flow"><span>Create Project</span><span>Project Details</span><span>Domestic / International</span><span>Country</span><span>State / Region</span><span>Implementation Model</span><span>Timeline</span><span>Budget</span><span>Team</span><span>Objectives</span><span>Success Criteria</span><span class="out">Project Dashboard</span></div>
+          <div class="ai"><b>AI:</b> create project · suggest implementation model · suggest timeline · suggest required modules.</div>
+          <div class="gate"><b>GATE 1 · Geography Selection:</b> Is this geography worth launching? <span class="rec">→ Select / Defer</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Business Intelligence</h5>
+          <div class="sublabel">Human input</div>
+          <div class="flow"><span>Product</span><span>Category</span><span>Geography</span><span>Objective</span><span>D-Day</span><span>Budget (opt)</span></div>
+          <div class="sublabel">Claude → outputs</div>
+          <div class="flow"><span>Business Brief</span><span>Scope</span><span>KPIs</span><span>Timeline</span><span class="out">Risk Summary</span></div>
+          <div class="gate"><b>Gate:</b> Is the business objective correctly defined? <span class="rec">→ Proceed / Revise</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 2 · Stage 2</span><div class="name">Geography Intelligence Engine</div></div>
+        <div class="mid"><div class="pn">2</div><div class="pl">Geography<br>Engine</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp empty"><div class="name">No direct parallel</div><small>Geography is an input field in Marketplace, not a stage</small></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Geography Intelligence Engine</h5>
+          <div class="flow"><span>Country</span><span>State</span><span>Admin Hierarchy</span><span>Business Hierarchy</span><span>Population</span><span>Consumption</span><span>Tourism</span><span>Retail Landscape</span><span>Hotels</span><span>Restaurants</span><span>Institutions</span><span>Commercial Clusters</span><span class="out">Outlet Mapping</span></div>
+          <div class="sublabel">Hierarchy adapts by geography</div>
+          <div class="flow"><span>Goa → District → Taluka → Panchayat → Village → Outlet</span><span>TN → District → Corporation → Zone → Ward → Outlet</span><span>UK → Nation → County → Town → Store</span></div>
+          <div class="ai"><b>AI:</b> priority talukas · high-consumption areas · tourism hotspots · recommended rollout sequence.</div>
+        </div>
+        <div class="detail mp">
+          <p class="none">Marketplace has no Geography stage — geography enters as a Stage 1 input. This is DRS-specific depth.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 3 · Stage 3</span><div class="name">Market Intelligence <span style="color:var(--muted);font-weight:400;font-size:12px">(DMS begins)</span></div></div>
+        <div class="mid"><div class="pn">3</div><div class="pl">Market<br>Intelligence</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 2</span><div class="name">Market Intelligence</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Market Intelligence</h5>
+          <div class="flow"><span>Research</span><span>Market Assessment</span><span>Environmental Impact</span><span>Economic Impact</span><span>Policy Research</span><span>Intl. Case Studies</span><span>Competitor Study</span><span>Consumer Behaviour</span><span>Waste Ecosystem</span><span>ESG Alignment</span><span>Opportunity Assessment</span><span class="out">Business Case</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Market Readiness Score</span><span class="out">Implementation Complexity</span><span class="out">Opportunity Score</span></div>
+          <div class="ai"><b>AI:</b> whitepapers · case studies · impact reports · research summary.</div>
+        </div>
+        <div class="detail mp">
+          <h5>Market Intelligence</h5>
+          <div class="flow"><span>Market &amp; Industry Research</span><span>Competitor Analysis</span><span>TAM / SAM / SOM</span><span>Regulations</span><span>Pricing Analysis</span><span>Social Listening</span><span>Trend Analysis</span><span>SWOT</span><span>PESTLE</span><span>Porter's Five Forces</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Market Report</span><span class="out">Competitor Report</span><span class="out">Opportunity Analysis</span></div>
+          <div class="gate"><b>Gate:</b> Is market research sufficient? <span class="rec">→ Proceed / Research more</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 3 · Stage 4</span><div class="name">Stakeholder Intelligence</div></div>
+        <div class="mid"><div class="pn">4</div><div class="pl">Stakeholders<br>&amp; Customers</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 3</span><div class="name">Customer &amp; Ecosystem Intelligence</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Stakeholder Intelligence</h5>
+          <div class="flow"><span>Government → Departments → Officials → Meetings → Approvals → Documents</span></div>
+          <div class="flow"><span>PIBO · Brands · Retail · Hotels · Restaurants · Municipality · Panchayat · Collectors · NGOs · Media · Universities · Influencers</span></div>
+          <div class="sublabel">Each stakeholder holds</div>
+          <div class="flow"><span>Support</span><span>Influence</span><span>Interest</span><span>Resistance</span><span>Engagement</span><span>Meetings</span><span>Follow Ups</span><span>Documents</span><span>Comms History</span></div>
+          <div class="ai"><b>AI:</b> next meeting · talking points · stakeholder priority · similar stakeholders from previous projects.</div>
+        </div>
+        <div class="detail mp">
+          <h5>Customer &amp; Ecosystem Intelligence</h5>
+          <div class="flow"><span>Buyer Personas</span><span>Seller Personas</span><span>Customer Journey</span><span>Supplier Journey</span><span>Stakeholder Mapping</span><span>Industry Associations</span><span>Government Stakeholders</span><span>Buying Behaviour</span><span>Segmentation</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Persona Library</span><span class="out">Stakeholder Map</span><span class="out">Customer Journey</span></div>
+          <div class="gate"><b>Gate:</b> Have all important stakeholders been identified? <span class="rec">→ Human approves</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 3 · Stage 5</span><div class="name">Resistance Intelligence</div></div>
+        <div class="mid"><div class="pn">5</div><div class="pl">Resistance<br>Intelligence</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp empty"><div class="name">No direct parallel</div><small>Unique to DRS — public/government resistance</small></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Resistance Intelligence</h5>
+          <div class="flow"><span>Government</span><span>Retail</span><span>Consumer</span><span>Brand</span><span>Media</span><span>Political</span><span>Operational</span></div>
+          <div class="sublabel">Per item</div>
+          <div class="flow"><span>Root Cause</span><span>Impact</span><span>Probability</span><span>Severity</span><span>Mitigation</span><span>Owner</span><span>Status</span><span>Review Date</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Resistance Index</span><span class="out">Sentiment Map</span><span class="out">Heat Map</span><span class="out">Trend</span></div>
+          <div class="ai"><b>AI:</b> predict future resistance · suggest mitigation.</div>
+          <div class="gate"><b>GATE 2 · Stakeholder Readiness:</b> Are launch-critical stakeholders aligned? <span class="rec">→ Proceed / Engage more</span></div>
+        </div>
+        <div class="detail mp">
+          <p class="none">Marketplace has no Resistance stage — this behaviour-change / public-acceptance depth is DRS-specific.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 6 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 3 · Stage 6 + 7</span><div class="name">DRS Marketing System + Go-To-Market</div></div>
+        <div class="mid"><div class="pn">6</div><div class="pl">Strategy</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 4</span><div class="name">Marketing Strategy</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>DRS Marketing System (Core Engine · DMS)</h5>
+          <div class="flow"><span>Research</span><span>Stakeholder Mapping</span><span>Narrative Development</span><span>Government Alignment</span><span>Consumer Awareness</span><span>Launch Readiness</span><span>Reputation Mgmt</span><span>Collection Optimization</span><span>Narrative Amplification</span><span class="out">Knowledge Capture</span></div>
+          <div class="sublabel">Each workflow carries</div>
+          <div class="flow"><span>Objectives · Activities · Deliverables · Templates · Budget · Timeline · Owners · Dependencies · KRAs · KPIs · Reports · Lessons Learned</span></div>
+          <h5 style="margin-top:12px">Go-To-Market Engine (Stage 7)</h5>
+          <div class="flow"><span>Segmentation</span><span>Personas</span><span>Positioning</span><span>Messaging</span><span>Channels</span><span>Campaign Calendar</span><span>Budget</span><span>Execution</span><span>Monitoring</span><span class="out">Optimization</span></div>
+          <div class="ai"><b>AI:</b> campaigns · FAQs · PR · whitepapers · opinion articles · presentations · reports.</div>
+          <div class="gate"><b>GATE 3 · Narrative Approval:</b> Is the story clear and evidence-backed? <span class="rec">→ Approve / Revise</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Marketing Strategy</h5>
+          <div class="flow"><span>GTM Strategy</span><span>Positioning</span><span>Messaging</span><span>Value Proposition</span><span>Buyer Acquisition</span><span>Seller Acquisition</span><span>Marketing Funnel</span><span>Campaign Strategy</span><span>Content Strategy</span><span>Channel Strategy</span><span>PR Strategy</span><span>Event Strategy</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Marketing Blueprint</span><span class="out">GTM Document</span><span class="out">Campaign Framework</span></div>
+          <div class="gate"><b>Gate:</b> Is the marketing strategy approved? <span class="rec">→ Human approves</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 7 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Within Stage 6 + 16</span><div class="name">Creative produced by DMS &amp; AI Copilot</div></div>
+        <div class="mid"><div class="pn">7</div><div class="pl">Creative<br>Production</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 5</span><div class="name">AI Creative Studio</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Creative in DRS</h5>
+          <p class="none" style="font-style:normal;color:#cdd8f0">DRS does not have a separate creative stage — assets are produced inside the <b>DRS Marketing System (Stage 6)</b> deliverables and generated by the <b>AI Copilot (Stage 16)</b>: campaigns, FAQs, PR, whitepapers, opinion articles, presentations, reports.</p>
+        </div>
+        <div class="detail mp">
+          <h5>AI Creative Studio</h5>
+          <div class="sublabel">Content</div>
+          <div class="flow"><span>Blogs</span><span>Landing Pages</span><span>Emails</span><span>WhatsApp</span><span>LinkedIn</span><span>Social</span><span>PR</span><span>Brochures</span><span>FAQs</span><span>Sales Decks</span></div>
+          <div class="sublabel">Images · Video · Decks</div>
+          <div class="flow"><span>Creatives</span><span>Infographics</span><span>Video Scripts</span><span>Reels / Shorts</span><span>Explainers</span><span class="out">Strategy / Campaign / Exec Decks</span></div>
+          <div class="gate"><b>Gate:</b> Are all creative assets approved? <span class="rec">→ Approve / Regenerate</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 8 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 3 · Stage 8</span><div class="name">Acquisition Engine</div></div>
+        <div class="mid"><div class="pn">8</div><div class="pl">Acquisition</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp empty"><div class="name">Folded into Strategy &amp; Execution</div><small>Buyer/Seller acquisition lives in MP Stages 4 &amp; 7</small></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Acquisition Engine</h5>
+          <div class="sublabel">Universe</div>
+          <div class="flow"><span>Government · PIBO · Brands · Retail · Hotels · Restaurants · Bars · Beach Shack · Casinos · Schools · Colleges · Municipality · Panchayat · CSR · NGOs · Collectors · Recycler</span></div>
+          <div class="sublabel">Pipeline</div>
+          <div class="flow"><span>Universe</span><span>Priority</span><span>Target</span><span>Contact</span><span>Meeting</span><span>Proposal</span><span>Negotiation</span><span>Approval</span><span>Agreement</span><span>Onboarding</span><span class="out">Activation</span></div>
+          <div class="ai"><b>AI:</b> priority · lead score · suggested follow-up · meeting summary.</div>
+          <div class="gate"><b>GATE 4 · Awareness Scale-Up:</b> Can public communication begin? <span class="rec">→ Scale / Hold</span></div>
+        </div>
+        <div class="detail mp">
+          <p class="none">Marketplace runs acquisition as Buyer &amp; Seller Acquisition strategy (Stage 4) and demand/seller-drive campaigns (Stage 7) — not a standalone stage. DRS keeps a dedicated Acquisition Engine.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 9 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 4 · Stage 9 + 10</span><div class="name">Consumer Engagement + Communication &amp; BTL</div></div>
+        <div class="mid"><div class="pn">9</div><div class="pl">Execution<br>Planning</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 6</span><div class="name">Execution Planning</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Consumer Engagement (Stage 9)</h5>
+          <div class="flow"><span>Awareness</span><span>Education</span><span>School</span><span>College</span><span>Community</span><span>Retail</span><span>Airport</span><span>Tourism</span><span>Digital</span><span>CSR</span><span>Feedback</span><span>Sentiment</span><span class="out">Behaviour Change</span></div>
+          <h5 style="margin-top:12px">Communication &amp; BTL (Stage 10)</h5>
+          <div class="flow"><span>Internal</span><span>Government</span><span>Retail</span><span>Consumer</span><span>Media</span><span>Brand</span><span>Partner</span></div>
+          <div class="flow"><span>BTL Planning</span><span>Calendar</span><span>Vendor</span><span>Material</span><span>Execution</span><span>Attendance</span><span>Bottle Collection</span><span class="out">ROI</span><span>Reports</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Execution Planning</h5>
+          <div class="flow"><span>Execution Timeline</span><span>Campaign Calendar</span><span>Daily Tasks</span><span>Weekly Tasks</span><span>SOPs</span><span>Checklists</span><span>Milestones</span><span>Dependencies</span><span>Resource Plan</span></div>
+          <div class="sublabel">Anchored to D-Day</div>
+          <div class="flow"><span class="out">Execution Plan</span></div>
+          <div class="gate"><b>Gate:</b> Is execution planning complete? <span class="rec">→ Human approves</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 10 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 4 · Stage 11 + 12</span><div class="name">Infrastructure + Operations</div></div>
+        <div class="mid"><div class="pn">10</div><div class="pl">Ground<br>Execution</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 7</span><div class="name">Campaign Execution</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Infrastructure (Stage 11)</h5>
+          <div class="flow"><span>Site Identification</span><span>Survey</span><span>Power</span><span>Internet</span><span>Permission</span><span>Installation</span><span>Commissioning</span><span>Maintenance</span><span class="out">Machine Analytics</span></div>
+          <h5 style="margin-top:12px">Operations (Stage 12)</h5>
+          <div class="flow"><span>Bottle Return</span><span>Validation</span><span>Refund</span><span>Collection</span><span>Sorting</span><span>Transport</span><span>Recycler</span><span>PCR</span><span>Brand</span><span class="out">Reporting</span></div>
+          <div class="gate"><b>GATE 5 · Launch Go / No-Go:</b> Is the public promise operationally ready? <span class="rec">→ Go / Conditions / Delay</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Campaign Execution</h5>
+          <div class="flow"><span>Publishing Plan</span><span>Email Schedule</span><span>WhatsApp Schedule</span><span>Social Calendar</span><span>PR Calendar</span><span>Event Calendar</span><span>Landing Page Plan</span><span>Campaign Dashboard</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Campaign Launch Package</span></div>
+          <div class="gate"><b>Gate:</b> Launch campaign? <span class="rec">→ Human approves</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 11 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 5 · Stage 13 + 14</span><div class="name">Analytics + Metrics Engine</div></div>
+        <div class="mid"><div class="pn">11</div><div class="pl">Performance</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 8</span><div class="name">Performance Intelligence</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Analytics (Stage 13)</h5>
+          <div class="flow"><span>Executive</span><span>Project</span><span>Marketing</span><span>Stakeholder</span><span>Government</span><span>Acquisition</span><span>BTL</span><span>Infrastructure</span><span>Operations</span><span>Finance</span><span>Knowledge</span></div>
+          <div class="sublabel">Filters by geography + implementation model</div>
+          <h5 style="margin-top:12px">Metrics Engine (Stage 14)</h5>
+          <div class="flow"><span>Objectives</span><span>KRAs</span><span>KPIs</span><span>Formula</span><span>Data Source</span><span>Frequency</span><span>Target</span><span>Actual</span><span>Variance</span><span>Trend</span><span class="out">Owner</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Performance Intelligence</h5>
+          <div class="flow"><span>Website Traffic</span><span>Leads</span><span>Buyer Acquisition</span><span>Seller Acquisition</span><span>Engagement</span><span>Campaign Performance</span><span>ROI</span><span>Brand Sentiment</span><span>SEO</span><span>Social</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Daily / Weekly Reports</span><span class="out">Monthly &amp; Executive Dashboards</span></div>
+          <div class="gate"><b>Gate:</b> Is campaign performing as expected? <span class="rec">→ Continue / Investigate / Optimize</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 12 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Within Stage 6 + 12</span><div class="name">Collection Optimization</div></div>
+        <div class="mid"><div class="pn">12</div><div class="pl">Optimization</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 9</span><div class="name">Optimization</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Optimization in DRS</h5>
+          <p class="none" style="font-style:normal;color:#cdd8f0">DRS runs optimization as <b>Collection Optimization</b> inside the DRS Marketing System (Stage 6) and Operations (Stage 12) — diagnosing location friction, behaviour gaps, cost per container and repeat participation.</p>
+          <div class="gate"><b>GATE 6 · Post-Launch Optimization:</b> What must improve first? <span class="rec">→ Pick workflow to fix</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Optimization</h5>
+          <div class="flow"><span>Better Headlines</span><span>Better CTAs</span><span>Better Creatives</span><span>Better Audience</span><span>Better Messaging</span><span>New Content</span><span>Landing Page</span><span>SEO</span><span>Campaign</span></div>
+          <div class="sublabel">Outputs</div>
+          <div class="flow"><span class="out">Optimization Report</span><span class="out">Improved Assets</span></div>
+          <div class="gate"><b>Gate:</b> Apply optimization recommendations? <span class="rec">→ Human approves</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 13 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Layer 5 · Stage 15</span><div class="name">Knowledge Hub</div></div>
+        <div class="mid"><div class="pn">13</div><div class="pl">Knowledge</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">Stage 10</span><div class="name">Knowledge Intelligence</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>Knowledge Hub</h5>
+          <div class="flow"><span>SOP Library</span><span>Playbooks</span><span>Templates</span><span>Government Documents</span><span>Campaign Assets</span><span>Case Studies</span><span>Research Papers</span><span>Lessons Learned</span><span>Best Practices</span><span class="out">Reusable Geography Templates</span></div>
+          <div class="gate"><b>GATE 7 · Amplification:</b> Is there credible proof to share? <span class="rec">→ Amplify / Wait</span></div>
+        </div>
+        <div class="detail mp">
+          <h5>Knowledge Intelligence</h5>
+          <div class="flow"><span>Research</span><span>Strategies</span><span>Campaigns</span><span>Content</span><span>Images</span><span>Videos</span><span>Reports</span><span>SOPs</span><span>Templates</span><span>Winning Campaigns</span></div>
+          <div class="sublabel">Outputs · no approval — auto</div>
+          <div class="flow"><span class="out">Updated Knowledge Base</span><span class="out">Reusable Templates</span><span class="out">Best Practices</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 14 -->
+    <div class="band">
+      <div class="band-head" onclick="tg(this)">
+        <div class="side drs"><span class="tag drs">Stage 16 · Cross-cutting</span><div class="name">AI Copilot</div></div>
+        <div class="mid"><div class="pn">14</div><div class="pl">AI Layer</div><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+        <div class="side mp"><span class="tag mp">The engine</span><div class="name">Claude (the 90%)</div></div>
+      </div>
+      <div class="band-body">
+        <div class="detail drs">
+          <h5>AI Copilot — embedded throughout</h5>
+          <div class="flow"><span>Research summarization</span><span>Case study retrieval</span><span>Stakeholder insights</span><span>Meeting summaries</span><span>GTM drafting</span><span>Campaign generation</span><span>PR &amp; FAQ drafting</span><span>KPI explanations</span><span>Trend analysis</span><span>Resistance recommendations</span><span>Report generation</span><span>Presentation assistance</span><span>Knowledge search</span></div>
+          <div class="ai"><b>Principle:</b> AI advises and accelerates; approvals and execution stay with the teams.</div>
+        </div>
+        <div class="detail mp">
+          <h5>Claude is the operating engine</h5>
+          <p class="none" style="font-style:normal;color:#cdd8f0">In Marketplace, Claude is not a stage — it <b>is</b> the 90%: it runs every stage end-to-end, while the human provides context and approves at gates. Same principle as the DRS AI Copilot, applied across the whole pipeline.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>DRS ⇄ Marketplace — Parallel View</b><br>
+    Two verticals · same operating motion · each keeping its own native stages. DRS = your 5-layer / 16-stage plan. Marketplace = AI MOS 10-stage model.<br>
+    <span style="opacity:.6">Click phases to expand · Ctrl/Cmd + P to export as PDF</span>
+  </div>
+</footer>
+
+<script>
+  function tg(head){ head.parentElement.classList.toggle('open'); }
+  function toggleAll(open){ document.querySelectorAll('.band').forEach(function(b){ b.classList.toggle('open', open); }); }
+  document.addEventListener('DOMContentLoaded', function(){
+    var first=document.querySelector('.band'); if(first) first.classList.add('open');
+  });
+</script>
+</body>
+</html>

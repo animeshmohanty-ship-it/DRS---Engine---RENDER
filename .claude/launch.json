@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "diip-portal",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 8123
+    },
+    {
+      "name": "drs-bot",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "drs-bot/web", "run", "dev"],
+      "port": 3002
+    }
+  ]
+}

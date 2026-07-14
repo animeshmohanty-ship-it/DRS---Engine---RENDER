@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# secrets & environment
+.env
+.env.*
+*.key
+*.pem
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log
+
+# local Claude settings (keep project config, drop local overrides)
+.claude/settings.local.json

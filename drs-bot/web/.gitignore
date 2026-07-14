@@ -1,0 +1,9 @@
+node_modules/
+.next/
+.env
+.env.*
+*.log
+
+# GCP Service Account Key — NEVER commit this
+travel-elry-b6087829f510.json
+*.service-account.json

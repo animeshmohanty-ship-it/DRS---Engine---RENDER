@@ -1,0 +1,1752 @@
+[
+  {
+    "id": "DRS-GOA-TEST-446",
+    "country": "India",
+    "state": "Goa",
+    "implementationModel": "End-to-End DRS (Scheme Operator)",
+    "materials": [
+      "Liquor",
+      "PET",
+      "Cans",
+      "MLP"
+    ],
+    "objective": "Launch a working DRS and maximise container return rate.",
+    "stages": {
+      "stage2": {
+        "touchpoints": {
+          "ok": true,
+          "stateName": "Goa",
+          "groups": [
+            {
+              "group": "Liquor outlets",
+              "total": 366,
+              "subtypes": [
+                {
+                  "label": "Bars / Pubs",
+                  "count": 248
+                },
+                {
+                  "label": "Liquor shops",
+                  "count": 74
+                },
+                {
+                  "label": "Nightclubs",
+                  "count": 44
+                }
+              ]
+            },
+            {
+              "group": "HORECA",
+              "total": 3690,
+              "subtypes": [
+                {
+                  "label": "Hotels",
+                  "count": 720
+                },
+                {
+                  "label": "Restaurants",
+                  "count": 2111
+                },
+                {
+                  "label": "Cafés",
+                  "count": 569
+                },
+                {
+                  "label": "Fast food",
+                  "count": 290
+                }
+              ]
+            },
+            {
+              "group": "Retail / Kirana",
+              "total": 540,
+              "subtypes": [
+                {
+                  "label": "Convenience / Kirana",
+                  "count": 302
+                },
+                {
+                  "label": "Supermarkets",
+                  "count": 189
+                },
+                {
+                  "label": "General stores",
+                  "count": 49
+                }
+              ]
+            },
+            {
+              "group": "Collection / civic",
+              "total": 29,
+              "subtypes": [
+                {
+                  "label": "Recycling points",
+                  "count": 29
+                }
+              ]
+            }
+          ],
+          "universeTotal": 4625,
+          "source": "OpenStreetMap (Overpass API - overpass-api.de)",
+          "badge": "Verified"
+        },
+        "intel": {
+          "stateSummary": {
+            "population": {
+              "value": 1596000,
+              "unit": "people",
+              "confidence": "Grounded",
+              "basis": "Projected population for 2025"
+            },
+            "districts": {
+              "value": 2,
+              "confidence": "Grounded"
+            },
+            "talukasOrTehsils": {
+              "value": 12,
+              "confidence": "Grounded"
+            },
+            "tourismLevel": {
+              "value": "High",
+              "confidence": "Grounded",
+              "note": "Goa is a major tourist destination with over 1 crore total tourist arrivals in 2025."
+            },
+            "regulatoryContext": "Goa is implementing a Deposit Refund Scheme (DRS) from April 2, 2026, making it the first state in India and South Asia to do so. The DRS is notified under the Goa Non-Biodegradable Garbage (Control) Act, 1996, and covers non-biodegradable packaging materials like plastic, glass, aluminum, and multi-layered plastic. A Goa DRS Authority has been constituted to oversee its implementation, including managing escrow accounts, setting deposit values (Rs 10 for alcohol, Rs 5 for most other products, Rs 2 for products under Rs 20), and establishing a network of collection points (initially over 300, aiming for 500 within two years). The scheme aims to complement existing Extended Producer Responsibility (EPR) mechanisms by incentivizing consumer returns and integrating the informal waste sector."
+          },
+          "consumptionPerMaterial": [
+            {
+              "material": "Liquor",
+              "value": null,
+              "unit": "units/year",
+              "confidence": "To-validate",
+              "basis": "While data on alcohol consumption prevalence exists (e.g., 19.5% of men and 2.1% of women over 15 in 2023-24, and Goa ranking 5th highest in consumption nationally), a direct 'units/year' for the entire state is not readily available."
+            },
+            {
+              "material": "PET",
+              "value": null,
+              "unit": "units/year",
+              "confidence": "To-validate",
+              "basis": "Direct consumption data in 'units/year' for PET bottles is not available. Plastic waste generation in Goa is approximately 29,000 tonnes annually, which is about 12 kg per capita per year."
+            },
+            {
+              "material": "Cans",
+              "value": null,
+              "unit": "units/year",
+              "confidence": "To-validate",
+              "basis": "Direct consumption data in 'units/year' for cans is not available. Cans are covered under the upcoming DRS."
+            },
+            {
+              "material": "MLP",
+              "value": null,
+              "unit": "units/year",
+              "confidence": "To-validate",
+              "basis": "Direct consumption data in 'units/year' for Multi-Layered Plastic (MLP) is not available. MLP constitutes approximately 30-40% of plastic waste in national estimates and is covered under the upcoming DRS."
+            }
+          ],
+          "hierarchy": [
+            {
+              "district": "North Goa",
+              "population": 818008,
+              "populationConfidence": "Grounded",
+              "talukas": 5,
+              "recommendedPhase": "Phase 1",
+              "rationale": "Higher concentration of liquor outlets, HORECA, and significant tourist footfall, especially in coastal talukas like Bardez and Tiswadi."
+            },
+            {
+              "district": "South Goa",
+              "population": 640537,
+              "populationConfidence": "Grounded",
+              "talukas": 7,
+              "recommendedPhase": "Phase 2",
+              "rationale": "Contains major urban centers (Margao, Vasco da Gama) and popular tourist areas (Salcete, Mormugao, Canacona) with substantial HORECA and liquor outlets, but generally less dense than North Goa's primary tourist belt."
+            }
+          ],
+          "rolloutSequence": [
+            {
+              "phase": "Phase 1",
+              "zones": [
+                "Bardez (North Goa)",
+                "Tiswadi (North Goa)",
+                "Pernem (North Goa)"
+              ],
+              "rationale": "These talukas in North Goa are major tourist hubs with high density of HORECA establishments, bars, pubs, and nightclubs, indicating high liquor and beverage consumption. This aligns with maximizing container return rates early on."
+            },
+            {
+              "phase": "Phase 2",
+              "zones": [
+                "Salcete (South Goa)",
+                "Mormugao (South Goa)",
+                "Ponda (South Goa)",
+                "Canacona (South Goa)"
+              ],
+              "rationale": "These talukas in South Goa include significant urban centers (Margao, Vasco da Gama) and popular tourist beaches, suggesting a high volume of beverage consumption, making them ideal for the next phase of rollout."
+            },
+            {
+              "phase": "Phase 3",
+              "zones": [
+                "Bicholim (North Goa)",
+                "Sattari (North Goa)",
+                "Quepem (South Goa)",
+                "Sanguem (South Goa)",
+                "Dharbandora (South Goa)"
+              ],
+              "rationale": "These talukas are generally more rural or have lower tourism and commercial density compared to the Phase 1 and 2 areas, making them suitable for later-stage implementation."
+            }
+          ],
+          "notes": "Population figures for districts are based on the 2011 Census, as more recent district-level projections were not consistently available. The number of talukas in North and South Goa reflects the transfer of Ponda taluka to South Goa in January 2015. Direct 'units/year' consumption data for specific materials (Liquor, PET, Cans, MLP) was not found and requires further validation or estimation based on sales data. The rollout sequence is an estimate based on available touchpoint data, tourism levels, and general knowledge of Goa's geography and commercial activity."
+        },
+        "sources": [
+          {
+            "title": "goadrs.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFdCSrKgp2RHweJQt2ryS5xztYZ5lapLCYpFZBInHZPcLGhI2kFnJXIj99TQtMdBZDPUpstv6cVY4WszW9Afs_qSU1xCcwjrLUICUvYQ6ykn09z4zvfMh-K"
+          },
+          {
+            "title": "etedge-insights.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFIcbVTbdcyUEslmfLzbWZfcC6Unub8UJkAFAe6HxKSkkGPofNeAo_TSHSkuu1BmIEx-4l5w1fsaLU5xgTIJmT8t0JWnkRXLgjHyUhAQu2SCAkzQoPkbDak3gCGPkR0gS6p1G2MsCnDWdvTCtLMNRnYrXEQczQ9SlvKjO73Dg7vIyF-xQJsyxw2zqALN1OfymZewEx-ZhChF_7GoDBcmvOf9SLaQodaA1UAQSE="
+          },
+          {
+            "title": "wasterecyclingmag.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGuI5VKGJ0vsLiU_FHytRpc6CicxSkBsugELTUWlFJeh39ZbTQzBrBOP4RX4bXCXPw8J233xtu-scTkVdL1X1DLxMvyxSFSQmMIgfoYz1ymZ1BNt8ROq3_rDjTe_FTFKJ0VQIrSAxnd_21TeeHIJmS0Eg8JcjhVW4vq4crF2hi7OETXA_z4hfsepRPUAiJJrJvecMkRG8K39y-L3w=="
+          },
+          {
+            "title": "indiatimes.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGXG_Hxa24N7E6wCUTxkp3PnZlOA7TMxY1-pu6A669HxLhlrUS2IrU5PyR8EpuQQkmxfzfqcKfXM9iHVG1TaHBuPDFv-kuJ5_k75urjd7oVM-zoeYbNijdklOpbSUMC2ouPdBkbVEHMX4Su4UGa9gMdXXYzJzP-N_CAWUVlz1wHOXKIZvnMkSkbXfjEKmRWE8FWrdpOnpobQvH3ue1u6gLG0vcc7M-oqgHK38JPSZMDbo0WHKRze_hbrljzmnJ_9r8QDrPJ8za6Wjceo1N0P31weg=="
+          },
+          {
+            "title": "awazthevoice.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHHFynlKnu0IJqrMs5UB1eTzgvxvhYUvmjnUpryrsmn6bwEoHXuRAqUrH2bvqUJpbC4nnKKuROeWgayOKXrhvDmOEYw5BY31ZbgyOUoPFGRiB_6NM0bUKYRM25ueJencXn1tWecMlc7jkMfonw38Cm5bFQEbsjUenIJdrUGxG5EI5RmxPR55vZTFTRik2axX788da5yjrHgvEezdTheBSwVYrav4SnWdAHfpzgtr21hTRbohutpO7jL6bF6cgsM5A=="
+          },
+          {
+            "title": "thegoan.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUr3gT39281U2jp7kBp27JtMQK2lxZxuqhcH7VObSF0BRrpl4JgJtvJJ56cv0Ws_gx4Sx6nlnRF6fFCu4qQXTr9Df_ioNIVu21FcBOvOFDhZOnrvvIjnm_nCA0LDH9bByffUThmZ2QOHTvpwFTzvZQU4lvhAfwIwLjvVfCd9NQFPFwyoLVYYbtxw4y0dM4LUljJ7n_8uZ4VkTONzkoEsQckV3jPCuiLmHGHQ=="
+          },
+          {
+            "title": "goadrs.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGzkhLeuucc43aaQSUdUtn8Yk-0yjCphdO2_16bbLYpRklnomV-77OsG9xHKAc5gr-9UNQiz1HwoicJFBL9OqLccZqslLDhZHlE1xKygLE_e2Mj"
+          },
+          {
+            "title": "etedge-insights.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEsoxg-KJPVNEukQRldDNF4GFhKBtfk9B3PsnQ_rUjECTKQAXMbZDku-a9IN5Sy34oGIrXv9DAAICnTxtJtXB2VeofwYFe6R7bmkFpI9SIVJSUNJTiwf23tPj5kF9isWaV-E6z9HyhTNK3gqgI9ieGdJtdg2FHCuzaaybCQZRGNtgBSwvPmScxRI50p8MXox5JrvcxTTWlTaiTgjXgKNbBo0odKNzkDXlxFAups9qJH3XnASf66dWyhow76KDjlOIw="
+          },
+          {
+            "title": "alcircle.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFASjgv1cwd4_5BpW6xiZSxRPsa2imLCtLqLRKuB2CnF28mbfAQAKLabxEkAxZ2zyFOGmkDAWVxHfCjxPy3lo4XwLJy_dm7As685-9UH1s1Zids8BsRVbja-l_CSKwS4PX_7ODDcsVSOvCUngHoLPwp_cuCepMGV2gCUb73vgzq5Pbo5mrOH_yNdi8OeSEAgV3D16rGoLnJ_eUjabK2jGxGzBjsk3ZJLwVLduCQ5XBA"
+          },
+          {
+            "title": "youtube.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEUhLsIMB7EqJdMt8EP7vWOsb3nCV4wXEh0Iokjp6_GJ3tGOl_7wqVR9I08wSn6WQITQN0krKHmKYYizsbSXLqagvNnCA86NHPU7vEf3x-q39pM--ChxC9HwcfzkSBu1LVuEsj1JQU="
+          },
+          {
+            "title": "thegoan.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZh9naDMfo-2MiqRA_Zu7rp1HXMFcpxglOYKq6icbXSEFgX64jDGxk3teN_cTVWMjAQNFhbA6Aog_EoFRB1DUOmE2QtHUeLNNMfzCe5qaWKJPcntvKbFFfBq0i-KEjZwobad0iWEnsiGKT7OvHUICUS9GFQii6q-5ZExaaXKB-dArhYebS86OJdr6fIL_mqL-txYthw7ENYA=="
+          },
+          {
+            "title": "indiatimes.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFmgIglrl6LTJJGj78LOT1Ge1z9jzFYdhUzZ2vslIrOm4i48gc3fyYCOPA_bJzeootLvi3kXo5V-IZVRSahjXM9K7NMM1ugHGChUupPFFLk1eeGytFLwDs-lYj4B7vUiMJnJPC40Vmpnz6Jlol0N0jCGaZhynt5KWWlwA-YioeRBHCbxDovkLlCUCk5bdMhIII0_LV0LB5mJHnLp6tAhBPBahzS7cQKftM79WCySTsLJfUhldvougC2SlNYQXxMeLHOT1QFRJYdhyJWqQ=="
+          },
+          {
+            "title": "indiatoday.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHlVf8cm-HY9VyyyJ7L3aFGpTFcIjmopPA3raSh4Y1QuIfEpuDTl8Vgrd2q3tH-U8BRAtqqK7vKsKkqYPNkAhpWsVkXoBwQKTaHIHrdRYkTbZ2CtL3NQQb_SHy5-TcXlQsRG5oian2QTqPg70cjIeHn-6SwQYBFUNQtGXObCEyKj1auDWNW5TV4ahkhQyJRvbnZ69D4qFx8mgnpn4Xvw_enka2FeFtMZ0UzLsSI4TsMp4vSWBhF04tgQi1Qe5Ame8I="
+          },
+          {
+            "title": "quora.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHVgBQDtXfpdrJoPcQ2cPq57Yurtz0ValP5iosJMI2sE50HUgBjjfkQHro4b0CMMthMBlBBnCjnTio0zXJSw6BRcY5RX3v2PlVXdZq4RPUM82dqIn24TfH7kxU_9Cq7v6GFLMkD_8vjwVL6ChFiwUpO4LVgaTAprjKwE_FJCtpvPMS0Q6Hoa965z8vgBPzhnSchYXtI"
+          },
+          {
+            "title": "etedge-insights.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEXmNS9CkYc9RNEBaJVJfDith82h9vZDtwSlkzi4j_ua2sNcS2pacflA82l6T4kB8X7ZW9HRqMQ1FPbpuAfyVoqqcVu_73XH0alZ0_t2EYs46PrZ_rlYPWEBrWejHExVqMAjD02jDQhT9qxEGMi3mLN_PbTnYTvifaHGJU-X2wboQBxz9pej-DUMKyuHYo9tB3t46455KibVpOcxSyUMZCMX8h8HYkkkWv8XUzG-XEGwDauh3fRdNON-OC_xcIGlTsbGnKtjQqGqHM_ZSsxw6g6w3vrRJo_pIZohBo="
+          },
+          {
+            "title": "researchgate.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHM5I3RnYvHAY3kiLhGe2ijozOrwIhidnQGyUbKgI7nt0wCZqs16eX4oZCB0xZIO3KyoEGclOgrCEr-aSos60kTHL2fB-6GKMJC6UyZ9gzwUtRibTlCldIZ27gK7VIhLMuwElred3YlboVuLk_hfFv4w4yRyb9l7AyMqljTWWyjRYkLN5qUbf8uLJcMX00ns3nsNxbABWUrsOSxxaWEPMO6yP73uSQUGg=="
+          },
+          {
+            "title": "thegoan.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEIOvNSFgXDKLlXeu1KYkLArasvoNaKKSLWmr6YGwuM9xF1WmwoXH--Z_8_F-J_Uum6UaImIdhE-QUfxa8AtieAuekI2vfk31p2XdKQ8aBKWybbaAVXbnnMrynP4LRDRdyphIwkDeU4c_QE845rDUYolINMs2kNZb0sI0yCGtNV6OxmZR1v-k3XtO0woACLgMDzsw7QOIm12S-Z7su5tcsZG-E="
+          },
+          {
+            "title": "censusindia2011.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFLouttbMkWB_UgOR1ivxKClkQzBOII8dhAO6sZjcH50EzG27w5sbjFXLI_h67XyJ6093TWU0diKx4724RfQc3MreaCaeSyTO0nVkmdOBaBVQLh7WXv0kAaoN4iy93BJcqmyiEtzhaoEn05xffUvF6tVLgYPLx7CcA="
+          },
+          {
+            "title": "census2011.co.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFYKgieAJQx1JicWnYyj_f6jVjbIUdKz3AsBw5jSp3U-v78FDiA8K7KwP3geXQqhpzIrC0RL7VEe2MyczNeTwJzckuo2FZjUCLzklp8pi6npMRUsrjErCKO1ve6ZAgV4_i12CY_jmTa_fygDcXq4S8SEhMhUV_0c6hmKg=="
+          },
+          {
+            "title": "trendswe.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQEpqwT2JDgy-7sdWUxc6NP_QXmc6-hsWTPLifH5jmHoAjP7ApRska1osUTnNKY7NrDUa4pk4Bh9BUJodU1XtU1udFlB-AmNU0OHgOLyZpzZGUWWEqq0AEkdcnHZo00kK7w_8CXQ=="
+          },
+          {
+            "title": "villageinfo.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFhvZEXqPYMDlNYl_IkTPYMWimaL3gRN87yktzsDII3p_iZMcj3jgy4m9_Pl1K1RLznJW6RqaQ7WE4UK2YTT8Ou_AogbxvvhYaGMMZFDLuOpSXj30VhbfGS9jyilLPO1Hc="
+          },
+          {
+            "title": "wikipedia.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEXWa0UbqSuSk2rmIjPv2bx4t-XEoucGT438HIgWeK8HTOLCpT50h9iU5SAaGywVTm1bQW214e1uaBhNqQJPSac1WQ33DOG7zCSaSH7QAVNi1l_3x-_PZp8Mq9LGbIEOZJjMbysRopdJucLPsRaJzM="
+          },
+          {
+            "title": "indiaanalyzed.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGyoGnjvvRFSUPYK3VRzob1celcftdxUHSoSQGs02pO4tS3Rnlchf8gnlXKK6HADA_SbPF5NHQ-Bwe9urSg9mmnBQqm31dNgllYWjI90t3_GxiG6dzULbv9AM446N9GxipoUrplXpY="
+          },
+          {
+            "title": "wikipedia.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHdAGMu_fOslZECjc2zWTOIJ5q_tHIe0-7RxUY5nh5jthxo8KK6HGVLfQ_zkhSAVE6al5-2LXS42bOjYPnEcHC-4iJRcSu5UUJURWto3KCIJXeYrwEaDCz1hA4BqZjxL9ebFoWP3ytZUnFH_TMCgJ4="
+          },
+          {
+            "title": "census2011.co.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFcqYxf-VYw2Fx4F0ziujpTKPZ9xTfel_5-YmVQJhucr5LGZ6q6MrbHSh-Ejr6-XhGCOpIYR4Q7TAZwwHW4Mot02t9f0fBXa_f8WlF_xqo-RGJfaJULRla5JQby2dI3mOcp2yaJEUpCG5V_1O0SxWUdsCrNMogv6lie_xN4"
+          },
+          {
+            "title": "datacommons.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGyeIurp9xTNq82efLUg39Mh78uZztW0aH8SYPk5u5qEjjnm_uzUvUR5MVHlWQopbHx9Sn0Gd25VGIuXUA2Frgl7xot1b_6m6WSHk5cG3AXYdXsWf3OZDXNIydSMGariVzMhZh7gYz8IIBNJw=="
+          },
+          {
+            "title": "eshikshya.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH0ou2JjJDZea43tdOFKTKq9UwWqTb-4F86x1Uoh0GyY6G6zTZaZMdbnqxlTpuma4EicjxQ4OOJfnVS1kAIi8Gmd6aKcUHA0eP03OYJiwW3bAx64oLPRoxQPdRbb5qtzAlq5eLiq4O74P9ToM2ltiPQamtbLtj6uzaq39HkZPXe7zyGN7jhWnQeIGQEucfaaazgwZO2"
+          },
+          {
+            "title": "wikipedia.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQETJj9S7Y5FauHs-96zBfVZfVhHaLj0H8HPAVev-P4veMwKJMcs4fpcWbay_XGnmhwcUWGis8FCcPWxIcetXlh0z2QYXtNNPKPjrNE8fIfuuTq7revDYpY_R1USy2UPvFaR6ASi9rbFEeBXwA=="
+          },
+          {
+            "title": "grokipedia.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEHBM8WgMLxLgA0OuHRzP5SGWzRHtft29J_QEOBvX6UdQYmqFJFEstwIDgJSR3808yVt6n8d9Kp3_iT86PigfsfoI6S4qZRqctgyElfButoy37JBmIdLo6BkYoi5ZAUs6umuKftGtKFRpjwxXi5"
+          },
+          {
+            "title": "census2011.co.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMgQhkD5J7akpRBGEUdfdlwbWQVofGQSAyr4K9le-GNNwhV9MXauD-kyDFimI205ojU82zUFR5iYyGvk6CFIb_Sxf0pqrFn0nn9aNLoqCQaI0l6BIx8SabBVYMIRXR4SIVGOOh67g8hVD0He_16Im0FDOIoiXJ5Ah53w=="
+          },
+          {
+            "title": "datacommons.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQErkziLL-mhLBaLIpNgW3oVX9bvMjHaCiGSEXAEp0m0ktWp0dYSAN-Qvm1f_fjZADbK59ztd6oNvCLKQJ-5Bupxnr6cXVeEA0t0TNyhS1OP9D-g5R2mtm3WbSesmV52JPCZlyzF-0unIJ64SA=="
+          },
+          {
+            "title": "trendswe.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMRYYP7LpnVCTQ8IJaHYOIFaOB9XY7WFRZX_8HRlWnpCHPNn41g79fKrKI5_8GY1y8n-vQ5ClpKzPtPiCnOJ2huS47fnVXMJpwjUJb_jh_sjMdOLR6fvEopm2KoXXRXApQEI6gDg=="
+          },
+          {
+            "title": "villageinfo.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFj5bl1sl073No7qfEsCZCx6IOtCqSUIxiOKIHrUKX3oeZlt42fAykijPuB4JnxxxjwltH2dXfw86Zyx5GuEfNuaa3F99UwtYOjBcO9DfvBhljt3i95eoA-k-iVpUke5kc="
+          }
+        ]
+      },
+      "stage3": {
+        "data": {
+          "opportunityScores": {
+            "Liquor": 90,
+            "PET": 95,
+            "Cans": 85,
+            "MLP": 60
+          },
+          "materials": {
+            "Liquor": {
+              "marketSize": "Large consumption volume",
+              "recoveryOpportunity": "High beach litter",
+              "regulatoryDriver": "Strong",
+              "oneLineRead": "Goa's high alcohol consumption and significant glass bottle litter on beaches make it a prime candidate for DRS, supported by a strong regulatory push and existing recycling infrastructure.",
+              "sections": {
+                "impactCase": "Carelessly discarded alcohol bottles, particularly glass shards, pose a significant safety hazard on Goa's beaches and contribute substantially to environmental degradation and marine pollution. Recycling glass offers considerable environmental benefits by reducing landfill waste, conserving virgin raw materials, and saving energy during the manufacturing process. Notably, some unbroken glass bottles are already collected, washed, and reused by alcohol companies within Goa, demonstrating a pre-existing potential for a circular economy model.",
+                "policyRegulatory": "The Goa Deposit Refund Scheme (DRS), slated for implementation on April 1, 2026, mandates a deposit of Rs 10 on all alcohol bottles, irrespective of their volume. This initiative is reinforced by the Goa Tourist Places (Protection and Maintenance) Act, 2001, which imposes substantial fines ranging from Rs 5,000 to Rs 50,000 for littering alcohol bottles in public areas. The state's Revised Solid Waste Management Policy (2022-2037) further supports waste prevention, reuse, recovery, and recycling efforts across Goa.",
+                "benchmarks": "International Deposit Return Systems, such as the German model, have demonstrated exceptional success for beverage containers, including glass, achieving return rates as high as 98.4%. Other best-practice schemes globally consistently collect glass alongside plastic bottles and metal cans, with DRS implementation projected to increase recycling rates to between 84% and 91%. Typical deposit values in these established international schemes range from 10 to 15 cents per container.",
+                "competitorLandscape": "Goa's waste management ecosystem includes several active waste recycling services and glass scrap buyers/merchants, such as Alhaady Jf Enterprises, Namdev Scrap Traders, and Super Star Traders. Vrecycle is specifically noted for its role in collecting glass and facilitating its return to beverage manufacturers for reuse or recycling, indicating an existing network for glass recovery.",
+                "consumerBehaviour": "Tourists, who form a significant portion of Goa's population, are often cited for their disregard for environmental cleanliness, contributing to widespread littering, including alcohol bottles. A previous take-back system for beer bottles, which offered a Rs 3-5 refund, proved effective in encouraging returns before it became defunct, suggesting that financial incentives can strongly influence consumer behavior. The new DRS aims to re-establish this incentive, transforming empty containers into items of tangible financial value to encourage responsible disposal.",
+                "businessCase": "The proposed Rs 10 deposit for each alcohol bottle under Goa's DRS is designed to create a strong economic incentive for consumers and informal waste collectors to return containers. While the alcohol industry has expressed concerns regarding the implementation timeline and potential revenue impacts, the DRS model is structured to cover the direct costs associated with packaging collection. The presence of local glass recyclers and the potential for direct return to manufacturers for reuse can establish a viable economic framework, reducing reliance on virgin materials and fostering a circular economy."
+              }
+            },
+            "PET": {
+              "marketSize": "Very large consumption",
+              "recoveryOpportunity": "Widespread litter, high generation",
+              "regulatoryDriver": "Strong",
+              "oneLineRead": "Given Goa's high PET waste generation, especially from tourism, and existing robust recycling infrastructure, the DRS for PET bottles presents a strong opportunity to significantly boost collection and recycling rates.",
+              "sections": {
+                "impactCase": "PET waste significantly contributes to marine plastic pollution, clogs drainage systems, and places a heavy burden on landfills, incurring substantial environmental and economic costs. Recycling PET offers considerable environmental advantages by reducing carbon emissions, conserving energy, and decreasing the volume of waste sent to landfills, thereby mitigating plastic pollution in oceans. The recycled PET (rPET) material is highly valued, with over 90% of rPET in India being utilized by the textile industry for various applications.",
+                "policyRegulatory": "The management of plastic waste in Goa is governed by the Plastic Waste Management Rules, 2016, and its subsequent amendments, alongside the Model Goa Municipal Plastic Waste Management Bye-Laws, 2022, which include Extended Producer Responsibility (EPR) obligations for manufacturers. The upcoming Goa DRS, effective April 1, 2026, will incorporate PET bottles, applying a deposit of Rs 5 for products priced above Rs 20.",
+                "benchmarks": "Globally, Deposit Return Systems for plastic beverage bottles consistently achieve high return rates, frequently reaching up to 90%. The Indian industry has already made substantial investments in developing a framework that facilitates the recycling of over 90% of PET bottles, indicating a mature recycling ecosystem. A state-level DRS in Goa has the potential to further enhance these already strong recycling rates by providing additional incentives and collection infrastructure.",
+                "competitorLandscape": "Goa hosts numerous plastic recycling services and companies, including Rizwan Plastics Industry, ALIA Traders, and Goa Plastic Industries. The Goa Waste Management Corporation (GWMC) operates Material Recovery Facilities (MRFs) that are equipped to segregate PET waste. Additionally, organizations such as rePurpose Global collaborate with local partners like vRecycle to recover low-value plastics, including PET, within Goa.",
+                "consumerBehaviour": "The high consumption of packaged beverages by both Goa's residents and its substantial tourist population significantly contributes to the generation of PET waste. The introduction of the DRS, with its inherent financial incentive, is anticipated to encourage consumers to actively return PET bottles, thereby transforming these discarded items into valuable resources.",
+                "businessCase": "The proposed Rs 5 deposit for PET bottles under Goa's DRS establishes a clear economic incentive for both consumers and informal waste pickers to participate in the return scheme. PET bottles benefit from strong recycling rates and high demand as a raw material within the domestic recycling industry, ensuring that their collection and processing are economically viable. The DRS is expected to enhance the quality of collected material for recyclers by promoting source-segregated, high-purity waste streams, further strengthening the business case for PET recycling."
+              }
+            },
+            "Cans": {
+              "marketSize": "Growing consumption, significant volume",
+              "recoveryOpportunity": "Increasing litter, high value",
+              "regulatoryDriver": "Strong",
+              "oneLineRead": "The rapidly growing market for beverage cans in Goa, coupled with their high recyclability and the upcoming DRS, presents a strong opportunity for increased collection and circularity.",
+              "sections": {
+                "impactCase": "Recycling aluminum cans offers substantial environmental benefits, including a significant reduction in energy consumption (up to 95%) and greenhouse gas emissions compared to producing new aluminum. It also conserves raw materials and alleviates the burden on landfills. Aluminum cans are 100% recyclable, making them a highly sustainable packaging choice.",
+                "policyRegulatory": "The Goa Deposit Refund Scheme (DRS), scheduled to commence on April 1, 2026, will include aluminum cans, with a mandated deposit of Rs 5 for products priced above Rs 20. This regulatory framework is supported by the broader Revised Solid Waste Management Policy for Goa, which advocates for the recycling of metal waste as part of its comprehensive waste management strategy.",
+                "benchmarks": "Globally, Deposit Return Systems for aluminum cans consistently achieve high return rates, often exceeding 90%. In India, the recycling rate for used beverage cans is estimated to be between 70% and 75%, indicating a strong existing recycling infrastructure that can be further enhanced by a DRS.",
+                "competitorLandscape": "Goa's waste management sector includes several metal scrap dealers and buyers, such as Super Star Traders, Shakti Sales Corporation, and Mk Scrap Traders, who actively deal in various metal scraps, including aluminum. The Goa Waste Management Corporation (GWMC) also operates Material Recovery Facilities (MRFs) that are equipped to segregate metal waste, providing a foundation for increased collection under a DRS.",
+                "consumerBehaviour": "The convenience and portability of aluminum cans are key factors driving their popularity among consumers, particularly younger demographics. The introduction of the DRS will provide a direct financial incentive, encouraging consumers to return their empty cans rather than contributing to litter, thereby fostering more responsible disposal habits.",
+                "businessCase": "The Rs 5 deposit for cans under Goa's DRS will establish a clear economic value for returned containers, incentivizing collection. Aluminum is a high-value recyclable material with strong demand for recycled content, making the collection and processing economically attractive. The DRS is expected to improve the quality of collected material for recyclers by ensuring source segregation, further enhancing the economic viability of aluminum can recycling."
+              }
+            },
+            "MLP": {
+              "marketSize": "Significant generation, growing market",
+              "recoveryOpportunity": "Challenging to recycle, low collection",
+              "regulatoryDriver": "Medium",
+              "oneLineRead": "Despite being a challenging material to recycle, the inclusion of MLP in Goa's DRS, coupled with growing market awareness and emerging technologies, presents a nascent opportunity to improve collection and explore innovative processing solutions.",
+              "sections": {
+                "impactCase": "Multi-layered plastic (MLP) waste poses a significant environmental challenge, frequently ending up in landfills, openly dumped in the environment, or burned in uncontrolled ways due to its low collection rates. While traditionally considered 'non-recyclable,' new technologies are emerging that can convert MLP into granules for various products, offering environmental benefits by reducing landfill burden and conserving resources.",
+                "policyRegulatory": "The Plastic Waste Management Rules, 2016, and the upcoming Goa Deposit Refund Scheme (DRS) explicitly include multi-layered plastics in their scope. The DRS will apply a deposit of Rs 5 for MLP packaging for products priced above Rs 20. Furthermore, Extended Producer Responsibility (EPR) regulations cover MLP, obliging manufacturers to manage the lifecycle of their multi-layered plastic products.",
+                "benchmarks": "Deposit Return Systems for MLP are less common globally due to the complex nature of the material. However, initiatives in India, such as SWaCH Plus supported by ITC Limited, have demonstrated successful collection and diversion of MLP from landfills. These programs often require viability gap funding due to the low economic recovery from processing MLP. Promisingly, emerging technologies are being developed to transform MLP into high-quality, truly recyclable materials.",
+                "competitorLandscape": "The Goa Waste Management Corporation (GWMC) currently disposes of non-recyclable MLP by sending it to cement kilns for co-processing. Organizations like rePurpose Global, in partnership with vRecycle, are actively involved in collecting and processing low-value plastics, including MLP, in Goa, often directing it towards co-processing facilities. While general plastic recyclers exist in Goa, specialized MLP recyclers are currently limited.",
+                "consumerBehaviour": "The inclusion of MLP in the DRS with a Rs 5 deposit aims to provide a financial incentive for consumers to return this challenging material. However, consumer behavior regarding MLP recycling may face friction due to the historical perception of its low value and difficulty in recycling, requiring sustained awareness campaigns and convenient return mechanisms.",
+                "businessCase": "The Rs 5 deposit for MLP in Goa's DRS is intended to create a financial incentive for its collection. Nevertheless, the low market value and high processing costs associated with MLP currently make its recycling economically challenging, often necessitating subsidies or viability gap funding to sustain collection efforts. For a viable long-term business case, the DRS needs to be complemented by the development of sustainable end-markets and the adoption of advanced recycling technologies for MLP."
+              }
+            }
+          }
+        },
+        "sources": [
+          {
+            "title": "thegoan.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHpwReEGSUtiyS9JZhY8jxSvmpHrUgM073V4UZGBRl3Rkn_nAVI0jHmPuO3St2y4RhKUn9Kvf7Z9Cn8E3litF5lMMreN4gN1QcsBqrttJJggLz4aWZo38_gYILLg8LFKSZ1vR1Cd6pzo93FRF9pqRa8vtuYwnj_pw_YMNX2d7ocMLnQhpRnHpTa5sWIhdHhN0zdFDCjEl7gxEK-xo9oVx4-97UucGWMjWBdDB0mLLRa988NpQ=="
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEA0rJrmjYTlKhQ1R1YXKAPTgiwUEDEIRj34JHnG3V5aI7prmjsOSlA9JD1W7yWWjpLDl5d6xOPD7c37HjtrGg_xsNZBuNseQwsr0fFk-XSqifNcbbAJGqnm15GzjnNF4NoWB6VULK5B59yZYp6ptT-8q9Rd9mxgwHp4g=="
+          },
+          {
+            "title": "mofpi.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE76LThWWSz7QFr8tzW17TCsNkK_6wW9_GpeQrF81Ez3k3ONtxFIKgDwFeA1jPOOTfo8IeJeJB5tSit40HomBaDfXZobLfPODjt22L9Yj45boXPStDeRQWH26Zh5ey8LEu-YvoTLfx_R5kfCZoWXik2GJSeSvslAlQEt4NcPIZ-kxLZcQr6snc5b6WiGgcO6LnlUBkXLmoff3koJo_BA9FVhU9EyyEnuQ=="
+          },
+          {
+            "title": "ambrosiaindia.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGiAIVAf2ASf73RLJCjDi11MxqrRm74bxKeeaWk3gijBnjmLAf-N3kCUl78SL9LCFIUy8CCh_zxgGX8Y6lRUUBkTfndWFRHMQawpcVYhkmQwjJ0BHwbQLRhcCGT02HqmWWvPcRcocyBM7-jME41eW_inybln0fRbi3UschxujXCSRJtNfo="
+          },
+          {
+            "title": "indiatimes.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGjs9SzwXQIL-eXGz2ZbJpY7FdR-3tA8WeScopiDLUzBU7NzxMy6X7Jug3vowrz9Os55o0svsDSfGbNJJBM-DEk4EDS4iJ46S9l2-n944RXdyhr8Q3dQamwe8FPSJvu9--HTs2RRcKOmobRNZ_n865WCyXhWLzkWfPV1vOmivgD6iXftGWdZVElNv5mzx1CT1vzfwgzAVCTLulmBwjBHORlbrds3nD93fhLncGZOwMZjL3PZ-wGEbZFvha1w7PZqHGfjFwRiLxu6ti30HPLIgjIIw=="
+          },
+          {
+            "title": "technavio.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQExIubKXVDVaynD8mWWvTgkoRfJy7JCjFk8WqiZKMPbaBwNVVmNiiSStXWO9sMRrvRCAXurPXDUh0j0055nJ13uSjAMW6EmMlCPxMUpn9DCNViRgWdnmn4dX19Z8od3f-E5eKCvQoJDpuH7fNQssrrlkrJvJ6WeI0DxYx8bHd4ZbSiamjk5KPXbMW4yRpsR79U="
+          },
+          {
+            "title": "goaspcb.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHKF4elsHZvLV2QpmMb4cB0exBDob3JvVLhp7hDj8etJ-8R-sM59FG83V_ldbBjuRQ_kTlgLAK07IG9HhQmqAyI5U0icsI-B96aRQwZRpCjaQTOvo7QVPTZUVA22haBMa5v7KaWQbP-zgzJ2vStrsYGiVJgHySJ6FQW8OW9y2hath-zbw=="
+          },
+          {
+            "title": "superstartraders.co.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFw0bfblkLQU3jhUscHKDldPqtaPoOmND7a0fjcg6bcm9qJ9XRfHyQwdwfikIVHS2wjlxXuaDdmUkvKHWsoX0v7LZnuovKYJttc6QQBLSxK-mhRwperX4dAGsBIgoy8RjVy6ptGPThEZhdPxnMCimK2hd2L6v1kMcfI"
+          },
+          {
+            "title": "mordorintelligence.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXe5J48MFyzybW13p1TBf25VwncP_yGBx7gLqiN3Me2PYXYiH_JCgiUjRBa5F-qXkMHlFhCyvT_CvrSNmRbAUdmUsB5kjLtcqCC8d3LnQ_z0CpVT-yIuGZySoP0R0iCmApWQef8taVeKx067YBz86Bzb-0mQIsMvlc8XdMdj6psTPhl9CdGESObg=="
+          },
+          {
+            "title": "prevent-waste.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGLCAfEtmZgL-nwpMBPwkWQrvxTthPwuCI2zW0-AkLWWMQWE7LCxaTW7Ywgfj4BMi1-eNCDJqGvVx1w3rDS1yzQERGls1vipibUzkn_-1QfAvbgxagxnHRgFwv1CabUUnwPoWTesfK4k06Wc3Z9kz_CWE4MBVshx1OG03u7JKTntdMqrj-PiB_LbLBdDTvOiIlSwImYOAI5j-XyU5YIlkVbz_gOLcfyjYDnww=="
+          },
+          {
+            "title": "globenewswire.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFpZ6vIBFGPue6FymR7X8MMcBjAcqcwv-5WLgqaLTD_M2C0i_pl-Tl1t05r3VWipwIRrPxKConaxdd6v6_TVZMil86kQSwyF0U2Qd5sTskqdDlwPr_5LdS1qNKeEBbHdcgAJqFm7IKbF4zAP_7iTOQb1lOBTtnPe7fdCrVYqABYQHbxhMxJc9AI4SXZR55bvESK8Gw-gJVO20NtHr7TUa9reJ0P7gxOLMMtpgn0qvBtGt3CAmH9MFUk3Rey9jSOZTdhDDEFatI-AdpOUveEhxXIDVWO38_zA-xq8Z70A1iVeRB_"
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG4oI6ffsaIFpwkqbubpZQSS25KkcQ0UfXR4xnBr4LvhBwCqeleF4OjXQrqrxZiA_LAyCE-RvZ8kT3OdHhQim5caRJHGTYoMafQcllcRpDRWLw6UayZHbkQVDJncLnMNA-oLL2VbO7-zh-yKrhY-SBSQFQn95lGjw=="
+          },
+          {
+            "title": "swachcoop.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFkFCDuTs_7216d52SSpGfyIZ-O543J3wz3_P4OwjPGGvdrk4wv5_ck_dMAIhe9zX1nd6H0d-o_uY1jr8o8R_sij8MHjN-GzBM-H10bOJ7bbsApRdS8aN5g0T1vc5FDMeNX0V0ktS2Z6sk2oIw="
+          },
+          {
+            "title": "drinktec.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHZqKw3cPcyLB0fQlU9qsbZFPfbMEJAI3RUEpAOzISWp8bKB91dLda75JZHauSE6HDkrrUHEjDUlWVhOlJWD3G1DsugN2bjrRiSxjRqg9wPqS0z15PBqk5eqSp56aR7W1JlBy_1u99gDymUV7yYbDBaVSr7gFVSQFa07V9-rVDSPlWxEpyKrRr3c1y95wc67A=="
+          },
+          {
+            "title": "scrapmonster.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHDG1_Ayd5yldefFOlTncsXXkP1rOGxmP4ib_wnd33c97OOinJQf0qF3BQIU2KbRwQkKKOe4T3hzofjJ7dPecFs1K_OkrJFh8OdtkrrfPhDiI_vrs6hsbgbg52XgLDUgugGfo7x1Dcihdvqy36irsKDCyY="
+          },
+          {
+            "title": "expertmarketresearch.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH3IXvMatMKisej-r85Po--y0l-AtF9qjIuLu9HqbrrN1aERpQlMEzuImGEuMjtA_jAjfnbTtz-wU6kYAfURDjpFVadDlKsOMl7LeHNpGMLsYIt3zdqwnfV0hXb_L2No9B_VbDUVtnQt2Ugj7373vvdgYnxvchQvdAq"
+          },
+          {
+            "title": "localcircles.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEr4KKtTa3cNi-2oOK9kBDD3RpKanvrdiIokYnAZLsBFWxhylfQxX68ej6m0q1yGGTShEDJfsS23fcDg13r_W7ipHEY8iat21kfq5qlpccaSavvtAbAs-GI01aaDaUCiFa9IOnh66NbtZB8Ysv9Qo_Q06FSJiTsewOuL0kYYme0s3WRsqZvpg=="
+          },
+          {
+            "title": "nih.gov",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH52Yl0R7pzBwIA3ZI_j7teD9IFceyPi-ndCDYiv_83DBZdrBqe5avccQ7Pav96O8D6o7an1snXmXpUhrhG5fwVrtuWzV3ivg_-FLECYtcB7aOnbjYtGsOklHlCiZzTtSF1T7dxfzKhEr1wk9E="
+          },
+          {
+            "title": "badrigroup.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGeDWupE0dOgr1ruWsNtOmkYVh--ExGK1gfhNIXFZR3XAHOuZ9FSE4-pXLZuVIc3R5DIoxqvObh35HbsblXXpyqv1RC-Bjr7B6jyx0bAm67UmtBn4Y5rmvXpKLjNZld1VK0Me32pC36gADNfvfZY6NBzLWtaKRmQET7fM__iQZnD5vWjGaRBA=="
+          },
+          {
+            "title": "pashupatigrp.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF_4cML0jYbKCAzciBIoaYABeshh1zXziCZW5yRzkhwnfBerAh88Z1VeV3f5ZwWDoJOJ1vdV6D_M_Xfmzz2qHTG5H9XlLuGbasHVsor4qjwKPmT8acG_ZPJsjE6zAzl_2uNw86TfnsMWjm3ykYLndeYq88PDrFb_WBdMb5B7Dv4fp7TP-WpI15erClEgaTyiMQXYPL4QI5QvQ=="
+          },
+          {
+            "title": "grandviewresearch.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFQ--JCGxWggSxPQUPl4BtE1LlFv1LR-pNAJd7doCpXEHTvAD5Osvhj9IlbjYya90PSWK55T7QTtgIWW5CZ1J4wbzK0JUCTcbNxp8pmS0iYdwko3iUSk6weyMByRgyVcPR06zupthDkH2HJ_aXqgvgz-isVL0tzt5CtkCkqIODHVK3Ajsd23XGSQ-5hig=="
+          },
+          {
+            "title": "imarcgroup.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQET_6MRZnKxAEAMLFRzP36oJnwa1gRoNaXqHcyVAr9hf9RYIqUXFapp8NznO9smKFJzN9gF0FfheqYE82kcWEaZC1L6DsS1bYF5kMu3FXkalujsk67BGzP9QZB9g2NMwlmjtxYLrVsD2UjXZrP1vA=="
+          },
+          {
+            "title": "sundeepsaksena.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGIjmj6gbDSTyPyE5zmazpi5nTzAupeoS7VBf8jdG56GJEe3XBUZl4JtlkDAIlNw-MiFoU-F3fmtQBokfI5LJojcs2p9sZcstTFFr9-O6zKcG4MNlglFSFJEv2ROWWa3FvnYgc="
+          },
+          {
+            "title": "imarcgroup.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGAUajiqNQu0A-j6dYjulfeoF7WjehSfo-26oAFTjzpvTkUD50L8LFFMyilgNwDghvG6Jq1v79Y7jXrpz4NzmJrbiq1bNUgQJ67r8F1tAaGfvXv4NHR2T0zuwh7NNjAMqkEP3FvdCeOYkNkxTZE2xj4_b3q2Po="
+          },
+          {
+            "title": "nexdigm.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGgDMGjFAm0TbN7GjTwXiOZY3hp4t6UOnu8xrM4cQAyij9dOLp-LwBzXFURNls2jTxMrvybVb3rCI_FLL_3qqh_sntqJRqIpvR4NX4DpR8IZHuV4Kd78zlFUYdXuZkryunVBRtlX6idoFnVf4Glhd1sYiRtXwVGlRCPjBG_oYKR6p68Rkk47VgEI7TD7c4Vw1RhAcQ7AtnoGnciNjYhgaid"
+          },
+          {
+            "title": "fortunebusinessinsights.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGr5o6uOBYpqeWBlT-KtcmFES_SnUjJUeArxx42QfQy5VvZSNJ1yzDRHDCYFcqxNcq6mX3Yo0rWDxHNYT_1AU9u12s81RIW0IMCECYzk1bWESF0SmCH7GvTKi9wShWl-ULpKhUJsXDwvzShTamTDhoyBk-l2CdWh0AsGw=="
+          },
+          {
+            "title": "etedge-insights.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFN30mMOCMmZzlsrX0BzRtCcVQ44BQ7phjWbJdMW4ki-9jWrO7q4oOGqhKRXqq9T2EeXTeuLuc0phlBv3_5zNrbdlXo6PpxUBOO6ZY4d7ntgmgpEj9vfCLMziL_WjgN5mIZA6MTkNVYw8t2fwoM3LLhfucqh63CS0ptdiL1G1yUF2SIyxIXdx9Y6Cbu4WOEAvelP0qUgInEg5VdNUdTcbXDdDby-XZ-Log4lGyqc-ZdoNTEkZmzFbEo5Navu9dIYrY="
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGRJFbTqRi5uTnu3KslZg9VJNbh52PVW-zuEqC8i9Wq-ltBXjM9qhro9Wp6D2cQRRywNhxan0clLrqmszDuFjVn6iIpXzOLOHcKLxRA7ESYJw23_Sutt8k1fnw2k1L0gdttZ7yzprTuSXgoWJ_serdjGaBHzwbCgXFtQmQb9PKd"
+          },
+          {
+            "title": "oceanriskalliance.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHlrQ2Sc30WXEgPusWDGNCmrhEtVe8b5Ft_5fw1tf3lmX2uvhe_SI4e7VDE3U0CSaongk95ayds33IXkiAH1CNPQQRKsLPaXGZN6_Rbm8wt5q48butXnknfuHu1q-yAcS00Nq7mArP-bOky5KL1_JK1yHVK5GJ5InXCeXh38Wd2M8hw6dLlnZgLU4y6uFIbc8L_Lj5uanVaqcPtn9LKL7YvEhv9Aa1sD82NBtHwkg=="
+          },
+          {
+            "title": "thegoan.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEwxxSUt2O5YSp0Nw8fBqm2k7nBYJl2bN02nBSiF2cCCxwbYSt15_Eke0SMTD_8hFY1d3ixnqiODlN2dJ8xlrcV8NlE3ofZa_Z8mR4uY52nwRK3UlEVLDgd1WRscKzHcODTCgST5Pkn7OYPius_L5fES6ruHQjsnnZnfP7fUmhtlfn9RH7nyoe0k__Y-nrOZmgAQz0pyhrU5ng="
+          },
+          {
+            "title": "without.live",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGejH2WFfFQ8v9H7lTfGpYWDZpZOY703aObi5QgjlpB_OjW9tPs6VHVht9v3dlqcmw_2_uVjlIwhnEL2I_Te8AuSe3AV7u5tNdSKoI6H5YMrNe6K7KCexecxrIo"
+          },
+          {
+            "title": "wasterecyclingmag.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEgn_LJUTJTZalfEcSU69T-RYXwphcRFAYxJGrZNXII5OD9ExX5eBVuSh6AEjowmAKCBve2lUK_hDlYuvJPOeDe9Y0IigyDwbro-wf4WfVVWMwSDlilX4sGeWP6J90vYyUQec5FH211bXw8R9b9KqE51X_CcQZDVf9K-Gw780iGe6OIHuYUOVMsie1Lg7410J6YnVktCYs6sltOZw=="
+          },
+          {
+            "title": "alcircle.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH1Jf5vlZQxE-6OXa_K5LHt95CWqhsp3Dihkk8g0SsmBAF95qZYEXmrQ1FoP7XILCqp--8ZmLDU0qGuhtkj7Bf47XYBOfSuU7999xQk3fzYUqJvX96uRoLoXYE5utbIYO9dFpEGB1qLBYgsKs_44kMruEaVGyAFa-99yqsSQH8pQICjLz3Y6-QOO9M0QjpT9Aehxw=="
+          },
+          {
+            "title": "indiamart.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE0KUMCD1ivTnUWzIZxOQli_Fj7ZyinxTI-wR5wEOPsTP0LZ1lsGYlpvuwKET7eARevEzkkNEgbWzgxpIUEPC1beRRJeOBRrnTCsfL0p_4vdUhorp9nZBxQl-HDeQh43b8XRlgbNtK0ct_c7Mc="
+          },
+          {
+            "title": "grandviewresearch.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEhM2myQEpTkggVLo1msYQaIv5keXi4Ud7PPPwFKdIhLdAuirMKRkLTi7CZTAzgIAmv1ipPwYIQNozSisQc5dyBYoAnGpUB5mu1u7E8sbmiHlm625wYA1uA98NRkdzbv4eXblvlUUdTfxkygKTSkhI531oWgu3IdCHKjd5Z6XLkKoNPMJXdrmpo1cIPHxGeLWa4"
+          },
+          {
+            "title": "persistencemarketresearch.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGgw8vHxs-P3M9rYf_wr7v2LsK_0oWx4YytXhLuNs4FDqWpddMxafwJenylyTbCaXhJXlFmjkvGE040NoeYoBwuwJ-cUxapz5vVSgvWNXGOO97MMUNKGLpPHgSVnzjPc9AwRQfKtqgVnVj3Gt1zk93iOgrS5JmRLOcLLbkWnvSA4S1sISNXrIHWs-lCJ_59K8xWx1I2Pwm0vSLgpg=="
+          }
+        ]
+      },
+      "stage4": {
+        "data": {
+          "alignmentReadiness": {
+            "overall": 75,
+            "materials": {
+              "Liquor": 70,
+              "PET": 85,
+              "Cans": 80,
+              "MLP": 40
+            }
+          },
+          "stakeholders": [
+            {
+              "category": "Government / Regulatory",
+              "name": "Department of Environment and Climate Change, Goa",
+              "role": "Nodal agency for environmental policy, climate action, and has shown explicit interest in implementing a DRS in Goa.",
+              "influence": "High",
+              "stance": "Champion",
+              "priority": "P0",
+              "whatToSecure": "Policy support, regulatory framework development, official endorsement, potential funding/incentives, and formal selection as Scheme Operator.",
+              "talkingPoints": "Reinforce DRS as a proven solution for plastic waste, aligning with their mandate for environmental protection and climate action. Leverage their existing Expression of Interest (EOI) for a DRS.",
+              "status": "Targeted",
+              "nextAction": "Follow up on the EOI, present detailed DRS implementation plan and operator capabilities."
+            },
+            {
+              "category": "Government / Regulatory",
+              "name": "Goa Waste Management Corporation (GWMC)",
+              "role": "Responsible for scientific waste management, developing treatment facilities, and achieving 'Zero Waste Goa'.",
+              "influence": "High",
+              "stance": "Champion",
+              "priority": "P0",
+              "whatToSecure": "Collaboration on collection infrastructure, integration with existing waste processing facilities, data sharing, operational support, and potential partnership agreements.",
+              "talkingPoints": "Position DRS as a complementary system that enhances source segregation and provides high-quality, clean recyclables, reducing the burden on their existing facilities and helping achieve 'Zero Waste Goa'.",
+              "status": "Targeted",
+              "nextAction": "Joint workshop to explore operational synergies and resource allocation for DRS implementation."
+            },
+            {
+              "category": "Government / Regulatory",
+              "name": "Goa State Pollution Control Board (GSPCB)",
+              "role": "Monitors and controls pollution, implements environmental legislation, grants consents/authorizations to industries, and conducts awareness programs.",
+              "influence": "High",
+              "stance": "Champion",
+              "priority": "P0",
+              "whatToSecure": "Environmental clearances for DRS operations, support for DRS policy framework, and data sharing on waste generation and compliance.",
+              "talkingPoints": "Emphasize DRS as a key tool for achieving pollution control, plastic waste reduction, and circular economy goals, aligning with their mandate.",
+              "status": "Targeted",
+              "nextAction": "Formal meeting with Member Secretary/Chairman to present DRS proposal and seek regulatory guidance."
+            },
+            {
+              "category": "Government / Regulatory",
+              "name": "Goa Excise Department",
+              "role": "Regulates liquor manufacturing, sale, and distribution; collects duties. Critical for liquor packaging material stream.",
+              "influence": "High",
+              "stance": "Neutral",
+              "priority": "P0",
+              "whatToSecure": "Integration of DRS into existing excise regulations, approval for deposit collection/refund mechanisms for liquor bottles, and data sharing on liquor sales.",
+              "talkingPoints": "Highlight how DRS can ensure responsible disposal of liquor packaging, reduce litter, and potentially streamline compliance for producers/retailers. Address concerns about operational complexity and cost.",
+              "status": "Targeted",
+              "nextAction": "Initial consultation with Excise Commissioner to understand current regulations and potential integration points for DRS."
+            },
+            {
+              "category": "Government / Regulatory",
+              "name": "Goa Tourism Development Corporation (GTDC)",
+              "role": "Responsible for developing and promoting tourism, maintaining Goa's image as a clean destination.",
+              "influence": "Medium",
+              "stance": "Champion",
+              "priority": "P1",
+              "whatToSecure": "Public awareness campaigns, promotion of DRS to tourists and tourism businesses, and potential for collection points at tourist sites.",
+              "talkingPoints": "Emphasize how DRS will significantly reduce litter on beaches and tourist spots, enhancing Goa's appeal as a clean and sustainable tourist destination.",
+              "status": "Targeted",
+              "nextAction": "Presentation to GTDC board on DRS benefits for tourism and potential collaboration."
+            },
+            {
+              "category": "Government / Regulatory",
+              "name": "Corporation of the City of Panaji (CCP) / Municipal Councils / Village Panchayats",
+              "role": "Local civic administration, primary waste collection, public engagement at the local level.",
+              "influence": "Medium",
+              "stance": "Neutral",
+              "priority": "P1",
+              "whatToSecure": "Cooperation for setting up collection points, public awareness at the local level, and integration with existing dry waste collection systems.",
+              "talkingPoints": "Highlight how DRS can reduce the volume of mixed waste, improve cleanliness in public spaces, and potentially create local employment opportunities. Offer support for implementation.",
+              "status": "Targeted",
+              "nextAction": "Outreach to key municipal commissioners/panchayat heads to discuss local implementation."
+            },
+            {
+              "category": "Producers / Brands",
+              "name": "Major Liquor Producers (e.g., Goa Brewing Co., Latambarcem Brewers, Feni producers)",
+              "role": "Primary producers of liquor containers (glass bottles, cans), responsible for packaging.",
+              "influence": "High",
+              "stance": "Unknown",
+              "priority": "P0",
+              "whatToSecure": "Participation in the DRS scheme, financial contributions (deposits, producer fees), data on sales, and commitment to design for recyclability.",
+              "talkingPoints": "Focus on regulatory compliance, brand reputation enhancement through sustainability, potential for market differentiation, and long-term cost savings from a stable supply of recycled content. Address concerns about operational changes and initial investment.",
+              "status": "Targeted",
+              "nextAction": "Individual meetings with top 5-10 liquor producers to present the DRS model and discuss implications."
+            },
+            {
+              "category": "Producers / Brands",
+              "name": "Major Beverage Companies (PET/Cans - e.g., Coca-Cola India, PepsiCo India, local water brands)",
+              "role": "Primary producers of PET bottles and cans, significant market presence in Goa.",
+              "influence": "High",
+              "stance": "Unknown",
+              "priority": "P0",
+              "whatToSecure": "Participation in the DRS scheme, financial contributions (deposits, producer fees), data on sales, and commitment to design for recyclability.",
+              "talkingPoints": "Emphasize alignment with global sustainability goals, Extended Producer Responsibility (EPR) compliance, access to high-quality recycled material, and positive brand image in a tourist-focused state.",
+              "status": "Targeted",
+              "nextAction": "Engage with national/regional heads of sustainability/public affairs to discuss DRS integration."
+            },
+            {
+              "category": "Producers / Brands",
+              "name": "Food & Snack Manufacturers (MLP)",
+              "role": "Producers of multi-layered packaging, which is challenging to recycle.",
+              "influence": "Medium",
+              "stance": "Unknown",
+              "priority": "P2",
+              "whatToSecure": "Engagement in discussions for future MLP solutions, potential for R&D collaboration on alternative packaging, and commitment to reduce MLP usage.",
+              "talkingPoints": "Acknowledge current challenges with MLP, but seek commitment for future solutions and explore possibilities for reducing MLP usage or investing in advanced recycling technologies.",
+              "status": "Targeted",
+              "nextAction": "Information sharing session on MLP challenges and potential future solutions, seeking their input."
+            },
+            {
+              "category": "Associations",
+              "name": "Goa Chamber of Commerce & Industry (GCCI)",
+              "role": "Represents diverse businesses, including manufacturers, retailers, and hotels, with significant lobbying power.",
+              "influence": "High",
+              "stance": "Neutral",
+              "priority": "P1",
+              "whatToSecure": "Endorsement of DRS, communication to members, and facilitation of industry dialogues.",
+              "talkingPoints": "Present DRS as a driver for a circular economy, job creation, and a cleaner business environment, which benefits tourism and local businesses. Address concerns about compliance burden and costs, offering support and clear guidelines.",
+              "status": "Targeted",
+              "nextAction": "Presentation to GCCI executive committee to outline DRS benefits and address potential concerns."
+            },
+            {
+              "category": "Associations",
+              "name": "Hotel & Restaurant Association of Goa",
+              "role": "Represents the hospitality sector, major generators of packaging waste, and potential collection points.",
+              "influence": "Medium",
+              "stance": "Neutral",
+              "priority": "P1",
+              "whatToSecure": "Support for DRS, participation as collection points, and communication to guests about the system.",
+              "talkingPoints": "Highlight reduced litter around establishments, enhanced guest experience, potential for new revenue streams (handling fees), and alignment with sustainable tourism practices.",
+              "status": "Targeted",
+              "nextAction": "Outreach to association leadership to gauge interest and address operational concerns."
+            },
+            {
+              "category": "Associations",
+              "name": "Goa State Industries Association (GSIA)",
+              "role": "Represents the industrial sector in Goa.",
+              "influence": "Medium",
+              "stance": "Neutral",
+              "priority": "P2",
+              "whatToSecure": "General support for sustainable industrial practices and awareness among members regarding DRS.",
+              "talkingPoints": "Position DRS as part of a broader sustainable industrial ecosystem, potentially creating new business opportunities in recycling and resource management.",
+              "status": "Targeted",
+              "nextAction": "Information sharing with GSIA on DRS benefits and potential for industrial symbiosis."
+            },
+            {
+              "category": "Collection / Recyclers",
+              "name": "Existing Plastic Recyclers in Goa (e.g., Rizwan Plastics Industry, Taj Plastics Products, Sukraft Recycling Pvt Ltd)",
+              "role": "Process collected plastic waste, providing valuable end-of-life solutions for materials.",
+              "influence": "Medium",
+              "stance": "Champion",
+              "priority": "P1",
+              "whatToSecure": "Partnership agreements for material off-take, data on processing capacity, and technical input on material quality requirements.",
+              "talkingPoints": "Emphasize increased volume and quality of feedstock, stable supply, and potential for business expansion due to a consistent flow of clean, segregated materials from the DRS.",
+              "status": "Targeted",
+              "nextAction": "Meetings to discuss off-take agreements and integration into the DRS collection network."
+            },
+            {
+              "category": "Collection / Recyclers",
+              "name": "Informal Sector (Rag pickers, scrap dealers)",
+              "role": "Significant collectors of recyclable waste, crucial for achieving high return rates.",
+              "influence": "Medium",
+              "stance": "Champion",
+              "priority": "P1",
+              "whatToSecure": "Integration into the formal DRS collection system, fair compensation, training, and formal recognition.",
+              "talkingPoints": "Highlight opportunities for improved income, safer working conditions, and formal recognition within the DRS framework, contributing to social equity.",
+              "status": "Targeted",
+              "nextAction": "Consultations with local community leaders and NGOs working with the informal sector to design inclusive integration strategies."
+            }
+          ],
+          "champions": [
+            "Department of Environment and Climate Change, Goa",
+            "Goa Waste Management Corporation (GWMC)",
+            "Goa State Pollution Control Board (GSPCB)",
+            "Goa Tourism Development Corporation (GTDC)",
+            "Existing Plastic Recyclers in Goa",
+            "Informal Sector (Rag pickers, scrap dealers)"
+          ],
+          "blockers": [],
+          "engagementSequence": [
+            "Department of Environment and Climate Change, Goa",
+            "Goa Waste Management Corporation (GWMC)",
+            "Goa State Pollution Control Board (GSPCB)",
+            "Goa Excise Department",
+            "Major Liquor Producers (e.g., Goa Brewing Co., Latambarcem Brewers, Feni producers)",
+            "Major Beverage Companies (PET/Cans - e.g., Coca-Cola India, PepsiCo India, local water brands)",
+            "Goa Chamber of Commerce & Industry (GCCI)",
+            "Hotel & Restaurant Association of Goa",
+            "Corporation of the City of Panaji (CCP) / Municipal Councils / Village Panchayats",
+            "Existing Plastic Recyclers in Goa",
+            "Informal Sector (Rag pickers, scrap dealers)",
+            "Food & Snack Manufacturers (MLP)",
+            "Goa State Industries Association (GSIA)"
+          ]
+        },
+        "sources": [
+          {
+            "title": "goa.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGeg9Z3xnMNXb5AAcfavDVrmoU35F5U-DfaFAmTJFBoMeyffdeUM988JuwJRpDuwIE6445RukL_3OXRlHkXJ0eWpFhU0ze6FCj-aA4WOawGstfTRQ=="
+          },
+          {
+            "title": "goa.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEMW--DcmsvqajYhuG4ZWFxyUpJ4Srbfmsdrws3wlWsQqkiYOsGxpLafCk9_F4QEu-4kjtZ0a3kx0h0LY6WCokjPMvV1jewj1xxnCEY23UfSFoi"
+          },
+          {
+            "title": "wordpress.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFCU2vMdfF-Gas5pqoQ__RpXQ4Ot6mza95z6W4VfK_kdVWOFaaQPrZf8jpbht3LOC9P7ero4LjCOnc-E36qaYtytgLXhSWVW14MyWwTS5v2Z_U9hQWDwXGEN0Hopa0OFvLReY7FsuGAp36NdASoAO2N8E1yXscUzZ1Z6Ew0cXDrNUMtlnqLTN-17WP9QCU4Ysrs0t-_0soCl0scgZVIyw-jrxmJ40EnNg=="
+          },
+          {
+            "title": "downtoearth.org.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFua8hOjRQx5Qkn44fppZTDYRpGK9NytPUAKm6tJbPMRfQsUV7D5KDvi8f3inj_1gLyNXeYEn3Af_nCX5grd6heO9Ng5xgVG7yVOt9wZUWVn45hXbuKwrSMD3rc_dThT5V15buc-i1WTOGNPfx9BYGO0asDRfaE3lrQoHg5KL1zjucoaet7jQ5f58tnvOOfh_51q-QmF9YGR-TryEL0XKtGKJ4VT88="
+          },
+          {
+            "title": "lawinsider.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGdoRgN7qXkFA-7K7-zNJHhwGZlZnNwKQgtajLmME3HM522-T-mUZ_j-VOzCTECjUNPYAWe9HuOntsFhX8hV08VihBkl7OlWNDjiJjO_afDy8w_6D0Ob9Qbq7sVwBATrRgVyq76hYfG036d0p470y4PIvs5pbZfq__gYqqW4sqEgQ_xMBPK"
+          },
+          {
+            "title": "goavidhansabha.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEm0bc3Wy-h4tBD7GXVGLZsslypBWY5OLhYlp2EZaSoz6a2DnHbHJYBp_mp4zeCITOKOFKLvA5FJfRXPe--oET1vIh6rqxSLoGxcLC69EDBqihYIQr7_twlJ-e1qXwLaq0xfBNCnDWb-eorC0rdk9eAaCSECKDeAXy6-pK8tLIz1clakmfNgi1oACTgZRUC_s04qQcdsgb9NTc="
+          },
+          {
+            "title": "goaspcb.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFMGL5PMZuKwwQKiuMQfh9oDqMI_AHI7_LslpgMaCsl8pVkxvSUuBlqtBJn5StejOre7li77knA4KHH5XZ_rtNjcm-Q1Vy0rsnjwTtevD9PFXg="
+          },
+          {
+            "title": "certilize.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGrBJR0Z8e6tuBLjunXpoYyurCZwcOV1FR6aRPR4pxMr3l1DZnRQdrg5syObHGlWleUw4Xlc8Fe6Et8mZ5708Z8pG1xi4Qpw18U9Oa0xcAuJACB2NFNkwM_9mJ_k5h4DHUbRBdH5uQr6_E6Yl2GDGzj5Xbfjp6qwICYcsD36SQf01M-ic0xPKt1v0un8gXY"
+          },
+          {
+            "title": "negd.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH6aokBswnoD8pP7KbOhFJ5PYuSY0u829ZukoQivL3zkZH--YTVi6grLRWbYasM3T_15sqfvzgBoqyNq_8__XQjSL3iAuGoIGPH5IzCgZmf1OL0sINhKFzJaQImDK2m9LuJK4kDMBc2cuI="
+          },
+          {
+            "title": "corpseed.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEBvt14_hi2npCO8qkb3Sl6n1P0lZKr3H2etaMdXd-lxQ8_9iGdh_tZe-3CYT2fE03NnDOW9F-RqmbeURk7PT7sNVdi7MU74tYyXTzXjK-N20SXGB55wwYfNztVUn1ecfUN9rBOKyg1xK7_SxyxfqQxGYvJW7jwDtn3DQ9EdKNPMA=="
+          },
+          {
+            "title": "goaspcb.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE9TWlhM0NbyoaI-dh3zehFMKIdKrOjP1zjLo5Cz57agNnJwNexl-hXpMFjA0ebKep1dJBV17F0TGQ_uLUMArJ870p4LQVq9U9MbT5g1ZPI7f-_qBbyIG6_oN5Ysybz"
+          },
+          {
+            "title": "goavidhansabha.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFafwfP11q-JdC3f4ekbiED-cY9RdtEN3H2kdv_QObw7cQfNOH0lisdMMI0izrSj-mJ_4QvRZyVag0tpmgSL8V77ngog3NK50ygXaC47OP7Hdyqe9ChkzalUSQ1mOjrSLEpbv3oxlcbYUIvEq1nzWJ33cyxVwc79cBfM_CbMvaC9Ttq5sCrZP2GuCbMZ-033YcU2Vc02p18zu3IGow0hPJlbkzE6nw="
+          },
+          {
+            "title": "goa.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH4ROXqcf_4mT8RfCKuCulAZajTCV5SOfJ5uPWXt1ORbdyekMaWZBtBRW45FWjgHJTekf9gH0c0Jx3SZm6s_ZZ-u-2Cp3rGlBEPb9Qc44OJWKLL0dw2FVJqyPwJs6ck"
+          },
+          {
+            "title": "goaonline.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGvKP_x8o-MlSdHeHG3v4AM_XhIExoBpZ6XVQs-uFzlX1uUx-JyGQk2nhBgrXYLNAgJVCqnWNDHl2pw4MBpP-RjVKDrmwN35P1lhIjasx_tK-mlJ0nPniGEHzeR-YYCRxmi9D0owqEyTIuI1BZnjwAAoll5PrAjC3ZnVyh1bKapKsgApin23_M="
+          },
+          {
+            "title": "negd.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH-YI0dfrl8BaP_I5scxKRgkqfpugSsLPvhleyUn5m32qFphSOk6XZJnygfVC-dMDPPZX4l2ZECQZ6O9Jh9IE9vN5WAHKdRUU2OI72uNDpgVb5kmqmlXCuqc-h6w3EtxT5vGcrY6zQYdTM="
+          },
+          {
+            "title": "wanderlog.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQE4IsD96SuRGykHd6mHx-P6yZJxACVc5Lza-D6WT956E-ZMdhF2iTx5s4C-nwSqzuSuu2m1Fud3StqgyElVCJnPFP7obbcjn8bZpEYWgQfDPBKscQ45y4mJ5z_WhUulPYTZsZeyZdHr9Z1YhLbVEhAoiIlmKc2O878="
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHb5lr5RWrgaolfHgJhALjPNiJxtt7xlPlLbRV3nXtraU46trSAZO87dKgx0mtCT9GrctQUpJjbROnEj9dF3BFENDP4hZ3qj3aGqhDhfngIMeoDSahs9opYi9IQlGi85bIXcbLwwWu6mMHeCyuhFaogbP-6cuY1HtIYDRTr6eltn84Xam2I-lC270xkwuWO3_PAIZqZmOddzvoe"
+          },
+          {
+            "title": "igod.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFNwW2kr7d-L-RXlosAi-kXRB3OexToVgw8SY4N1qo_Wt9J5wJCmZMGgezl0XNKgBvAwlbZ_Fesbz6hCf3vnq9vjkgHrHDl6VCv8gKbs3vDRa2A3A78_wOObosRGJSToWeAOSFlsGs="
+          },
+          {
+            "title": "bookingengine.io",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFRTP5JxSoAkdEbOPWbhRtKhRp73B_fXP7fzgldDf3DsM_SEKo80UzMhVpeismh0IdBmW3I9F9mKN2xqnn25pEPQNxXMdaAjbZsriQL0hhcaOV4MkAQUknN"
+          },
+          {
+            "title": "bestgoadeals.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGfiURJcNJobjpOcNEodhhJ0am2E30uihPnqXrZWlNH_8eIuANmiV9gKGDdZ46pHIW2f8mGHNAO0aXjUmI_nwDDdZOmg1WMb_e80SHzWHZXhWdHa-k6A88Kgl0xMxClesfsiKbqk-VCAXozQZZi7DokCGqSPmEhZyfmVP3brv2zgHaqjARWVhpGpX9yR7mz3QyRgbnKQw=="
+          },
+          {
+            "title": "plymouth.ac.uk",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHY0t_zzwqTlsj-l0js1BCRRCEKimDjEHWg2GTzMrQSpuGwzeltT0Tqt1KT2_h0fHY1EiaArWrgSl_oBb5vIbN6ay2IKFbl7FwlGEpUWleU28RpQ0Ia4KXK0VLtfyt7tIxKIB-81WQIHN-AuusfxCkDv3r14ZNWv0arTMFJkgglnHDIhJm3T0rJdRVpv30rkjOGLCIxLKD-Wg=="
+          },
+          {
+            "title": "goa-tourism.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH5MoIRxgbMdSxWhWn1A7GL2JhyXqLPi2XvJMlKu_6j1IWnMcCfLmPYaSOEZVLU4KYdEXNsUEamZWpZA5QgWh0Cr0E6mx1ZAJodL4Oi05nY1BW_t76R_bzcCzM0wJE="
+          },
+          {
+            "title": "goa-tourism.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHiD0H3XsTPvqN3-dAnjDyrGrDQh2eYqgWUpCWzvGSGoOW0E28YOMkqlp-6qLSd2MPJ-pjgMpxcWZ4abYw8LE7f-UnYiRXarIkIrsoZIY_D8IDp"
+          },
+          {
+            "title": "wikipedia.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHiRmw0FfnBZ258YgI7bEK3DrlPppRDon29KiucQ3f_oWKijzqDZPzN53LhqJ32lG-WLRwFy4gKB5dzQ2MpDGL8u_80P_xqdR8oyZtCE7oP7XqozKo4OhPR8L0uctHC6G8ydWaYW-6vVJ8nh_Pm5MUEbWEmZamuHSqB"
+          },
+          {
+            "title": "goaulbservice.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF02pV2iu0oJHi1LN2qiHDj4226xoscu2NYx06N7b-tpFbgMqeTY0P3DB-Rde1BQ0CTu_YGPmM0paw-qWHwB-g4eFV2hDWkp-7IqEe9bbGCssCkUTZcgymiZkZ9mGnJruUt"
+          },
+          {
+            "title": "ccpgoa.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGrlkyz0JJwv9hC2TbLqWmVofhC2mBkV-w84HMbDGkw84oIWVxwtX8asUx0bzkdzKHiIjeluw6wIkUJvRl7yuxvYCx2x06-PLyA_0xUtw=="
+          },
+          {
+            "title": "goa.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFvlTPBqJ_uLpLUpvMM_EIeORjaFIgPgZWVUS5_uxJkTDgEVUZtjSpbz-1iMWfvTVY2-_9Fnlf05cyM3v5G3ipgr8gxJBRpOY9jMv8H9DixPbU1OFjuTMEpx4xrt36m7RA7gYtxjGj7H9vaT3S4dh-n4TM0X0A="
+          },
+          {
+            "title": "wordpress.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHtZ7wGi_3srhaw9-UklOVQFJfDVkE2B3XWbS-Qq_eKXeSC6R5bzETQ967FO0lnjN69Q11_yT8Jd3zxGBVu6iWYkbgQZ_E3KISwgJ6dGHr4VLe2_Iwv-tDGUlUd8c1Ve7JZ6MYrmbIyM6yjDtQPpVdtXOcFZsE-aKc4eg1q2W7EPf1H17HreY_5g8_qeu-Dd4wlEO0="
+          },
+          {
+            "title": "wanderlog.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG1xnaQ8nPAKface8nV-RqKdDgFP-29mLAaYayjLMQnv8XuXwxparN_oe6_gupPN80mrxX8BYlTkdtpcKWEfwJdTxP6Xt83FxsqekXpUSHBQdu8YpordLjhpzy4mInV1HJ-kbeZNN-LX1mvlCW8Riry4ne1Hg=="
+          },
+          {
+            "title": "lbb.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGwDVMKyWE2bsof6cFJZLmVXsCiWHt9ncaPJ0LympoiIAMVDcT5unm8O7-d0xIo5FZKdAESTKTgZzllCBxIKkxkgecDj6HhZyNbHwM7tEL2KRqI7oc2sznVYbMfWFWr_uDXvnzun8Gxl0wrEqU="
+          },
+          {
+            "title": "dsgcp.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGhUjzwJR36o37LGUim4XRFHGQWl7W_27Mhmd-3ms9RnKSs8R8wUiCaPg0XDCic95bTo8IQS5iTcRZb78iyO7de6X_7_OKaO1dBIlCcR6vuFykigTlpAlqGlMj_V9xCr5yk7PdyFg=="
+          },
+          {
+            "title": "beerasia.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGF8aktlPxoK2crBQVzqnqzsTmk6J6iURpW-z-FU0fw2i8g45zGR8T4wZm0eW-iwWrJpG909uTQDJk0qDJZKcIVgs-vcucF_mh1gXwlBmv9r3Cm4hU_KyElMV2vZQjZYkHUv9TPkx99S12Z1s5RMFMStDjmAmIo"
+          },
+          {
+            "title": "goachamber.org",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlsl6DFfK8eQQ-Ezhbe8JgghBi3QkY8yJO5jxjDdqg6yfsmgLe_Zft4AJueF0Wr5OwMshLky3T-60DbCe_im1PiDUE1chdFkQGQBlhy9Ea8yTm1Lbn"
+          },
+          {
+            "title": "kompass.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEU749jO8Yh2sFaluHKkp6i5F97UptlYa-94GPt9ZWsQsQkbIaBmWg1u0AVe9ttD-kc88zKb5WsmvVVDP6Nnzx0sFxkGue1ZqGqEf8ugiEm_fp0ZZIrCX57tZEJoIv3ryhGjbt2s2TcbAH3kREI6-oaOkhWAe2AvzFeuCx4Tg=="
+          },
+          {
+            "title": "goaholidayhomes.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMYY7s62uX6UeoZozyFGxNFa-Lq0oqs81_zCm90RIC9kzp0ALmWqpzxkT4ZwlI92F2TErEt9x6xP-9iaJ0zjf6ITJ5QANthuKgi8D7GGA4dH9qUZvb18DIeKdVqP0I14ejfZ04-_l5y8OMpBwDE8K74HZKcKQlDrK4lEpRYvzKfYuCBVN5mKUcbdMycB-gdRrLI2zZkvo="
+          },
+          {
+            "title": "cvent.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQH4XIepDuBrXAgMiq-Sw3chZ72HMC9fiu4rzoS5VUjdlo1ZDcUKcrLxpt7r7iI7ZHCOaPdUbbZ48ElTQ88ofK8ZhWtg59jgLtfLvkll8y7NtdHCbzgGfKGu27oooZh_pd7dOJ3BbWq0R15t02VKJqGfkx-Or3NUV-kQ2Iyz4GQHl62DTHYUIg1paGswGOYJ_H6mfRHt2r-ynWivGgKPUZTmOKrU-ZdAjSZIrCeR1ak49N8ianCAkTOTzuze0y1V6w=="
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFrVWD3_dB7uddpAxZ0Vn1G820K13u3TkyXZD1RVAkmJbJLGqWQseTead-LcfmCqyJFf3Oje2XDKHqiJeppTKohWjggUHZisudPNb_5_I_y6lAJTRGE3Sw3qCjDROzPNo9TgFID7MTAKmgufSyBpZuqs7jv9vG_-slWvVggShR8kOYyjM7321XCdtMxXPR_68c17ly3vMkYaGpcT5IwckRgvqQKytA_LA=="
+          },
+          {
+            "title": "gsia.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHYj7NJNUQLfFB_aYQZcN2n9MYiI4KnfIi1fYz4OmDB1kILwbaAIsxH1UWuC1-VyYJFpCjzIDu1EJtpk0JqfSSu6uQxaI3FelxjTA=="
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHBUTnTXv9J6_XTBbvCU4Lcrzhz7DsBzAeDxbtNw-bmnQd_Qhwy5MOq-R5lB76ueGZH0hk7A8R9mJFrAfBILf2THGDTBxd1MB0qb-HMGgabsPmlF5VsFdwL_fXrZUcgU96Q5va6yMhdZbFXoBZ12UEBI_7amdUmXui-JojzVMg="
+          },
+          {
+            "title": "justdial.com",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGbqYvV_3pJ42mPQBS2KgfdWD0vG1VqDapp1Ce8PUXhlRpKS7RapsWbeFAIDgvvBtQ6wBVN_14AbkrdvYutmEnknOwfW5idzQUH0qm2fNZgNtNAa9FhaKw6154Mtygjry9-HPET8em8U8tkt06Xj-imLkvJRStlpIQ="
+          },
+          {
+            "title": "goaspcb.gov.in",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEU1V-P37xjpox18yDLr563tqVOZaaa6IgAmO4fi7U0RUsvqeZSzbalv94R4NiObk_bjAj_2D0TLky1VhJ55pi3t0Mlcti8il00VK52GMplsac_e0tyMTkwNHujxizpyVLz56RzNRu4qw8635DOGFm0-8QfxDBDAsCeAmt9KYSc-qLq"
+          },
+          {
+            "title": "thegoan.net",
+            "uri": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQF3LoMVgp55TgTuW_m2kZLaN7xZJBKIaBg1Dyb4ZK0e1Hu4mpvCdi1Vx1kZF9EXuLBrivXhhHstAMYvApy5jDk6pKFqoo7Fd5EF-O8wwmdH3N_n3kdaia6K-gGaH2p64zMkjnOikmC14QhyQijWXbXXtWpgZJuaBFzcWGYskmihQZ_33cgNozsCUnM5Qr2LTUyNK2GzlCA4KgMk8aGOk7M6j25P-c5bz_TprTnWy6-6Y22v"
+          }
+        ]
+      },
+      "stage5": {
+        "data": {
+          "resistanceIndex": {
+            "overall": 65,
+            "materials": {
+              "Liquor": 75,
+              "PET": 60,
+              "Cans": 60,
+              "MLP": 85
+            }
+          },
+          "register": [
+            {
+              "front": "Government / Regulatory",
+              "material": "All",
+              "rootCause": "Delays in policy finalization and clear enforcement mechanisms, potential for conflicting existing regulations.",
+              "impact": "Implementation delays, uncertainty for all stakeholders, potential for legal challenges.",
+              "probability": "Medium",
+              "severity": "High",
+              "mitigation": "Establish a dedicated inter-departmental task force (Environment, Tourism, Excise, Local Self-Government) with clear timelines. Conduct regular high-level meetings with key government officials to present clear policy drafts and demonstrate economic/environmental benefits. Pilot programs to showcase feasibility.",
+              "owner": "Recykal Government Liaison",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Retail / Trade",
+              "material": "All",
+              "rootCause": "Perceived operational burden, space constraints for collection points (especially in small Goan shops), handling costs for deposits/refunds, hygiene concerns, and staff training requirements.",
+              "impact": "Retailer pushback, refusal to participate, poor collection rates, negative public perception of DRS convenience.",
+              "probability": "High",
+              "severity": "High",
+              "mitigation": "Offer attractive handling fees per container. Provide compact and easy-to-operate collection solutions (e.g., manual collection bins, small RVMs where feasible). Develop comprehensive training modules for retail staff. Conduct pilot programs with diverse retail types (kirana, supermarkets, liquor stores) to gather feedback and refine processes.",
+              "owner": "Recykal Retail Engagement Lead",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Retail / Trade",
+              "material": "Liquor",
+              "rootCause": "Challenges with reverse logistics for heavy, fragile glass liquor bottles (storage, breakage, transportation costs) and specific excise regulations.",
+              "impact": "High operational costs for retailers, increased breakages, potential for non-compliance, and reduced participation from liquor vendors.",
+              "probability": "High",
+              "severity": "High",
+              "mitigation": "Design a specialized reverse logistics network for glass, potentially leveraging existing liquor distribution channels. Provide sturdy, stackable collection bins. Implement clear guidelines for handling and storage to minimize breakage. Engage with excise department early to integrate DRS requirements.",
+              "owner": "Recykal Operations Lead",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Consumer",
+              "material": "All",
+              "rootCause": "Tourist transience (visitors leaving Goa before returning containers), lack of awareness among diverse tourist populations, perceived inconvenience of returning, and potential confusion about the system.",
+              "impact": "Significantly lower return rates, especially from the tourist segment, leading to reduced environmental impact and system inefficiency.",
+              "probability": "High",
+              "severity": "High",
+              "mitigation": "Launch multi-lingual public awareness campaigns targeting tourists (airport, hotels, tourist spots, digital ads). Ensure high density of convenient and visible collection points in tourist areas. Partner with hotels and tour operators for collection initiatives. Implement a clear, simple deposit refund mechanism.",
+              "owner": "Recykal Marketing & Communications Lead",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Brand",
+              "material": "MLP",
+              "rootCause": "Low intrinsic value of MLP, technical challenges in recycling, and potential for brands to resist inclusion due to perceived lack of viable end-of-life solutions and increased costs.",
+              "impact": "Brands lobbying against MLP inclusion, limited market for recycled MLP, making the material economically unviable within the DRS.",
+              "probability": "High",
+              "severity": "High",
+              "mitigation": "Engage proactively with MLP brands to explore design-for-recyclability initiatives. Research and pilot advanced recycling technologies for MLP. Secure off-take agreements with recyclers for collected MLP. Highlight Extended Producer Responsibility (EPR) benefits and potential for brand reputation enhancement.",
+              "owner": "Recykal Brand Engagement Lead",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Media",
+              "material": "All",
+              "rootCause": "Potential for negative media coverage focusing on initial challenges (e.g., retailer complaints, tourist inconvenience) or misinformation, potentially influenced by opposing lobbies.",
+              "impact": "Erosion of public trust, increased political pressure to halt or modify the DRS, and difficulty in gaining consumer and stakeholder buy-in.",
+              "probability": "Medium",
+              "severity": "High",
+              "mitigation": "Develop a proactive media strategy with clear, consistent messaging. Identify and train spokespersons. Prepare rapid response protocols for negative stories. Showcase early success stories and positive environmental/economic impacts. Engage local influencers and community leaders.",
+              "owner": "Recykal Marketing & Communications Lead",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Political",
+              "material": "All",
+              "rootCause": "Lobbyist action from affected industries (e.g., retail, beverage), local political leaders opposing based on perceived negative impact on constituents (e.g., small businesses), or changes in political leadership leading to policy shifts.",
+              "impact": "Political interference, delays in policy approval, potential for system design compromises that undermine effectiveness, or complete abandonment of the DRS.",
+              "probability": "Medium",
+              "severity": "High",
+              "mitigation": "Build a broad coalition of support including environmental groups, consumer associations, and progressive businesses. Conduct targeted outreach to key political figures, demonstrating the long-term benefits for Goa. Highlight public support through surveys and community engagement. Be prepared to address specific concerns raised by political opponents with data and solutions.",
+              "owner": "Recykal Government Liaison",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            },
+            {
+              "front": "Operational",
+              "material": "All",
+              "rootCause": "Complexity of establishing a new end-to-end reverse logistics network in Goa, especially for diverse materials and varying container types. Challenges in managing peak tourist season volumes and ensuring efficient collection in remote areas.",
+              "impact": "High operational costs, logistical bottlenecks, inefficient collection, and failure to meet return rate targets.",
+              "probability": "High",
+              "severity": "High",
+              "mitigation": "Implement a phased rollout, starting with key areas and expanding. Invest in robust IT infrastructure for tracking and data management. Partner with existing local waste management entities or logistics providers. Develop flexible collection schedules and routes to accommodate peak seasons and remote locations. Implement strong fraud prevention measures.",
+              "owner": "Recykal Operations Lead",
+              "status": "Open",
+              "reviewDate": "2026-07-31"
+            }
+          ],
+          "predictedFutureResistance": [
+            {
+              "front": "Government / Regulatory",
+              "threat": "Policy fatigue or lack of sustained political will to adapt and evolve the DRS after initial launch, leading to stagnation or outdated regulations.",
+              "mitigation": "Establish a permanent DRS oversight committee with representation from all key stakeholders. Implement a regular review cycle for policy and performance, ensuring mechanisms for adaptation and continuous improvement."
+            },
+            {
+              "front": "Retail / Trade",
+              "threat": "Retailers finding loopholes or gradually reducing their commitment to the DRS over time if handling fees are perceived as insufficient or operational burdens increase without corresponding support.",
+              "mitigation": "Implement a transparent and periodic review mechanism for handling fees, linked to inflation and operational costs. Maintain ongoing support and training programs. Conduct 'mystery shopper' audits to ensure compliance and identify areas for improvement."
+            },
+            {
+              "front": "Consumer",
+              "threat": "Erosion of deposit value due to inflation over time, leading to decreased consumer motivation to return containers, especially for lower-value materials.",
+              "mitigation": "Establish a mechanism for periodic review and adjustment of deposit values, potentially linked to a consumer price index or material market value, to maintain their incentive power."
+            },
+            {
+              "front": "Operational",
+              "threat": "Scalability issues as the DRS expands to new areas or includes additional materials, leading to logistical bottlenecks, increased costs, and potential system collapse under higher volumes.",
+              "mitigation": "Invest in modular and scalable infrastructure from the outset. Continuously scout for and integrate new technologies for collection, sorting, and processing. Develop robust contingency plans for peak periods and unexpected disruptions."
+            }
+          ]
+        },
+        "sources": []
+      },
+      "stage6": {
+        "data": {
+          "blueprintSummary": {
+            "currentPhase": "Phase 1 - Planning",
+            "criticalPathAlert": "Excise Department mandate for liquor outlets as return points is blocking touchpoint onboarding and brand participation agreements."
+          },
+          "timeline": [
+            {
+              "workstream": "Government & Regulatory",
+              "startDays": 0,
+              "durationDays": 30,
+              "phase": "Pre-Launch"
+            },
+            {
+              "workstream": "Brand/Producer & Deposit",
+              "startDays": 15,
+              "durationDays": 30,
+              "phase": "Pre-Launch"
+            },
+            {
+              "workstream": "Touchpoint Onboarding",
+              "startDays": 30,
+              "durationDays": 45,
+              "phase": "Pre-Launch"
+            },
+            {
+              "workstream": "Infrastructure & RVM Deployment",
+              "startDays": 30,
+              "durationDays": 45,
+              "phase": "Pre-Launch"
+            },
+            {
+              "workstream": "Consumer Awareness",
+              "startDays": 45,
+              "durationDays": 45,
+              "phase": "Launch"
+            },
+            {
+              "workstream": "Operations & Collection",
+              "startDays": 60,
+              "durationDays": 30,
+              "phase": "Launch"
+            },
+            {
+              "workstream": "Launch & Scale",
+              "startDays": 75,
+              "durationDays": 45,
+              "phase": "Post-Launch"
+            }
+          ],
+          "workstreams": [
+            {
+              "id": 1,
+              "name": "Government & Regulatory",
+              "objective": "To establish the legal and regulatory framework for the DRS in Goa, securing all necessary government approvals and mandates, particularly for liquor, PET, Cans, and MLP materials.",
+              "keyActions": "Secure official notifications; SPCB alignment; Cabinet note",
+              "owner": "Govt Affairs Lead",
+              "dependencies": "None",
+              "status": "In Progress"
+            },
+            {
+              "id": 2,
+              "name": "Brand/Producer & Deposit",
+              "objective": "To secure the participation of liquor, PET, Cans, and MLP producers/brands in the DRS and define the deposit values for each container type, ensuring financial viability and compliance.",
+              "keyActions": "Establish deposit refund values; Brand participation agreements",
+              "owner": "Producer Lead",
+              "dependencies": "Government & Regulatory in-principle clearance",
+              "status": "Not Started"
+            },
+            {
+              "id": 3,
+              "name": "Touchpoint Onboarding",
+              "objective": "To establish a comprehensive network of return points across North Goa by onboarding local panchayats, HORECA establishments, and liquor outlets, ensuring broad accessibility for consumers.",
+              "keyActions": "Onboard panchayats; secure agreements with HORECA and bars",
+              "owner": "Onboarding Lead",
+              "dependencies": "Brand/Producer & Deposit lock",
+              "status": "Not Started"
+            },
+            {
+              "id": 4,
+              "name": "Infrastructure & RVM Deployment",
+              "objective": "To procure, deploy, and install the necessary collection infrastructure, including RVMs and manual collection points, at designated return points in North Goa to facilitate efficient container returns.",
+              "keyActions": "Siting surveys; RVM procurement & shipping; install 1 RVM per panchayat",
+              "owner": "Ops Lead",
+              "dependencies": "Touchpoint Onboarding agreements",
+              "status": "Not Started"
+            },
+            {
+              "id": 5,
+              "name": "Consumer Awareness",
+              "objective": "To educate and engage consumers and tourists in North Goa about the DRS, promoting participation and maximizing return rates for liquor, PET, Cans, and MLP containers.",
+              "keyActions": "Kiosk setup; beach campaigns; airport tourist signs; local flyers",
+              "owner": "Marketing Lead",
+              "dependencies": "Infrastructure deployment",
+              "status": "Not Started"
+            },
+            {
+              "id": 6,
+              "name": "Operations & Collection",
+              "objective": "To establish efficient reverse logistics, collection routes, and recycling partnerships for the collected materials (Liquor, PET, Cans, MLP) in North Goa, ensuring smooth and cost-effective operations.",
+              "keyActions": "Reverse logistics contract; collection routes for bars; recycler agreements",
+              "owner": "Logistics Lead",
+              "dependencies": "Infrastructure deployment",
+              "status": "Not Started"
+            },
+            {
+              "id": 7,
+              "name": "Launch & Scale",
+              "objective": "To successfully launch the DRS in North Goa, monitor initial performance, gather feedback, and prepare for the subsequent rollout in South Goa (Phase 2) to achieve maximum container return rates.",
+              "keyActions": "Launch day checklist; go-live monitor; plan Phase 2 rollout",
+              "owner": "Project Manager",
+              "dependencies": "Operations and collections setup",
+              "status": "Not Started"
+            }
+          ]
+        },
+        "sources": []
+      },
+      "stage7": {
+        "data": {
+          "regulatoryReadiness": {
+            "score": 75,
+            "enablers": [
+              {
+                "stakeholder": "Goa Department of Environment & Climate Change",
+                "ask": "Gazette notification mandating a Deposit Return System for specified beverage containers.",
+                "talkingPoints": "Revenue-neutral model promoting circular economy, reducing plastic pollution on beaches, and enhancing Goa's clean tourism image. Aligns with Swachh Bharat Abhiyan goals.",
+                "status": "Pending",
+                "nextAction": "Schedule follow-up meeting with Secretary, Environment for final review and approval.",
+                "generatedDocs": {
+                  "proposal": "This proposal outlines the implementation of a comprehensive Deposit Return System (DRS) in Goa, targeting liquor, PET, cans, and MLP packaging. The system aims to significantly boost collection rates, reduce litter, and establish a circular economy for beverage containers. We propose a phased rollout, starting with key tourist areas, to demonstrate the system's efficacy and benefits for the state's environmental and economic well-being.",
+                  "draftNotification": "Draft Clause 3(a): 'A mandatory refundable deposit of not less than ₹5.00 shall be levied on all specified beverage containers (PET bottles, aluminum cans, glass liquor bottles, and multi-layered plastic pouches) sold within the State of Goa, effective from [Date]. This deposit shall be clearly indicated on the product and refunded upon return of the empty container to an authorized collection point.'",
+                  "deckOutline": "1. Introduction to DRS & Global Best Practices; 2. The Goa Context: Challenges & Opportunities; 3. Proposed Recykal DRS Model for Goa; 4. Economic & Environmental Benefits for Goa; 5. Implementation Roadmap & Policy Support Required; 6. Q&A and Next Steps.",
+                  "faq": "Q: How will this impact local businesses? A: The DRS is designed to be revenue-neutral for retailers, with brands managing the deposit funds. It can also drive footfall to collection points. Q: What is the timeline for implementation? A: We propose a 6-month preparatory phase followed by a pilot launch in select talukas, with full state-wide rollout within 18-24 months, subject to regulatory approvals."
+                }
+              },
+              {
+                "stakeholder": "Goa Excise Commissioner",
+                "ask": "Amendment to Excise Act/Rules to incorporate DRS deposit mechanism for liquor bottles.",
+                "talkingPoints": "Streamlines collection of high-value glass bottles, reduces illicit refilling, and supports responsible consumption. Enhances brand reputation and compliance.",
+                "status": "Pending",
+                "nextAction": "Submit formal request for amendment review to the Excise Department legal team.",
+                "generatedDocs": {
+                  "proposal": "This proposal seeks an amendment to the Goa Excise Act/Rules to facilitate the integration of a Deposit Return System for liquor bottles. By mandating a refundable deposit, we aim to significantly increase the return rate of glass bottles, thereby reducing waste and promoting recycling within the state. This mechanism will also help in curbing unauthorized refilling and ensuring product authenticity, benefiting both consumers and legitimate producers.",
+                  "draftNotification": "Draft Clause 5(b): 'Notwithstanding any other provision, all manufacturers, bottlers, and distributors of alcoholic beverages sold in glass bottles within Goa shall levy a refundable deposit as prescribed by the Department of Environment, to be refunded upon return of the empty, intact bottle to designated collection centers. Non-compliance shall attract penalties as per existing excise regulations.'",
+                  "deckOutline": "1. Overview of DRS for Liquor Packaging; 2. Current Challenges in Liquor Bottle Collection; 3. Proposed Excise Act Amendment & Impact; 4. Benefits: Waste Reduction, Authenticity, Compliance; 5. Operational Flow & Stakeholder Responsibilities; 6. Discussion & Way Forward.",
+                  "faq": "Q: Will this increase liquor prices? A: The deposit is refundable, so the net price to the consumer remains unchanged upon return. It's an incentive for responsible disposal. Q: How will existing excise duties be affected? A: The deposit is separate from excise duties and will be managed by the Scheme Operator, ensuring no impact on state revenue from excise."
+                }
+              }
+            ]
+          },
+          "brandOnboarding": [
+            {
+              "material": "Liquor",
+              "pipeline": {
+                "target": 50,
+                "contacted": 35,
+                "agreed": 15,
+                "onboarded": 5
+              },
+              "depositValue": "₹10.00",
+              "refund": "₹10.00",
+              "fundingSource": "Brand escrow account",
+              "generatedDocs": {
+                "agreement": "This Producer Participation Agreement outlines the terms for liquor brands to join the Goa DRS, including the levy and management of a ₹10.00 refundable deposit per bottle. Brands agree to integrate unique identifiers (e.g., QR codes) on packaging and contribute to the operational costs of the DRS. The agreement details reporting requirements, financial reconciliation, and the responsibilities of both the brand and the Scheme Operator in ensuring a smooth and efficient return system.",
+                "spec": "Upstream packaging specifications for liquor bottles require the integration of a unique, scannable QR code on each bottle label, resistant to moisture and handling. The QR code must be printed with high contrast and minimum dimensions of 15x15mm, ensuring readability by RVMs and manual scanning devices. Data encoded within the QR must include product SKU, batch number, and a unique serial identifier for tracking and deposit reconciliation purposes."
+              }
+            },
+            {
+              "material": "PET",
+              "pipeline": {
+                "target": 80,
+                "contacted": 60,
+                "agreed": 30,
+                "onboarded": 10
+              },
+              "depositValue": "₹5.00",
+              "refund": "₹5.00",
+              "fundingSource": "Brand escrow account",
+              "generatedDocs": {
+                "agreement": "This Producer Participation Agreement details the terms for PET beverage brands to participate in the Goa DRS, including the collection and refund of a ₹5.00 deposit per container. Brands commit to modifying packaging to include DRS-compliant markings and to contribute to the system's operational and awareness costs. The agreement covers data sharing protocols, financial settlement procedures, and performance metrics to ensure high return rates and environmental compliance.",
+                "spec": "PET bottle packaging specifications mandate the inclusion of a DRS-compliant barcode and a unique QR code, printed directly onto the label or embossed onto the bottle. The QR code must be machine-readable and contain product identification, volume, and a unique serial number. Labels must be designed to withstand the recycling process and be easily removable or made from compatible materials to avoid contamination."
+              }
+            },
+            {
+              "material": "Cans",
+              "pipeline": {
+                "target": 40,
+                "contacted": 25,
+                "agreed": 10,
+                "onboarded": 3
+              },
+              "depositValue": "₹5.00",
+              "refund": "₹5.00",
+              "fundingSource": "Brand escrow account",
+              "generatedDocs": {
+                "agreement": "This Producer Participation Agreement outlines the framework for aluminum can brands to integrate into the Goa DRS, specifying the ₹5.00 deposit mechanism. Brands are required to ensure their cans bear the official DRS mark and unique identifiers for tracking. The agreement covers financial contributions for system operation, data exchange for performance monitoring, and mutual commitments to achieving high collection and recycling targets for aluminum cans.",
+                "spec": "Aluminum can packaging specifications require a clear, indelible DRS mark and a unique QR code printed on the can body or lid. The QR code must be scannable by RVMs and manual devices, containing SKU and a unique serial ID. The printing must be durable to withstand handling and environmental exposure, ensuring the code remains readable throughout the product lifecycle until return."
+              }
+            },
+            {
+              "material": "MLP",
+              "pipeline": {
+                "target": 20,
+                "contacted": 10,
+                "agreed": 5,
+                "onboarded": 1
+              },
+              "depositValue": "₹2.00",
+              "refund": "₹2.00",
+              "fundingSource": "Brand escrow account",
+              "generatedDocs": {
+                "agreement": "This Producer Participation Agreement details the terms for Multi-Layered Plastic (MLP) brands to join the Goa DRS, including the levy and refund of a ₹2.00 deposit per pouch. Brands commit to ensuring their MLP packaging is marked with DRS identifiers and to contribute to the specialized collection and recycling infrastructure required for MLPs. The agreement outlines financial responsibilities, reporting, and collaboration to overcome the unique challenges of MLP recycling.",
+                "spec": "MLP packaging specifications for DRS integration require a prominent, scannable QR code printed on the pouch, along with a clear DRS logo. The QR code must be robust enough to withstand product handling and contain product SKU and a unique serial number. Material composition information should also be accessible via the QR code to aid in sorting and recycling processes, given the complexity of MLP waste."
+              }
+            }
+          ],
+          "touchpointOnboarding": [
+            {
+              "type": "Panchayats",
+              "taluka": "Bardez",
+              "target": 33,
+              "onboarded": 15,
+              "gstChecklist": "1. Panchayat Resolution for DRS support; 2. Land/Space allocation approval; 3. Electricity connection availability; 4. Point of contact details; 5. Bank account for RVM revenue share (if applicable).",
+              "generatedDocs": {
+                "nocTemplate": "This No-Objection Certificate (NOC) confirms that the [Panchayat Name] Panchayat, Taluka [Taluka Name], has no objection to the installation and operation of a Deposit Return System (DRS) collection point, including Reverse Vending Machines (RVMs), within its jurisdiction. The Panchayat commits to providing necessary local support, including space allocation and basic utilities, for the successful implementation of the DRS, recognizing its environmental benefits for the community.",
+                "onboardingAgreement": "This agreement outlines the terms for Panchayats to host DRS collection points, detailing responsibilities for site preparation, security, and local community engagement. It specifies the schedule for RVM servicing and collection, and any revenue-sharing model for returned containers. The Panchayat agrees to promote the DRS among its residents and collaborate with the Scheme Operator for effective waste management."
+              }
+            },
+            {
+              "type": "Bars/HORECA",
+              "taluka": "Tiswadi",
+              "target": 150,
+              "onboarded": 45,
+              "gstChecklist": "1. Valid GSTIN; 2. FSSAI License; 3. Trade License; 4. Bank account details; 5. Designated collection area; 6. Point of contact for pickups.",
+              "generatedDocs": {
+                "nocTemplate": "Not applicable for HORECA, replaced by 'Letter of Intent to Participate'.",
+                "onboardingAgreement": "This HORECA Scheduled Pickup Agreement formalizes the participation of [Establishment Name] in the Goa DRS, outlining the terms for the collection of empty, deposited beverage containers. The establishment agrees to collect and store containers securely, adhering to specified sorting guidelines, for scheduled pickups by the Scheme Operator. The agreement details the refund process for collected deposits, pickup frequency, and mutual responsibilities for maintaining hygiene and operational efficiency."
+              }
+            }
+          ],
+          "infrastructure": [
+            {
+              "taluka": "Bardez",
+              "panchayat": "Calangute",
+              "rvmStatus": "Installed",
+              "dependencies": "Calangute Panchayat NOC, Electricity Board connection approval",
+              "generatedDocs": {
+                "deploymentPlan": "The RVM deployment plan for Calangute, Bardez, specifies the installation of 3 RVM units at designated high-footfall locations: Calangute Beach entrance, main market, and a prominent hotel. Each site requires a dedicated 15A/230V electrical connection, a stable 4G network connection for data transmission, and a concrete plinth of 2m x 2m. Layout plans include accessibility ramps and clear signage zones, with security lighting and CCTV integration for night-time operation."
+              }
+            },
+            {
+              "taluka": "Tiswadi",
+              "panchayat": "Panaji",
+              "rvmStatus": "Sited",
+              "dependencies": "Panaji Municipal Corporation approval, Site preparation complete",
+              "generatedDocs": {
+                "deploymentPlan": "The RVM deployment plan for Panaji, Tiswadi, outlines the strategic placement of 5 RVMs across key urban areas: Miramar Beach, Panaji Market, Kadamba Bus Stand, Goa University, and a major shopping mall. Each location requires a robust power supply (20A/230V), a reliable internet connection (fiber preferred), and a secure, weather-protected enclosure. Detailed architectural drawings specify foundation requirements, branding elements, and waste storage solutions adjacent to each RVM unit."
+              }
+            }
+          ],
+          "consumerAwareness": [
+            {
+              "channel": "Beach",
+              "taluka": "Bardez",
+              "campaignActions": "Beach clean-up drives with local volunteers, interactive kiosks, and mobile DRS collection points at popular beaches.",
+              "reachTarget": "100,000 visitors",
+              "assets": {
+                "signage": "Return your bottle/can, get ₹5 back! Keep Goa clean!",
+                "faqSheet": "Q: Where can I return my bottles? A: Look for Recykal RVMs or designated collection points at beaches, markets, and shops. Q: What if my bottle is broken? A: Only intact bottles with the deposit mark are eligible for a refund."
+              }
+            },
+            {
+              "channel": "Digital",
+              "taluka": "State-wide",
+              "campaignActions": "Social media campaigns (Facebook, Instagram, YouTube) with influencers, targeted ads, and a dedicated DRS website/app.",
+              "reachTarget": "500,000 unique users",
+              "assets": {
+                "signage": "Your empty bottle is worth money! Find your nearest RVM.",
+                "faqSheet": "Q: How do I get my refund? A: Scan your container at an RVM, and the refund will be credited to your linked UPI ID or mobile wallet. Q: What types of containers are accepted? A: PET bottles, aluminum cans, glass liquor bottles, and MLP pouches with the DRS mark."
+              }
+            },
+            {
+              "channel": "Retail",
+              "taluka": "Tiswadi",
+              "campaignActions": "In-store promotions, point-of-sale materials, and staff training at supermarkets and liquor stores.",
+              "reachTarget": "75,000 shoppers",
+              "assets": {
+                "signage": "Deposit included. Return for refund. Help us recycle!",
+                "faqSheet": "Q: Can I return containers bought from other stores? A: Yes, any container with the Goa DRS mark is accepted at any participating collection point. Q: What if the RVM is full? A: Please report it via our app or contact customer service; we aim for quick servicing."
+              }
+            }
+          ],
+          "operations": [
+            {
+              "taluka": "Pernem",
+              "collectionModel": "Scheduled Truck Route",
+              "pickupRoute": "Arambol-Morjim-Mandrem hotel loop, daily 6 AM - 10 AM",
+              "recyclerOfftake": "Goa Glass & Bottle Recyclers (glass), GreenCycle Solutions (PET/Cans), Saahas Zero Waste (MLP)",
+              "generatedDocs": {
+                "sop": "This Standard Operating Procedure (SOP) details the reverse logistics for container collection in Pernem, covering scheduled truck routes, security protocols, and material handling. Drivers are required to follow optimized routes, conduct pre-trip vehicle checks, and ensure secure loading of collected containers. All collected materials must be segregated by type, weighed, and recorded using the mobile app, with strict adherence to safety guidelines during transit to the sorting facility.",
+                "agreement": "This Recycler Offtake Contract outlines the terms for [Recycler Name] to accept and process collected DRS materials from Recykal in Goa. The agreement specifies material quality standards, delivery schedules, pricing mechanisms based on market rates, and reporting requirements for processed volumes. It also includes clauses on environmental compliance, data sharing for traceability, and mutual commitments to sustainable recycling practices for a circular economy."
+              }
+            },
+            {
+              "taluka": "Salcete",
+              "collectionModel": "RVM Emptying",
+              "pickupRoute": "Margao City RVMs, twice daily (morning/evening)",
+              "recyclerOfftake": "Goa Glass & Bottle Recyclers (glass), GreenCycle Solutions (PET/Cans), Saahas Zero Waste (MLP)",
+              "generatedDocs": {
+                "sop": "This SOP for RVM emptying in Salcete details the process from RVM full notification to material transport. Field technicians must respond to alerts within 2 hours, securely empty RVM bins, and perform basic maintenance checks. Collected materials are to be immediately transferred to secure, labeled bags, scanned for inventory, and transported to the central sorting facility following designated routes. Strict adherence to hygiene and safety protocols is mandatory.",
+                "agreement": "This Recycler Offtake Contract outlines the terms for [Recycler Name] to accept and process collected DRS materials from Recykal in Goa. The agreement specifies material quality standards, delivery schedules, pricing mechanisms based on market rates, and reporting requirements for processed volumes. It also includes clauses on environmental compliance, data sharing for traceability, and mutual commitments to sustainable recycling practices for a circular economy."
+              }
+            }
+          ],
+          "launchScale": [
+            {
+              "taluka": "Tiswadi",
+              "readiness": "Ready",
+              "runbookSteps": "1. Finalize RVM site commissioning; 2. Conduct end-to-end system test (RVM-to-refund); 3. Train local staff on operations & maintenance; 4. Launch local consumer awareness campaign; 5. Initiate brand reconciliation pilot; 6. Go-live with pilot launch.",
+              "eventPlan": "Press conference with Goa Environment Minister and local dignitaries at Miramar beach, followed by live RVM demonstration and community engagement activities.",
+              "generatedDocs": {
+                "checklist": "1. All RVMs installed and commissioned; 2. Network connectivity stable for all RVMs; 3. Refund payment gateway integrated and tested; 4. Brand agreements signed for pilot materials; 5. Collection routes optimized and staff trained; 6. Consumer awareness materials deployed; 7. Emergency contact protocols established."
+              }
+            }
+          ]
+        },
+        "sources": []
+      },
+      "stage8": {
+        "data": {
+          "btlReachScore": {
+            "overall": 85,
+            "talukas": {
+              "Liquor": 88,
+              "PET": 90,
+              "Cans": 87,
+              "MLP": 75
+            }
+          },
+          "locations": [
+            {
+              "name": "Dabolim Airport (GOI)",
+              "type": "Transit / high-footfall",
+              "taluka": "Mormugao",
+              "footfall": "~20,000 passengers/day (average)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Manohar International Airport (Mopa, GOX)",
+              "type": "Transit / high-footfall",
+              "taluka": "Pernem",
+              "footfall": "~12,000 passengers/day (average)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Madgaon Junction Railway Station",
+              "type": "Transit / high-footfall",
+              "taluka": "Salcete",
+              "footfall": "~25,000-30,000 passengers/day",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Panaji Kadamba Bus Stand",
+              "type": "Transit / high-footfall",
+              "taluka": "Tiswadi",
+              "footfall": "~50,000 passengers/day (pre-pandemic estimate)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Margao KTC Bus Stand",
+              "type": "Transit / high-footfall",
+              "taluka": "Salcete",
+              "footfall": "~20,000-25,000 passengers/day (pre-pandemic estimate)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Mapusa Bus Stand",
+              "type": "Transit / high-footfall",
+              "taluka": "Bardez",
+              "footfall": "~15,000-20,000 passengers/day (pre-pandemic estimate)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Calangute Beach",
+              "type": "Tourism / leisure",
+              "taluka": "Bardez",
+              "footfall": "~30,000-50,000 visitors/day (peak season)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Baga Beach",
+              "type": "Tourism / leisure",
+              "taluka": "Bardez",
+              "footfall": "~20,000-40,000 visitors/day (peak season)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Anjuna Flea Market (Anjuna Beach)",
+              "type": "Tourism / leisure",
+              "taluka": "Bardez",
+              "footfall": "~15,000-25,000 visitors/Wednesday (peak season)",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Palolem Beach",
+              "type": "Tourism / leisure",
+              "taluka": "Canacona",
+              "footfall": "~5,000-10,000 visitors/day (peak season)",
+              "relevance": "Medium",
+              "status": "Planned"
+            },
+            {
+              "name": "Colva Beach",
+              "type": "Tourism / leisure",
+              "taluka": "Salcete",
+              "footfall": "~8,000-15,000 visitors/day (peak season)",
+              "relevance": "Medium",
+              "status": "Planned"
+            },
+            {
+              "name": "Mapusa Market",
+              "type": "Community / residential",
+              "taluka": "Bardez",
+              "footfall": "~10,000-15,000 visitors/Friday",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Panjim Market",
+              "type": "Community / residential",
+              "taluka": "Tiswadi",
+              "footfall": "~8,000-12,000 visitors/day",
+              "relevance": "High",
+              "status": "Planned"
+            },
+            {
+              "name": "Goa University",
+              "type": "Education / youth",
+              "taluka": "Tiswadi",
+              "footfall": "~5,000-7,000 students/staff",
+              "relevance": "Medium",
+              "status": "Planned"
+            },
+            {
+              "name": "Carmel College for Women, Nuvem",
+              "type": "Education / youth",
+              "taluka": "Salcete",
+              "footfall": "~2,000-3,000 students/staff",
+              "relevance": "Medium",
+              "status": "Planned"
+            },
+            {
+              "name": "Don Bosco College, Panaji",
+              "type": "Education / youth",
+              "taluka": "Tiswadi",
+              "footfall": "~1,500-2,500 students/staff",
+              "relevance": "Medium",
+              "status": "Planned"
+            },
+            {
+              "name": "Old Goa (Basilica of Bom Jesus, Se Cathedral)",
+              "type": "Civic / institutional",
+              "taluka": "Tiswadi",
+              "footfall": "~5,000-10,000 visitors/day (tourist/pilgrim)",
+              "relevance": "Medium",
+              "status": "Planned"
+            }
+          ],
+          "btlActivities": [
+            {
+              "venueType": "Transit / high-footfall",
+              "activity": "Interactive DRS Kiosks & Digital Screens: Strategically placed kiosks at arrival/departure gates, railway platforms, and bus waiting areas. Digital screens display animated videos on 'How to Return' and 'DRS Benefits' (cashback, environmental impact). Staffed by brand ambassadors during peak hours to assist with returns and answer queries. Special focus on PET and Cans for travelers.",
+              "calendar": "Pre-launch W3-W4, Launch Week, Sustenance Month 1",
+              "owner": "BTL Execution Agency",
+              "reach": "~50,000 people/week",
+              "permissions": "Airport Authority NOC, Railway/Bus Station Management Approval",
+              "vendor": "Digital Kiosk & AV Solutions Provider",
+              "budget": "₹3,00,000"
+            },
+            {
+              "venueType": "Transit / high-footfall",
+              "activity": "Branded Recycling Bins & 'Return & Win' Contests: Highly visible, branded DRS bins at all major entry/exit points. Passengers returning containers can scan a QR code on the bin to enter a daily/weekly lucky draw for local Goan souvenirs or travel vouchers. Emphasize convenience for PET and Cans.",
+              "calendar": "Launch Week, Sustenance Month 1",
+              "owner": "BTL Execution Agency",
+              "reach": "~70,000 people/week",
+              "permissions": "Airport Authority NOC, Railway/Bus Station Management Approval",
+              "vendor": "Fabrication & Logistics Vendor",
+              "budget": "₹2,50,000"
+            },
+            {
+              "venueType": "Tourism / leisure",
+              "activity": "Beach Clean-up & 'Recycle for Rewards' Drives: Partner with local NGOs for regular beach clean-ups at Calangute, Baga, Anjuna, Colva, Palolem. Set up mobile DRS collection points at these events. Participants returning collected containers (especially PET, Cans, MLP) receive instant small rewards (e.g., discount vouchers for local shacks, branded merchandise).",
+              "calendar": "Launch Week, Sustenance Month 1",
+              "owner": "BTL Execution Agency & Local NGO Partners",
+              "reach": "~40,000 people/week",
+              "permissions": "Goa Tourism Dept. Approval, Local Panchayat NOC",
+              "vendor": "Event Management & Waste Collection Partner",
+              "budget": "₹4,00,000"
+            },
+            {
+              "venueType": "Tourism / leisure",
+              "activity": "DRS 'Pop-Up' Experience Zones at Markets: Set up vibrant, interactive pop-up booths at Anjuna Flea Market, Mapusa Market, and Panjim Market. Feature games (e.g., 'ring toss' with bottles/cans), photo booths with DRS props, and live demonstrations of the DRS process. Focus on all materials, especially MLP for local shoppers. Offer instant cashback/vouchers for returns.",
+              "calendar": "Pre-launch W3-W4, Launch Week",
+              "owner": "BTL Execution Agency",
+              "reach": "~30,000 people/week",
+              "permissions": "Market Association/Panchayat Approval",
+              "vendor": "Experiential Marketing Agency",
+              "budget": "₹3,50,000"
+            },
+            {
+              "venueType": "Community / residential",
+              "activity": "Residential Society & Local Community Workshops: Conduct workshops in major residential areas and community centers (e.g., near Panjim, Margao, Mapusa markets). Educate residents on DRS, material segregation (Liquor, PET, Cans, MLP), and benefits. Set up temporary collection points during workshops and offer home collection sign-ups.",
+              "calendar": "Sustenance Month 1",
+              "owner": "BTL Execution Agency & Community Outreach Team",
+              "reach": "~15,000 households/month",
+              "permissions": "Resident Welfare Association (RWA) Approval, Local Community Center Permissions",
+              "vendor": "Local Community Engagement Partner",
+              "budget": "₹2,00,000"
+            },
+            {
+              "venueType": "Education / youth",
+              "activity": "Campus Recycling Challenges & Ambassador Programs: Launch 'Green Campus Challenge' at Goa University, Carmel College, and Don Bosco College. Students compete for highest return rates (PET, Cans, MLP). Recruit student ambassadors to promote DRS, manage collection points, and organize awareness events. Provide branded water bottles/notebooks for participation.",
+              "calendar": "Launch Week, Sustenance Month 1",
+              "owner": "BTL Execution Agency & College Administration",
+              "reach": "~10,000 students/month",
+              "permissions": "University/College Administration Approval",
+              "vendor": "Youth Engagement Specialist",
+              "budget": "₹2,50,000"
+            },
+            {
+              "venueType": "Civic / institutional",
+              "activity": "Heritage Site 'Responsible Tourism' Campaign: Install aesthetically designed, informative recycling bins at Old Goa sites (Basilica of Bom Jesus, Se Cathedral) and Fort Aguada. Signboards promote 'Responsible Tourism' and DRS for PET bottles and Cans. Partner with tour guides to include a brief mention of DRS and its importance.",
+              "calendar": "Pre-launch W4, Launch Week",
+              "owner": "BTL Execution Agency & Tourism Department",
+              "reach": "~10,000 visitors/week",
+              "permissions": "Archaeological Survey of India (ASI) / Church Authorities / Fort Management NOC",
+              "vendor": "Signage & Bin Manufacturer",
+              "budget": "₹1,50,000"
+            }
+          ]
+        },
+        "sources": []
+      },
+      "stage9": {
+        "data": {
+          "performanceIndex": {
+            "overall": 65,
+            "materials": {
+              "Liquor": 60,
+              "PET": 70,
+              "Cans": 65,
+              "MLP": 50
+            }
+          },
+          "kpis": [
+            {
+              "name": "Overall Return Rate",
+              "type": "Lagging",
+              "definition": "Percentage of containers sold that are returned through the DRS across all materials.",
+              "formula": "(Total containers returned / Total containers sold) * 100",
+              "source": "RVM system logs, manual collection logs, producer sales data",
+              "cadence": "Monthly",
+              "target": "50% within 12 months, 70% within 24 months",
+              "owner": "Ops Director"
+            },
+            {
+              "name": "Active Participants",
+              "type": "Leading",
+              "definition": "Number of unique individuals who have returned at least one container in a given period.",
+              "formula": "COUNT(DISTINCT user_id) from return transactions",
+              "source": "RVM system logs, mobile app data",
+              "cadence": "Weekly",
+              "target": "15,000 unique users within 6 months",
+              "owner": "Product Team"
+            },
+            {
+              "name": "Cost per Container",
+              "type": "Lagging",
+              "definition": "Total operational cost of the DRS divided by the total number of containers collected.",
+              "formula": "Total DRS Operational Cost / Total Containers Collected",
+              "source": "Finance audits, RVM system logs, collector logs",
+              "cadence": "Monthly",
+              "target": "< ₹7 per container within 12 months",
+              "owner": "Financial Auditor"
+            },
+            {
+              "name": "Panchayat Onboarding %",
+              "type": "Leading",
+              "definition": "Percentage of target Panchayats (local self-governing bodies) in Goa that have RVMs or designated collection points established.",
+              "formula": "(Number of Panchayats with DRS points / Total target Panchayats in Goa) * 100",
+              "source": "Operations deployment records",
+              "cadence": "Monthly",
+              "target": "60% of target Panchayats within 9 months",
+              "owner": "Ops Director"
+            },
+            {
+              "name": "RVM Uptime",
+              "type": "Leading",
+              "definition": "Percentage of time Reverse Vending Machines (RVMs) are operational and available for use by consumers.",
+              "formula": "(Total operational hours / Total scheduled hours) * 100",
+              "source": "RVM system logs, maintenance records",
+              "cadence": "Daily",
+              "target": ">90% average monthly uptime",
+              "owner": "Product Team"
+            },
+            {
+              "name": "Return Rate - Liquor",
+              "type": "Lagging",
+              "definition": "Percentage of liquor containers sold that are returned through the DRS.",
+              "formula": "(Liquor containers returned / Liquor containers sold) * 100",
+              "source": "RVM system logs, manual collection logs, producer sales data",
+              "cadence": "Monthly",
+              "target": "45% within 12 months",
+              "owner": "Ops Director"
+            },
+            {
+              "name": "Return Rate - PET",
+              "type": "Lagging",
+              "definition": "Percentage of PET containers sold that are returned through the DRS.",
+              "formula": "(PET containers returned / PET containers sold) * 100",
+              "source": "RVM system logs, manual collection logs, producer sales data",
+              "cadence": "Monthly",
+              "target": "65% within 12 months",
+              "owner": "Ops Director"
+            },
+            {
+              "name": "Return Rate - Cans",
+              "type": "Lagging",
+              "definition": "Percentage of can containers sold that are returned through the DRS.",
+              "formula": "(Can containers returned / Can containers sold) * 100",
+              "source": "RVM system logs, manual collection logs, producer sales data",
+              "cadence": "Monthly",
+              "target": "60% within 12 months",
+              "owner": "Ops Director"
+            },
+            {
+              "name": "Return Rate - MLP",
+              "type": "Lagging",
+              "definition": "Percentage of Multi-Layer Packaging (MLP) containers sold that are returned through the DRS.",
+              "formula": "(MLP containers returned / MLP containers sold) * 100",
+              "source": "RVM system logs, manual collection logs, producer sales data",
+              "cadence": "Monthly",
+              "target": "35% within 12 months",
+              "owner": "Ops Director"
+            },
+            {
+              "name": "Deposit Redemption Rate",
+              "type": "Lagging",
+              "definition": "Percentage of deposits paid by consumers that are successfully redeemed.",
+              "formula": "(Total deposit value redeemed / Total deposit value collected) * 100",
+              "source": "Financial system, RVM system logs",
+              "cadence": "Monthly",
+              "target": ">85% within 6 months",
+              "owner": "Financial Auditor"
+            },
+            {
+              "name": "Retailer Participation Rate",
+              "type": "Leading",
+              "definition": "Percentage of eligible retailers participating in the DRS (e.g., as manual collection points or RVM hosts).",
+              "formula": "(Number of participating retailers / Total eligible retailers) * 100",
+              "source": "Operations deployment records, retailer agreements",
+              "cadence": "Monthly",
+              "target": "70% within 9 months",
+              "owner": "Business Development"
+            }
+          ]
+        },
+        "sources": []
+      },
+      "stage10": {
+        "data": {
+          "blueprintCompleteness": 95,
+          "playbook": {
+            "evidence": "Market evidence gathered in Goa highlighted a significant challenge with container waste, particularly from liquor, PET bottles, and cans, exacerbated by high tourism. Consumer surveys indicated a willingness to participate in a DRS, provided convenience and clear incentives. Existing informal waste collection networks presented both an opportunity for integration and a potential point of friction. Government stakeholders expressed strong interest in sustainable waste management solutions, but also concerns regarding implementation complexity and potential impact on small businesses. Data on material flow confirmed high volumes of target materials entering the waste stream, especially in coastal and urban tourist hubs, underscoring the need for an efficient end-to-end system.",
+            "narrative": "The execution in Goa focused on establishing an End-to-End DRS as a Scheme Operator, targeting liquor, PET, cans, and MLP. The core narrative involved a phased rollout, beginning with pilot zones in high-tourism areas and gradually expanding. Key to success was the strategic placement of Reverse Vending Machines (RVMs) and manual collection points, coupled with a robust logistics network for collection and processing. Public awareness campaigns, leveraging local influencers and digital platforms, were crucial for driving initial adoption and educating consumers on the deposit mechanism. Collaboration with local municipalities and hospitality businesses ensured smooth integration into existing waste management practices, aiming to maximize container return rates by making participation effortless for both residents and tourists.",
+            "lessons": "1. **Proactive Stakeholder Engagement:** Early and continuous engagement with local government bodies, hospitality associations, and informal waste pickers is critical to mitigate resistance and foster collaborative ownership of the DRS.\n2. **Clear Communication on Economic Impact:** Transparent communication regarding the economic benefits for local businesses and the potential for job creation within the formal DRS structure helps overcome resistance from those fearing negative financial implications.\n3. **Addressing Informal Sector Concerns:** Developing clear pathways for integrating or compensating the informal waste collection sector is essential to prevent opposition and leverage their existing infrastructure and knowledge.",
+            "bestPractices": "1. **Strategic RVM Placement & Density:** Deploy RVMs in high-visibility, high-footfall areas within tourist zones (e.g., beaches, markets, hotel lobbies) with a higher density than typical urban settings to maximize convenience for transient populations.\n2. **Dynamic Pickup Logistics:** Implement a flexible, data-driven pickup schedule that adapts to peak tourist seasons and events, utilizing real-time RVM fill-level monitoring to optimize collection routes and prevent overflow.\n3. **Multi-lingual & Visual User Interface:** Ensure RVM interfaces and accompanying signage are multi-lingual (local language, Hindi, English, and common tourist languages) and highly visual to cater to a diverse user base, simplifying the return process for all."
+          }
+        },
+        "sources": []
+      }
+    },
+    "updatedAt": "2026-07-01T09:51:19.995Z"
+  }
+]
