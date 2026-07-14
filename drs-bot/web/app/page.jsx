@@ -1929,10 +1929,10 @@ export default function App() {
               </div>
 
               <div className="card">
-                <h2>{geoSchema.level1} Hierarchy & Recommended Phase</h2>
+                <h2>{isNationalProject ? geoSchema.level1 : geoSchema.level2} Hierarchy & Recommended Phase</h2>
                 <table>
                   <thead>
-                    <tr><th>{geoSchema.level1}</th><th>Population</th><th>{geoSchema.level2}s</th><th>Recommended Phase</th><th>Rationale</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+                    <tr><th style={{ textTransform: 'uppercase' }}>{isNationalProject ? geoSchema.level1 : geoSchema.level2}</th><th>POPULATION</th><th style={{ textTransform: 'uppercase' }}>{isNationalProject ? geoSchema.level2 : geoSchema.level3}s</th><th>RECOMMENDED PHASE</th><th>RATIONALE</th><th style={{ textAlign: 'right' }}>ACTIONS</th></tr>
                   </thead>
                   <tbody>
                     {activeStageData.intel?.hierarchy?.map((h) => (
@@ -2680,7 +2680,7 @@ export default function App() {
                 <h2>Location Database</h2>
                 <table>
                   <thead>
-                    <tr><th>Location Name</th><th>Type</th><th>{geoSchema.level2}</th><th>Footfall Volume</th><th>Relevance</th><th>Priority Rollout</th></tr>
+                    <tr><th>Location Name</th><th>Type</th><th>{isNationalProject ? geoSchema.level2 : geoSchema.level3}</th><th>Footfall Volume</th><th>Relevance</th><th>Priority Rollout</th></tr>
                   </thead>
                   <tbody>
                     {activeStageData.data?.locations?.map((l, i) => (
