@@ -87,18 +87,29 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
 }`;
 
     case 4:
-      return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
+      return `You are a senior Stakeholder & Public Affairs analyst for Recykal's DRS, applying a rigorous Power/Interest mapping method.
 You are generating STAGE 4 — Stakeholder & Partner Intelligence — for a real implementation plan.
 
 ${contextHeader}
-${projectData.stage3 ? `STAGES EVIDENCE:\n- Stage 3 Opportunity Scores: ${JSON.stringify(projectData.stage3.opportunityScores)}` : ''}
+${projectData.stage3 ? `STAGE 3 EVIDENCE (opportunity scores — use to tailor each pitch):\n${JSON.stringify(projectData.stage3.opportunityScores)}` : ''}
+
+RECYKAL / RETEARN CAPABILITY (use as the concrete leverage you offer stakeholders — name the actual product):
+- Retearn (Recykal's technology arm): reklaim Pro and reklaim Mini return units; QR-based container tracking; computer-vision material ID; connected-device network; a digital Deposit Refund System with secured payouts; merchant scanner apps.
+- Recykal: nationwide collection/aggregation network, marketplace, and EPR/traceability muscle.
 
 YOUR TASK:
-Use Google Search grounding to map key government bodies, producers/brands, trade associations, and waste recyclers in ${targetLocation} for ${materials.join(', ')}.
-Identify key names, stances, priorities, and what needs to be secured from each (e.g., Excise Commissioner, SPCB, Tourism Board, local distilleries, hotel/bar associations).
+Use Google Search grounding to map the real stakeholders (government bodies, producers/brands, trade associations, waste recyclers, AND the informal collection sector) in ${targetLocation} for ${materials.join(', ')}.
+
+METHOD & RIGOR (mandatory):
+1. Map each stakeholder on a Power/Interest grid — quadrant is one of: Manage Closely, Keep Satisfied, Keep Informed, Monitor.
+2. NEVER fabricate. For each stance, state the evidence and label confidence as "Verified" (found in search), "Inferred" (reasoned from their position), or "Assumption". If unsure of a specific entity name, describe the role and mark confidence "Assumption".
+3. For every stakeholder, identify their economic LOSS AVERSION (the money fear driving their stance) and the SPECIFIC Recykal/Retearn capability that neutralises it (name the actual product).
+4. You MUST include at least one "Informal Sector / Waste-pickers" stakeholder — in DRS this group is make-or-break.
+5. Generate a minimum of 6 stakeholders, covering every major blocker and champion.
 
 Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
 {
+  "executiveSummary": "<2-3 lines: the overall alignment picture and the single highest-priority stakeholder move>",
   "alignmentReadiness": {
     "overall": <number between 0 and 100>,
     "materials": {
@@ -107,21 +118,26 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
   },
   "stakeholders": [
     {
-      "category": "Government / Regulatory|Producers / Brands|Associations|Collection / Recyclers",
-      "name": "<e.g. Goa Excise Department, Goa SPCB, Hotel & Restaurant Association of Goa>",
-      "role": "<short description of role in the DRS>",
+      "category": "Government / Regulatory|Producers / Brands|Trade Association|Collection / Recyclers|Informal Sector / Waste-pickers",
+      "name": "<real named entity, e.g. Goa Excise Department, Hotel & Restaurant Association of Goa>",
+      "role": "<who they are + scale; mark any figure as (estimate) if not verified>",
+      "powerInterestQuadrant": "Manage Closely|Keep Satisfied|Keep Informed|Monitor",
       "influence": "High|Medium|Low",
       "stance": "Champion|Blocker|Neutral|Unknown",
+      "stanceEvidence": { "basis": "<why we believe this stance>", "confidence": "Verified|Inferred|Assumption" },
+      "theirLossAversion": "<the economic fear driving their stance>",
+      "recykalLeverage": "<the specific Recykal/Retearn capability that addresses it — name the product>",
+      "whatToSecure": "<the concrete instrument/agreement needed from them>",
+      "concession": "<what Recykal offers to win them over>",
       "priority": "P0|P1|P2",
-      "whatToSecure": "<what instrument/agreement is needed from them>",
-      "talkingPoints": "<tailored pitch based on Stage 3 data>",
-      "status": "Targeted|Contacted|Agreed|Onboarded",
-      "nextAction": "<next concrete outreach step>"
+      "nextAction": "<concrete next outreach step, with timing>"
     }
   ],
-  "champions": ["<name of champion stakeholder>", "..."],
-  "blockers": ["<name of blocker stakeholder>", "..."],
-  "engagementSequence": ["<ordered list of stakeholder names by priority>"]
+  "champions": ["<name of champion stakeholder>"],
+  "blockers": ["<name of blocker stakeholder>"],
+  "engagementSequence": ["<ordered list of stakeholder names by priority>"],
+  "assumptions": ["<key assumptions this map rests on>"],
+  "dataGaps": ["<what must be confirmed via primary research (interviews/surveys)>"]
 }`;
 
     case 6:

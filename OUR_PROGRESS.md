@@ -87,6 +87,8 @@ An **AI marketing team** for **Recykal + Retearn** — not a generic tool.
 - **2026-07-15** — Agreed: **code is source of truth**, skill `.md` files treated as stale.
 - **2026-07-15** — Created this file as the standing build log (THE RULE).
 - **2026-07-15** — Set `"autoPort": false` for the `drs-bot` config in `.claude/launch.json` (app needs port 3002; do not kill the user's running dev server — Turbopack cache risk).
+- **2026-07-15** — Adopted the **Market Research Director standard** (`market-research-director-drs` skill) for the research phase. Core rule: never fabricate — label every number measured / benchmark(approx) / estimate(with logic). This directly fixes the "made-up facts" problem.
+- **2026-07-15** — Scope for this pass: **only Stage 4 & Stage 5** rebuilt to MRD standard. Stages 2, 3, 6 explicitly deferred (user not yet aligned on those).
 
 ---
 
@@ -96,13 +98,18 @@ _Format: date — what changed — files touched — why — verified?_
 
 - **2026-07-15** — Created `OUR_PROGRESS.md` with vision + full baseline audit. — `OUR_PROGRESS.md` — establish single source of truth for the build. — n/a.
 - **2026-07-15** — Added `"autoPort": false` to `drs-bot` launch config. — `.claude/launch.json` — record that app requires port 3002. — verified preview loads (HTTP 200).
+- **2026-07-15** — Ingested the `market-research-director-drs` skill and adopted its standard (clarify question → method fits question → separate fact/estimate/opinion → lead with answer → tie to decision; DRS math: return-rate elasticity, breakage, TAM/SAM/SOM, break-even). Agreed to apply it to research stages; user aligned on **Stage 4 & Stage 5 only** for now (not 2/3/6 yet). — n/a — approach agreed.
+- **2026-07-15** — **Rebuilt Stage 4 (Stakeholders) to MRD standard.** — `lib/prompts.js` (case 4) + `app/page.jsx` (stage 4 UI). — Added Power/Interest quadrant, stance evidence + confidence label (Verified/Inferred/Assumption), loss-aversion + named Recykal/Retearn leverage (reklaim Pro/Mini etc.), concession, mandatory Informal-Sector stakeholder, min 6 stakeholders, plus executiveSummary / assumptions / dataGaps. UI gained an exec-read banner, a Stakeholder Playbook card grid, and an assumptions/data-gaps section. Schema is additive (kept alignmentReadiness/champions/blockers). — compiles clean, no console errors; full generation test to be run on Render.
+- **2026-07-15** — **Rebuilt Stage 5 (Competitors) to MRD standard.** — `lib/prompts/competitors.js` + `app/page.jsx` (stage 5 UI). — Added positioningVerdict, per-competitor presenceInMarket + returnRatePerformance + structured marketShare{global,local} with confidence labels, benchmarkSchemes[] (the performance bar), baselineNoDRS (no-DRS floor), dataGaps; moat strategy must name a real Retearn/Recykal capability. UI gained verdict banner, presence/return-rate columns (marketShare object rendered safely with back-compat for old string form), a benchmark-schemes table, and baseline/data-gaps section. — compiles clean, no console errors; full generation test to be run on Render.
+- **2026-07-15** — Did NOT touch `route.js` validation: `validateStageData` is dead code (never called), so the new schemas need no validation update. Left it alone to keep the change surgical. — n/a.
 
 ---
 
 ## 7. NEXT UP (candidate work — not yet started)
 
-Options on the table (no decision yet):
-1. **Deepen research phase for Recykal** — make stages 2–6 Recykal-grade, Retearn-aware, decision-grade.
-2. **Fix broken/risky items** — rotate secret, fix latent crash, remove dead code, make Claude/Copilot options honest.
-3. **Prototype execution layer** — turn one stage from "writes a plan" into "produces a real asset/action" (human-approved).
-4. (Foundational, in progress) — this progress doc.
+- **DONE (2026-07-15):** Stage 4 & Stage 5 rebuilt to MRD standard (pending user's live Render test).
+- **Awaiting user verdict:** does the Stage 4/5 output on Render hit the bar? If yes, apply the same MRD treatment to the remaining research stages.
+- **Deferred research stages:** Stage 2 (Geography → market-sizing base), Stage 3 (Market → TAM/SAM/SOM + break-even), Stage 6 (Resistance → behavioral-econ + likelihood×impact). Not started — user not yet aligned.
+- **Other candidates (not started):**
+  1. **Fix broken/risky items** — rotate committed GCP secret, fix latent Stage 2 crash (route.js:549), remove dead code, make Claude/Copilot options honest.
+  2. **Prototype execution layer** — turn one stage from "writes a plan" into "produces a real asset/action" (human-approved). The biggest vision gap.

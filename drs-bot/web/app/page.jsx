@@ -2053,6 +2053,13 @@ export default function App() {
           {/* STAGE 4 STAKEHOLDERS */}
           {activeTab === 4 && activeStageData && (
             <div>
+              {activeStageData.data?.executiveSummary && (
+                <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>Executive Read</span>
+                  <p style={{ fontSize: '14px', margin: '6px 0 0', color: 'var(--ink)' }}>{activeStageData.data.executiveSummary}</p>
+                </div>
+              )}
+
               <div className="card">
                 <h2>Alignment Readiness Score</h2>
                 <div className="grid four mt-4">
@@ -2073,22 +2080,64 @@ export default function App() {
                 <h2>Coalition Stakeholders</h2>
                 <table>
                   <thead>
-                    <tr><th>Name</th><th>Category</th><th>Role</th><th>Priority</th><th>Stance</th><th>Instrument to Secure</th><th>Next Action</th></tr>
+                    <tr><th>Name</th><th>Category</th><th>Quadrant</th><th>Priority</th><th>Stance</th><th>Confidence</th><th>Instrument to Secure</th></tr>
                   </thead>
                   <tbody>
                     {activeStageData.data?.stakeholders?.map((s, i) => (
                       <tr key={i}>
                         <td><strong>{s.name}</strong></td>
                         <td className="muted">{s.category}</td>
-                        <td className="muted">{s.role}</td>
+                        <td className="muted">{s.powerInterestQuadrant}</td>
                         <td><span className="phase p3">{s.priority}</span></td>
                         <td><span className={`phase ${s.stance === 'Champion' ? 'p1' : s.stance === 'Blocker' ? 'p3' : 'p2'}`}>{s.stance}</span></td>
+                        <td className="muted" style={{ fontSize: '11px' }}>{s.stanceEvidence?.confidence}</td>
                         <td className="muted">{s.whatToSecure}</td>
-                        <td><span className="phase p2">{s.nextAction}</span></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              <h2 className="mt-4" style={{ paddingLeft: '8px' }}>Stakeholder Playbook</h2>
+              <div className="grid two">
+                {activeStageData.data?.stakeholders?.map((s, i) => (
+                  <div key={i} className="card" style={{ borderLeft: `4px solid ${s.stance === 'Champion' ? 'var(--green)' : s.stance === 'Blocker' ? '#b42318' : 'var(--accent)'}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <h3 style={{ margin: 0 }}>{s.name}</h3>
+                        <span className="muted" style={{ fontSize: '11px' }}>{s.category}{s.powerInterestQuadrant ? ` · ${s.powerInterestQuadrant}` : ''}</span>
+                      </div>
+                      <span className={`phase ${s.stance === 'Champion' ? 'p1' : s.stance === 'Blocker' ? 'p3' : 'p2'}`}>{s.stance}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '14px' }}>
+                      {s.theirLossAversion && (
+                        <div>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Their Loss Aversion:</span>
+                          <p style={{ fontSize: '13px', margin: '4px 0 0', color: 'var(--ink)' }}>{s.theirLossAversion}</p>
+                        </div>
+                      )}
+                      {s.recykalLeverage && (
+                        <div style={{ background: 'var(--grey-soft)', padding: '10px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)', display: 'block' }}>🛡️ Recykal / Retearn Leverage:</span>
+                          <p style={{ fontSize: '13px', margin: '4px 0 0', fontWeight: 500, color: 'var(--ink)' }}>{s.recykalLeverage}</p>
+                        </div>
+                      )}
+                      {s.concession && (
+                        <div>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Concession Offered:</span>
+                          <p style={{ fontSize: '13px', margin: '4px 0 0', color: 'var(--ink)' }}>{s.concession}</p>
+                        </div>
+                      )}
+                      {s.stanceEvidence?.basis && (
+                        <div>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Evidence ({s.stanceEvidence?.confidence}):</span>
+                          <p style={{ fontSize: '12px', margin: '4px 0 0', fontStyle: 'italic', color: 'var(--ink-soft)' }}>{s.stanceEvidence.basis}</p>
+                        </div>
+                      )}
+                      {s.nextAction && (<div><span className="phase p2">Next: {s.nextAction}</span></div>)}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="grid two">
@@ -2105,12 +2154,36 @@ export default function App() {
                   </ul>
                 </div>
               </div>
+
+              {(activeStageData.data?.assumptions?.length > 0 || activeStageData.data?.dataGaps?.length > 0) && (
+                <div className="grid two">
+                  {activeStageData.data?.assumptions?.length > 0 && (
+                    <div className="card">
+                      <h3>Assumptions</h3>
+                      <ul>{activeStageData.data.assumptions.map((a, i) => <li key={i} className="muted" style={{ fontSize: '13px' }}>{a}</li>)}</ul>
+                    </div>
+                  )}
+                  {activeStageData.data?.dataGaps?.length > 0 && (
+                    <div className="card">
+                      <h3>Data Gaps — Verify via Primary Research</h3>
+                      <ul>{activeStageData.data.dataGaps.map((d, i) => <li key={i} style={{ fontSize: '13px', color: '#b54708' }}>{d}</li>)}</ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {/* STAGE 5 COMPETITORS */}
           {activeTab === 5 && activeStageData && (
             <div>
+              {activeStageData.data?.positioningVerdict && (
+                <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>Positioning Verdict</span>
+                  <p style={{ fontSize: '14px', margin: '6px 0 0', color: 'var(--ink)' }}>{activeStageData.data.positioningVerdict}</p>
+                </div>
+              )}
+
               <div className="card">
                 <h2>Competitor Landscape Comparison</h2>
                 <p className="sub">Side-by-side comparison of active circular operators, waste-tech platforms, and DRS systems in {country}.</p>
@@ -2119,25 +2192,32 @@ export default function App() {
                     <tr>
                       <th>Competitor</th>
                       <th>Segment Type</th>
-                      <th>Market Presence</th>
+                      <th>Presence</th>
+                      <th>Return Rate</th>
                       <th>Core Technology Model</th>
                       <th className="num">Threat Level</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {activeStageData.data?.competitors?.map((c, i) => (
-                      <tr key={i}>
-                        <td><strong>{c.name}</strong></td>
-                        <td>{c.type}</td>
-                        <td>{c.marketShare}</td>
-                        <td className="muted">{c.techCapability}</td>
-                        <td className="num">
-                          <span className={`phase ${c.threatLevel === 'High' ? 'p2' : c.threatLevel === 'Medium' ? 'p1' : 'p3'}`}>
-                            {c.threatLevel}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
+                    {activeStageData.data?.competitors?.map((c, i) => {
+                      const share = typeof c.marketShare === 'object' && c.marketShare !== null
+                        ? (c.marketShare.local || c.marketShare.global || '—')
+                        : c.marketShare;
+                      return (
+                        <tr key={i}>
+                          <td><strong>{c.name}</strong>{share ? <div className="muted" style={{ fontSize: '11px' }}>{share}</div> : null}</td>
+                          <td>{c.type}</td>
+                          <td className="muted">{c.presenceInMarket}</td>
+                          <td className="muted">{c.returnRatePerformance}</td>
+                          <td className="muted">{c.techCapability}</td>
+                          <td className="num">
+                            <span className={`phase ${c.threatLevel === 'High' ? 'p2' : c.threatLevel === 'Medium' ? 'p1' : 'p3'}`}>
+                              {c.threatLevel}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -2149,7 +2229,7 @@ export default function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div>
                         <h3 style={{ margin: 0 }}>{c.name}</h3>
-                        <span className="muted" style={{ fontSize: '11px' }}>{c.type}</span>
+                        <span className="muted" style={{ fontSize: '11px' }}>{c.type}{c.presenceInMarket ? ` · ${c.presenceInMarket}` : ''}</span>
                       </div>
                       <span className={`phase ${c.threatLevel === 'High' ? 'p2' : c.threatLevel === 'Medium' ? 'p1' : 'p3'}`}>
                         Threat: {c.threatLevel}
@@ -2157,6 +2237,12 @@ export default function App() {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                      {c.returnRatePerformance && c.returnRatePerformance !== 'n/a' && (
+                        <div>
+                          <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Return Rate (their schemes):</span>
+                          <p style={{ fontSize: '13px', margin: '4px 0 0', color: 'var(--ink)' }}>{c.returnRatePerformance}</p>
+                        </div>
+                      )}
                       <div>
                         <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Strengths:</span>
                         <p style={{ fontSize: '13px', margin: '4px 0 0', color: 'var(--ink)' }}>{c.strengths}</p>
@@ -2173,6 +2259,37 @@ export default function App() {
                   </div>
                 ))}
               </div>
+
+              {activeStageData.data?.benchmarkSchemes?.length > 0 && (
+                <div className="card">
+                  <h2>Benchmark Schemes — The Performance Bar</h2>
+                  <table>
+                    <thead><tr><th>Scheme</th><th>Return Rate</th><th>Lesson for Recykal</th></tr></thead>
+                    <tbody>
+                      {activeStageData.data.benchmarkSchemes.map((b, i) => (
+                        <tr key={i}><td><strong>{b.scheme}</strong></td><td>{b.returnRate}</td><td className="muted">{b.lesson}</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {(activeStageData.data?.baselineNoDRS || activeStageData.data?.dataGaps?.length > 0) && (
+                <div className="grid two">
+                  {activeStageData.data?.baselineNoDRS && (
+                    <div className="card">
+                      <h3>No-DRS Baseline (The Floor)</h3>
+                      <p style={{ fontSize: '13px', color: 'var(--ink)' }}>{activeStageData.data.baselineNoDRS}</p>
+                    </div>
+                  )}
+                  {activeStageData.data?.dataGaps?.length > 0 && (
+                    <div className="card">
+                      <h3>Data Gaps — Verify</h3>
+                      <ul>{activeStageData.data.dataGaps.map((d, i) => <li key={i} style={{ fontSize: '13px', color: '#b54708' }}>{d}</li>)}</ul>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

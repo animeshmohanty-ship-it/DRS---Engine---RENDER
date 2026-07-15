@@ -18,7 +18,7 @@ CRITICAL GEOGRAPHIC COMPLIANCE WARNING:
 - Ensure the 'recykalMoatStrategy' does not recommend 'UPI payouts' in non-Indian regions (recommend card refunds, bank wires, or standard mobile wallet transfers).
 ` : '';
 
-  return `You are the DRS (Deposit Return System) competitor analyst engine for Recykal.
+  return `You are a senior Competitive Intelligence analyst for Recykal's DRS, benchmarking against both rivals and world-class scheme performance.
 You are generating STAGE 5 — Competitor Analysis & Market Positioning — for a real implementation plan.
 
 CONTEXT:
@@ -29,34 +29,42 @@ CONTEXT:
 - Business objective: ${objective}
 ${nonIndiaWarning}
 
-YOUR TASK:
-Using the search reports provided, identify exactly 5 real competitor entities operating in or entering the market of ${country} (e.g., TOMRA, Sensoneo, Envipco, Karo Sambhav, Kabadiwalla Connect, Plastic Bank, rePurpose, or local waste-tech/EPR firms depending on the country).
+RECYKAL / RETEARN CAPABILITY (the basis of the moat — name the actual product):
+- Retearn (Recykal's tech arm): reklaim Pro / reklaim Mini return units, QR-based tracking, computer-vision material ID, a digital Deposit Refund System, merchant apps.
+- Recykal: nationwide collection/aggregation network + informal-sector integration + EPR/traceability.
 
-For each of the 5 competitors, you must provide:
-1. "name": The actual company or platform name.
-2. "type": (e.g., "Global DRS & RVM Giant", "Digital EPR/PRO platform", "Informal waste digitization SaaS", "Circular offset platform").
-3. "marketShare": A descriptive scale (e.g., "High (Global Leader)", "Medium (Active locally)", "Low (Emerging pilot)").
-4. "techCapability": (e.g., "Hardware-locked RVM networks", "Traceability APIs & wallets", "Manual scrap tracing ERPs").
-5. "strengths": A summary of their competitive advantage.
-6. "weaknesses": A summary of their core vulnerability.
-7. "threatLevel": "High" | "Medium" | "Low" (relative to Recykal).
-8. "recykalMoatStrategy": A specific, actionable technological or operational moat strategy for Recykal to outcompete or integrate this competitor (e.g., offering hardware-agnostic SaaS, instant UPI payouts, or preferred feedstock supply contracts).
+YOUR TASK:
+Using the search reports provided, deliver a competitive picture with THREE parts: (a) 5 direct competitors, (b) world-class benchmark schemes that set the performance bar, and (c) the no-DRS baseline the market sits at today.
+
+RIGOR (mandatory):
+- NEVER fabricate figures. Every market-share and return-rate number must be labelled "(verified)", "(approximate — verify)", or given as an explicit reasoned estimate. If unknown, say "unknown".
+- Identify exactly 5 real competitor entities operating in or entering ${country} (e.g., TOMRA, Sensoneo, Envipco, Karo Sambhav, Kabadiwalla Connect, Plastic Bank, or local waste-tech/EPR firms as relevant).
+- Frame every recykalMoatStrategy around an ACTUAL Recykal/Retearn capability (name reklaim, QR tracking, or informal-network integration) — not a generic "SaaS".
 
 Return ONLY a single valid JSON object (no markdown fences, no prose) matching exactly this schema structure:
 {
+  "positioningVerdict": "<2-3 lines: where Recykal realistically stands and what it should compete on>",
   "competitors": [
     {
-      "name": "Competitor 1",
-      "type": "...",
-      "marketShare": "...",
-      "techCapability": "...",
-      "strengths": "...",
-      "weaknesses": "...",
+      "name": "<actual company/platform name>",
+      "type": "<e.g. Global DRS & RVM incumbent, Digital EPR/PRO platform, Informal-waste digitization SaaS>",
+      "presenceInMarket": "<Live | Entering | No local presence — in ${targetLocation}>",
+      "marketShare": { "global": "<estimate + confidence>", "local": "<estimate + confidence>" },
+      "techCapability": "<their core technology model>",
+      "returnRatePerformance": "<if they operate a scheme, its return rate (approx — verify); else 'n/a'>",
+      "strengths": "<their competitive advantage>",
+      "weaknesses": "<their core vulnerability>",
       "threatLevel": "High|Medium|Low",
-      "recykalMoatStrategy": "..."
+      "recykalMoatStrategy": "<specific moat naming a real Recykal/Retearn capability>"
     }
-    // Repeat for exactly 5 competitors
-  ]
+    // exactly 5 competitors
+  ],
+  "benchmarkSchemes": [
+    { "scheme": "<mature high-performing scheme, e.g. Germany DPG, Lithuania>", "returnRate": "<approx % — verify>", "lesson": "<what Recykal should learn/apply>" }
+    // 2-3 benchmark schemes
+  ],
+  "baselineNoDRS": "<current beverage-container recovery rate in ${targetLocation} without DRS — the floor DRS must beat, labelled as estimate>",
+  "dataGaps": ["<figures that remain unverified and need primary sourcing>"]
 }
 `;
 }
