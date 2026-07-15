@@ -217,17 +217,17 @@ Each stage is specified with the same skeleton:
 
 DMS workflow mapping (where the 9 DMS workflows live across the stages):
 
-| DMS Workflow | Lives in |
+| DMS Workflow | Lives in (12-Stage Build Spec) |
 |---|---|
 | WF1 Research Impact Assessment | Stage 3 Market Intelligence |
 | WF2 Stakeholder Mapping | Stage 4 Stakeholder Intelligence |
-| WF3 Narrative Development | Stage 6 DRS Marketing System |
-| WF4 Stakeholder Alignment | Stage 6 (+ Stage 4 inputs) |
-| WF5 Consumer Awareness | Stage 9 Consumer Engagement |
-| WF6 Launch Readiness (T-minus) | Stage 6 / Execution (T-90→T+14) |
-| WF7 Reputation Management | Stage 10 / post-launch |
-| WF8 Collection Optimization | Stage 12 Operations (bot-tracked) |
-| WF9 Narrative Amplification | Stage 15 Knowledge Hub |
+| WF3 Narrative Development | Stage 6 Narrative & Alignment |
+| WF4 Stakeholder Alignment | Stage 6 Narrative & Alignment |
+| WF5 Consumer Awareness | Stage 8 Execution (WS5) + Stage 9 Engagement |
+| WF6 Launch Readiness (T-minus) | Stage 8 Execution (WS7) |
+| WF7 Reputation Management | Stage 10 Reputation Management |
+| WF8 Collection Optimization | Stage 11 Performance & KPI |
+| WF9 Narrative Amplification | Stage 12 Knowledge / Reusable Blueprint |
 
 ---
 
@@ -481,6 +481,7 @@ DMS workflow mapping (where the 9 DMS workflows live across the stages):
   - **Owner:** DMS Pod Lead + Operations.
   - **Claude recommendation:** Go / Go-with-conditions / Delay.
   - **Branch logic (cardinal rule is decisive):**
+    - IF Consumer Awareness readiness (Marketing) > Infrastructure/Machine readiness (Ops) → **CARDINAL RULE VIOLATION → NO-GO BLOCKER**.
     - IF machine readiness < threshold at T-15 OR retail readiness < threshold → **No-Go or Conditional (limited zones)**.
     - IF Go → proceed to launch + post-launch.
     - IF Delay → reset T-minus, loop readiness items.

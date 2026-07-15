@@ -71,6 +71,7 @@
 - **Grounded:** always cites sources, uses real data, flags estimates — never invents facts.
 - **Guardrailed:** AI **advises and drafts; the pod leader approves and executes** (clear read-vs-act line).
 - **One assistant, many contexts:** the same copilot everywhere, auto-scoped to the open tab.
+- **Governance & Cadence Engine:** The AI automatically prepares agendas for the Weekly DMS Workflow Standup and Monthly Health Review, pulling the biggest friction barriers and assigning next actions based on the active tab's data.
 
 **History tab (cross-cutting):**
 - Once a project's plan is prepared, it is **saved**. A top-level **History tab** lists all projects (e.g. DRS-GOA-001, DRS-TAM-001) with metadata — state · implementation model · materials · date · status.
@@ -342,7 +343,27 @@ The 7 fronts:
 
 ---
 
-### Stage 6 — Execution Blueprint (master on-ground plan)  **[LOCKED]**
+### Stage 6 — Narrative & Alignment  **[LOCKED]**
+
+**Purpose:** Generate the core story, persona messages, and FAQ kits before going into execution. Ensures every stakeholder repeats the same evidence-backed narrative.
+
+**Ask:** minimal — pod leader reviews and approves the narrative direction.
+
+**Draw from:** Stage 3 (evidence, proof points) · Stage 4 (stakeholders) · Stage 5 (consumer & government resistance).
+
+**Generate (+ docs):** Narrative House; Persona Messaging Matrix; FAQ Kit; Localized Message Bank (based on Stage 1 languages). *Generated documents:* Narrative House v1 · FAQ Kit · Stakeholder Briefing Kit.
+
+**Show — exactly this layout:**
+**① Narrative summary:** Core story · primary proof points · local pride/environmental angle.
+**② Persona matrix:** Stakeholder category → tailored message → addressing specific resistance.
+**③ FAQ kit:** Anticipated questions + official answers (filterable by audience).
+**④ Commitment tracker:** To be filled post-alignment workshops.
+
+**Score:** **Narrative Readiness %** (based on localization completeness and persona coverage).
+
+---
+
+### Stage 7 — Execution Blueprint (master on-ground plan)  **[LOCKED]**
 
 **Purpose:** The master, sequenced **on-ground action plan** — all 7 workstreams needed to put the scheme on the ground, **phased by material × geography × readiness**, with owners, timelines, dependencies, and key actions. The pod leader's "do this, then this, on the ground" roadmap. Each workstream drills into its own detailed stage (7+).
 
@@ -394,7 +415,7 @@ Critical path: Excise mandate blocks everything downstream.
 
 ---
 
-### Stage 7 — Execution (ALL workstreams in ONE stage)  **[STRUCTURE LOCKED]**
+### Stage 8 — Execution (ALL workstreams in ONE stage)  **[STRUCTURE LOCKED]**
 
 **Why one stage:** all 7 workstreams live in this **single Execution stage as tabs/sections — NOT 7 separate stages** (avoids stage sprawl). The master timeline & critical path come from Stage 6; this stage holds the **detailed plan + generated documents** for each workstream.
 
@@ -505,16 +526,16 @@ Every workstream below follows the same pattern: **Purpose · Ask · Draw from �
 - **Purpose:** go-live readiness across all workstreams, launch execution, monitoring, and **scale to the next phase** (geography + material).
 - **Ask:** confirm go-live date.
 - **Draw from:** all workstreams' readiness.
-- **Generate (+ docs):** launch readiness board; go-live runbook; launch/activation event plan; post-launch monitoring; next-phase rollout (next talukas + next material). *Generated documents:* launch checklist · go-live runbook · event plan.
-- **Show:** ① launch readiness board (WS1–6 status + overall go/no-go read — informational, no gate) · ② go-live runbook · ③ launch event/activation plan · ④ post-launch monitoring (return rate, participation) · ⑤ next-phase plan (Phase 2 geography + next material).
-- **Score:** **Launch Readiness %** (informational).
+- **Generate (+ docs):** Strict **T-Minus Launch Readiness Tracker** (T-90, T-60, T-30, T-15); go-live runbook; launch/activation event plan. *Generated documents:* Launch Go/No-Go Checklist · runbook · event plan.
+- **Show:** ① Launch readiness board (T-minus milestones with owners and status) · ② **Go/No-Go Gate Indicator (AI Auditor)**: visually flags a **NO-GO BLOCKER** if Consumer Awareness readiness (WS5) exceeds Infrastructure readiness (WS4) — enforcing the Cardinal Rule · ③ post-launch monitoring · ④ next-phase plan.
+- **Score:** **Launch Readiness %** (hard gate metric).
 - **Model-aware:** both.
 
-*All seven workstreams are tabs within Stage 7 — no separate stages.*
+*All seven workstreams are tabs within Stage 8 — no separate stages.*
 
 ---
 
-### Stage 8 — Engagement & BTL  **[LOCKED]**
+### Stage 9 — Engagement & BTL  **[LOCKED]**
 
 **Purpose:** The location-by-location on-ground engagement & **below-the-line activation plan** to drive public participation (return behaviour). Built on a **comprehensive location-data layer**, with a BTL activity plan per location. This is the **detailed execution layer** that WS5 (the high-level awareness summary, in Stage 7) references.
 
@@ -555,7 +576,26 @@ Every workstream below follows the same pattern: **Purpose · Ask · Draw from �
 
 ---
 
-### Stage 9 — Performance & KPI  **[LOCKED]**
+### Stage 10 — Reputation Management  **[LOCKED]**
+
+**Purpose:** Active post-launch crisis handling and sentiment tracking to protect trust. Rapid response to negative media or operational friction.
+
+**Ask:** pod leader logs any field incidents or negative press signals.
+
+**Draw from:** Live media monitoring · WS6 operational friction · Stage 5 resistance register.
+
+**Generate (+ docs):** Sentiment trend map; Misinformation flags; **Rapid Response Briefs** with enforced SLA. *Generated documents:* Rapid Response statements · Retail Testimonial capture forms · Milestone press releases.
+
+**Show — exactly this layout:**
+**① Sentiment tracker:** Positive/neutral/negative trendline post-launch.
+**② Issue Log:** Open issues · risk level · SLA status · owner.
+**③ Rapid Response panel:** AI-drafted statements ready for approval to counter misinformation.
+
+**Score:** **Reputation Trust Score (0–100)**.
+
+---
+
+### Stage 11 — Performance & KPI  **[LOCKED]**
 
 **Purpose:** Define the complete performance framework — **North Star + KPI tree + targets + formulas + data sources + cadence + owners** — per material + per taluka. This is *what success looks like and how it's measured.* **Roadmap-not-tracker:** it **defines** the measurement (targets/formulas/sources); *once live* it shows **actuals vs targets** from connectors — it is not a standalone status board.
 
@@ -592,7 +632,7 @@ Each KPI: **name · definition · formula · data source · frequency · target 
 
 ---
 
-### Stage 10 — Knowledge / Reusable Blueprint  **[LOCKED]**
+### Stage 12 — Knowledge / Reusable Blueprint  **[LOCKED]**
 
 **Purpose:** The **compounding intelligence layer.** Capture every completed geography → **enrich the bot's Knowledge Base** so future plans reuse proven precedent → and produce a **human-facing reusable blueprint.** Build once in Goa → clone faster into the next geography (Tamil Nadu, UK…).
 
