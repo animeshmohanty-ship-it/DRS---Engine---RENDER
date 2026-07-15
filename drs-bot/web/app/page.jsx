@@ -385,7 +385,7 @@ export default function App() {
     setSelectedWorkstreams(setupMeta.selectedWorkstreams || [1, 2, 3, 4, 5, 6, 7]);
     setCustomConstraints(setupMeta.customConstraints || '');
 
-    setActiveTab(2); // Jump to Geography Intel
+    setResearchTab(2); setActiveTab('research'); // Jump to Market Research
     setError(null);
   };
 
@@ -679,7 +679,7 @@ export default function App() {
     try {
       setLoading({ 1: true });
       await saveProjectToStorage(projectStages);
-      setActiveTab(2); // Unlocked and proceed to Stage 2
+      setResearchTab(2); setActiveTab('research'); // Unlocked → open Market Research
     } catch (e) {
       setError(e.message);
     } finally {
@@ -687,8 +687,10 @@ export default function App() {
     }
   };
 
-  // Collapsible "Market Research" phase group in the sidebar (stages 2-6).
-  const [mrCollapsed, setMrCollapsed] = useState(false);
+  // Market Research combined page: which sub-tab (stage 2-6) is showing + generate-all state.
+  const [researchTab, setResearchTab] = useState(2);
+  const [researchGenerating, setResearchGenerating] = useState(false);
+  const [researchProgress, setResearchProgress] = useState('');
 
   // Signature of the current Setup brief. Stages are stamped with this at
   // generation time; if the brief later changes, the stamp no longer matches
@@ -988,7 +990,25 @@ export default function App() {
     }
   };
 
-  const activeStageData = projectStages[`stage${activeTab}`];
+  // On the Market Research page the "active stage" is the selected sub-tab.
+  const activeStageNum = activeTab === 'research' ? researchTab : activeTab;
+  const activeStageData = projectStages[`stage${activeStageNum}`];
+
+  // Generate all selected research stages (2-6) in dependency order (2 -> 6).
+  const generateAllResearch = async () => {
+    const toRun = [2, 3, 4, 5, 6].filter((n) => selectedStages.includes(n));
+    setResearchGenerating(true);
+    try {
+      for (const n of toRun) {
+        setResearchTab(n);
+        setResearchProgress(`Generating Stage ${n} — ${STAGES.find((s) => s.num === n)?.name}…`);
+        await generateStage(n);
+      }
+      setResearchProgress('All research generated ✓');
+    } finally {
+      setResearchGenerating(false);
+    }
+  };
 
   return (
     <>
@@ -1055,19 +1075,18 @@ export default function App() {
               <>
                 {setupStage && renderStageItem(setupStage)}
 
-                {/* MARKET RESEARCH — collapsible phase group (stages 2-6) */}
+                {/* MARKET RESEARCH — single combined page (stages 2-6 live inside as sub-tabs) */}
                 {researchStages.length > 0 && (
                   <div
-                    className="menu-item"
-                    style={{ cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.03em', color: 'var(--ink-soft)' }}
-                    onClick={() => setMrCollapsed(!mrCollapsed)}
+                    className={`menu-item ${activeTab === 'research' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                    style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                    onClick={() => isSetupDone && setActiveTab('research')}
                   >
-                    <span className="badge-icon" style={{ background: 'transparent' }}>{mrCollapsed ? '▶' : '▼'}</span>
+                    <span className="badge-icon">MR</span>
                     <span>Market Research</span>
                     {researchStale && <span title="A research stage is out of date — regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
                   </div>
                 )}
-                {!mrCollapsed && researchStages.map((s) => renderStageItem(s, true))}
 
                 {/* Stages 7-15 — unchanged, flat (phases to be designed later) */}
                 {laterStages.map((s) => renderStageItem(s))}
@@ -1097,7 +1116,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'history' ? 'Project History' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1146,13 +1165,13 @@ export default function App() {
               <option value="claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
             </select>
             {activeTab !== 'history' && activeTab !== 1 && (
-              <button 
-                className="copilot-toggle-btn" 
+              <button
+                className="copilot-toggle-btn"
                 style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
-                disabled={loading[activeTab]} 
-                onClick={() => generateStage(activeTab)}
+                disabled={loading[activeStageNum]}
+                onClick={() => generateStage(activeStageNum)}
               >
-                {loading[activeTab] ? '🔄 Regenerating...' : '🔄 Regenerate Stage'}
+                {loading[activeStageNum] ? '🔄 Regenerating...' : '🔄 Regenerate Stage'}
               </button>
             )}
             <button className="copilot-toggle-btn" onClick={() => setCopilotCollapsed(!copilotCollapsed)}>
@@ -1164,7 +1183,7 @@ export default function App() {
         <div className="workspace-content">
           {error && <div className="err" style={{ marginBottom: 16 }}><b>Error:</b> {error}</div>}
 
-          {activeTab !== 'history' && activeTab !== 1 && isStageStale(activeTab) && (
+          {activeTab !== 'history' && activeTab !== 1 && isStageStale(activeStageNum) && (
             <div className="err" style={{ marginBottom: 16, background: '#fff7ed', borderColor: '#fdba74', color: '#9a3412' }}>
               ⚠️ <b>Out of date:</b> your Setup has changed since this stage was generated. The data below reflects the old brief — click <b>Regenerate Stage</b> to sync it with the current Setup.
             </div>
@@ -1886,15 +1905,50 @@ export default function App() {
             </div>
           )}
 
+          {/* MARKET RESEARCH — combined page header: sub-tabs + Generate All Research */}
+          {activeTab === 'research' && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {STAGES.filter((s) => [2, 3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num)).map((s) => {
+                    const has = !!projectStages[`stage${s.num}`];
+                    const stale = isStageStale(s.num);
+                    return (
+                      <button
+                        key={s.num}
+                        onClick={() => setResearchTab(s.num)}
+                        style={{
+                          padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                          border: '1px solid var(--line)',
+                          background: researchTab === s.num ? 'var(--accent)' : 'var(--grey-soft)',
+                          color: researchTab === s.num ? '#fff' : 'var(--ink)',
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                        }}
+                      >
+                        <span>{s.num}. {s.name}</span>
+                        {has && !stale && <span style={{ color: researchTab === s.num ? '#fff' : 'var(--green)' }}>✓</span>}
+                        {stale && <span title="Out of date">⚠️</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button className="btn" onClick={generateAllResearch} disabled={researchGenerating}>
+                  {researchGenerating ? <><span className="spinner" /> Generating…</> : '⚡ Generate All Research'}
+                </button>
+              </div>
+              {researchGenerating && <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{researchProgress}</div>}
+            </div>
+          )}
+
           {/* GENERATION STATE WRAPPER FOR STAGES 2-15 (Bypassed for Stage 11) */}
-          {typeof activeTab === 'number' && activeTab > 1 && activeTab !== 11 && !activeStageData && (
+          {(typeof activeTab === 'number' || activeTab === 'research') && activeStageNum > 1 && activeStageNum !== 11 && !activeStageData && (
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <h2>Stage {activeTab} is not yet generated</h2>
+              <h2>{STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
               <p className="sub">The engine will pull real datasets and formulate the roadmap for this stage.</p>
-              <button className="btn" onClick={() => generateStage(activeTab)} disabled={loading[activeTab]}>
-                {loading[activeTab] ? <><span className="spinner" /> Generating...</> : `Generate Stage ${activeTab} Roadmap`}
+              <button className="btn" onClick={() => generateStage(activeStageNum)} disabled={loading[activeStageNum]}>
+                {loading[activeStageNum] ? <><span className="spinner" /> Generating...</> : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`}
               </button>
-              {loading[activeTab] && (
+              {loading[activeStageNum] && (
                 <div className="muted" style={{ marginTop: 12 }}>
                   Querying search grounding databases & executing LLM structure checks. This can take ~20–45s.
                 </div>
@@ -1903,7 +1957,7 @@ export default function App() {
           )}
 
           {/* STAGE 2 GEOGRAPHY INTEL */}
-          {activeTab === 2 && activeStageData && (
+          {activeStageNum === 2 && activeStageData && (
             <div>
               <div className="card">
                 <h2>Geography Summary</h2>
@@ -2062,7 +2116,7 @@ export default function App() {
           )}
 
           {/* STAGE 3 MARKET INTEL */}
-          {activeTab === 3 && activeStageData && (
+          {activeStageNum === 3 && activeStageData && (
             <div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <span className={`chip ${materialFilter === 'All' ? 'on' : ''}`} onClick={() => setMaterialFilter('All')}>All Materials</span>
@@ -2117,7 +2171,7 @@ export default function App() {
           )}
 
           {/* STAGE 4 STAKEHOLDERS */}
-          {activeTab === 4 && activeStageData && (
+          {activeStageNum === 4 && activeStageData && (
             <div>
               {activeStageData.data?.executiveSummary && (
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
@@ -2241,7 +2295,7 @@ export default function App() {
           )}
 
           {/* STAGE 5 COMPETITORS */}
-          {activeTab === 5 && activeStageData && (
+          {activeStageNum === 5 && activeStageData && (
             <div>
               {activeStageData.data?.positioningVerdict && (
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
@@ -2367,7 +2421,7 @@ export default function App() {
           )}
 
           {/* STAGE 6 RESISTANCE */}
-          {activeTab === 6 && activeStageData && (
+          {activeStageNum === 6 && activeStageData && (
             <div>
               <div className="card">
                 <h2>Resistance Index</h2>
