@@ -701,7 +701,7 @@ export async function POST(req) {
             {
               front: 'Government / Regulatory',
               material: 'All',
-              rootCause: 'Rigorous compliance oversight and active Extended Producer Responsibility (EPR) regulations.',
+              rootCause: 'Rigorous compliance oversight and active packaging-waste / deposit-return regulations.',
               impact: 'Requires strict license compliance reporting.',
               probability: 'High',
               severity: 'High',

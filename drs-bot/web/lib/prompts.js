@@ -26,7 +26,7 @@ export function buildStagePrompt(stageNum, input, projectData = {}, action = nul
   const nonIndiaWarning = country.toLowerCase() !== 'india' ? `
 CRITICAL GEOGRAPHIC COMPLIANCE WARNING:
 - The target country is ${country} (NOT India).
-- You MUST NOT use any Indian regulatory names, terminology, or examples (such as SPCB, State Pollution Control Board, Gram Panchayat, Panchayat, Excise Commissioner, Miramar Beach, Dabolim, or Indian waste PROs like Karo Sambhav).
+- You MUST NOT use any Indian regulatory names, terminology, or examples (such as SPCB, State Pollution Control Board, Gram Panchayat, Panchayat, Excise Commissioner, Miramar Beach, or Dabolim).
 - Instead, map them to the real local equivalents in ${country} (e.g. EU regulations, National/Local Environmental Agencies, credit/debit card transfers or standard bank wires instead of UPI, and actual local cities/towns in ${country}).
 ` : '';
 
@@ -102,7 +102,7 @@ ${projectData.stage3 ? `STAGE 3 EVIDENCE (opportunity scores — use to tailor e
 
 RECYKAL / RETEARN CAPABILITY (use as the concrete leverage you offer stakeholders — name the actual product):
 - Retearn (Recykal's technology arm): reklaim Pro and reklaim Mini return units; QR-based container tracking; computer-vision material ID; connected-device network; a digital Deposit Refund System with secured payouts; merchant scanner apps.
-- Recykal: nationwide collection/aggregation network, marketplace, and EPR/traceability muscle.
+- Recykal: nationwide collection/aggregation network, marketplace, and traceability muscle (already running a live DRS deployment in Goa).
 
 YOUR TASK:
 Use Google Search grounding to map the real stakeholders (government bodies, producers/brands, trade associations, waste recyclers, AND the informal collection sector) in ${targetLocation} for ${materials.join(', ')}.
@@ -165,7 +165,7 @@ Highlight specific friction points in ${targetLocation} (e.g., tourist transienc
 
 CRITICAL EVALUATION RULES (LOGICAL REASONING ANCHORS):
 1. Government / Regulatory Risk:
-   - Examine environmental regulations in ${targetLocation}. If there are active Extended Producer Responsibility (EPR) laws, packaging recovery targets, or single-use plastic regulations (like the Plastic Waste Management Rules), the Government/Regulatory risk for PET and MLP must be evaluated as HIGH.
+   - Examine environmental regulations in ${targetLocation}. If there are active deposit/return mandates, packaging recovery targets, or single-use plastic regulations (like the Plastic Waste Management Rules), the Government/Regulatory risk for PET and MLP must be evaluated as HIGH.
 2. Retail / Trade Risk:
    - Cross-reference Stage 2 touchpoint counts. If unorganized retail stores (traditional Kiranas/small shops) outnumber organized supermarkets (modern trade) by more than 3:1, the Retail/Trade risk must be evaluated as HIGH across all materials due to acute storage space constraints, cash-flow friction, and manual collection bags logistics.
 3. Political / Consumer Risk:
@@ -839,10 +839,10 @@ You are performing web search research for STAGE 6 — Resistance Intelligence �
 YOUR TASK:
 Perform a web search to find actual active local issues, regulatory friction points, and political resistance for deploying a DRS in "${targetLocation}" for: ${materials.join(', ')}.
 Specifically research local news, government filings, and trade association press releases regarding:
-1. Government/Regulatory: Local excise regulations (e.g. Excise Department constraints on liquor bottles) and plastic waste/EPR regulations (e.g. Pollution Control Board fines or targets on PET and MLP).
+1. Government/Regulatory: Local excise regulations (e.g. Excise Department constraints on liquor bottles) and plastic waste regulations (e.g. Pollution Control Board fines or deposit/recovery targets on PET and MLP).
 2. Retail/Trade: Local shopkeeper/merchant association protests against empty container storage space and deposit handling costs.
 3. Consumer: Tourist behavior, compliance resistance in returning bottles, and public litter habits.
-4. Brand: Beverage producer pushback against PRO registration fees and recycling credit costs.
+4. Brand: Beverage producer pushback against deposit float costs and label/QR compliance costs for the deposit scheme.
 5. Media: Local environmental activist campaigns, beach or city litter reports, and press coverage.
 6. Political: Lobbying by tourist associations, restaurant lobbies, and municipal council discussions.
 7. Operational: Waste picker (kabadiwala) concerns over losing high-value scrap materials to automated RVMs.
@@ -893,7 +893,7 @@ Compile the finalized resistance index, risk register, and predicted threats.
 You must follow these strict logical reasoning rules to assign the SEVERITY ("High"|"Medium"|"Low") of each front:
 
 1. Government / Regulatory Front:
-   - Examine the search report. If the target region has active packaging waste rules, EPR mandates, or strict liquor licensing controls, evaluate Government/Regulatory severity as HIGH for those materials (especially PET, MLP, and Liquor).
+   - Examine the search report. If the target region has active packaging waste rules, deposit/return mandates, or strict liquor licensing controls, evaluate Government/Regulatory severity as HIGH for those materials (especially PET, MLP, and Liquor).
 2. Retail / Trade Front:
    - If traditional/unorganized shops dominate the Stage 2 touchpoints, evaluate Retail/Trade severity as HIGH for all materials because small outlets lack storage space and reverse-logistics infrastructure.
 3. Consumer / Political Front:

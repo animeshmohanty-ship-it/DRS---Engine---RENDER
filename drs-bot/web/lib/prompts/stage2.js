@@ -74,7 +74,7 @@ function getMRFAnchors(country, state) {
   if (cLower === 'ireland') {
     return [
       `EPA (Environmental Protection Agency Ireland) licensed waste facilities in ${target}`,
-      `REPAK Producer Responsibility Organisation registered collection points in ${target}`,
+      `REPAK-registered packaging collection points in ${target}`,
       `Local Authority Household Waste Recycling Centres (HWRCs) in ${target}`
     ];
   }
@@ -90,7 +90,7 @@ function getMRFAnchors(country, state) {
   // Generic international fallback
   return [
     `National Environment Agency registered waste sorting and MRF facilities in ${target}`,
-    `Producer Responsibility Organisation (PRO) certified collection points in ${target}`,
+    `Registered packaging / deposit-return collection points in ${target}`,
     `Municipal recycling depot count registered under local government authority in ${target}`
   ];
 }

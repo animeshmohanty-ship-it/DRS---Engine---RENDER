@@ -2296,12 +2296,19 @@ export default function App() {
 
               {activeStageData.data?.benchmarkSchemes?.length > 0 && (
                 <div className="card">
-                  <h2>Benchmark Schemes — The Performance Bar</h2>
+                  <h2>Domestic Benchmarks & Precedents ({country})</h2>
+                  <p className="sub">In-country DRS schemes and precedents only — the relevant performance reference for {state || country}.</p>
                   <table>
-                    <thead><tr><th>Scheme</th><th>Return Rate</th><th>Lesson for Recykal</th></tr></thead>
+                    <thead><tr><th>Scheme / Precedent</th><th>Location</th><th>Type</th><th>Return Rate</th><th>Lesson for Recykal</th></tr></thead>
                     <tbody>
                       {activeStageData.data.benchmarkSchemes.map((b, i) => (
-                        <tr key={i}><td><strong>{b.scheme}</strong></td><td>{b.returnRate}</td><td className="muted">{b.lesson}</td></tr>
+                        <tr key={i}>
+                          <td><strong>{b.scheme}</strong></td>
+                          <td className="muted">{b.location}</td>
+                          <td className="muted">{b.type}</td>
+                          <td>{b.returnRate}</td>
+                          <td className="muted">{b.lesson}</td>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
@@ -3543,8 +3550,8 @@ export default function App() {
                     </div>
                     <div style={{ width: '1px', background: '#e2e8f0' }} />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '600' }}>EPR Objective</span>
-                      <strong style={{ fontSize: '14px', color: '#334155', marginTop: '4px' }}>Clean Sourcing & Compliance</strong>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '600' }}>DRS Objective</span>
+                      <strong style={{ fontSize: '14px', color: '#334155', marginTop: '4px' }}>Deposit Return & Recovery</strong>
                     </div>
                     <div style={{ width: '1px', background: '#e2e8f0' }} />
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -3686,7 +3693,7 @@ export default function App() {
                 // Determine dynamic competitors or fallback locally based on geography
                 const fallbackCompetitors = [
                   { name: 'Global DRS Operators (e.g. TOMRA)', type: 'Hardware-locked RVM giants', recykalMoatStrategy: 'Hardware-agnostic SaaS platform integration' },
-                  { name: isIndia ? 'Digital PRO Platforms (e.g. Karo Sambhav)' : 'Regional Compliance Platforms', type: 'Compliance-led reporting', recykalMoatStrategy: 'Real-time transaction tracing & tracking' },
+                  { name: isIndia ? 'Digital Deposit-Scheme Platforms' : 'Regional Deposit Platforms', type: 'Software-led return tracking', recykalMoatStrategy: 'Real-time transaction tracing & tracking' },
                   { name: 'Social Offset Platforms', type: 'PR-led collection offset offsetting', recykalMoatStrategy: `Direct ${level3Name} logistics integrations` }
                 ];
                 
