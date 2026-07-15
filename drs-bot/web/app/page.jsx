@@ -687,6 +687,9 @@ export default function App() {
     }
   };
 
+  // Collapsible "Market Research" phase group in the sidebar (stages 2-6).
+  const [mrCollapsed, setMrCollapsed] = useState(false);
+
   // Signature of the current Setup brief. Stages are stamped with this at
   // generation time; if the brief later changes, the stamp no longer matches
   // and the stage is flagged stale (non-destructive — data is kept).
@@ -1024,24 +1027,53 @@ export default function App() {
 
           <div style={{ padding: '8px 14px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-soft)' }}>ROADMAP FLOW</div>
 
-          {STAGES.map((s) => {
-            if (s.num !== 1 && !selectedStages.includes(s.num)) return null;
+          {(() => {
             const isSetupDone = projectId !== '';
-            const isUnlocked = s.num === 1 || isSetupDone;
-            const stale = isUnlocked && s.num !== 1 && isStageStale(s.num);
+            const renderStageItem = (s, indent = false) => {
+              const isUnlocked = s.num === 1 || isSetupDone;
+              const stale = isUnlocked && s.num !== 1 && isStageStale(s.num);
+              return (
+                <div
+                  key={s.num}
+                  className={`menu-item ${activeTab === s.num ? 'active' : ''} ${!isUnlocked ? 'disabled' : ''}`}
+                  style={{ opacity: isUnlocked ? 1 : 0.5, pointerEvents: isUnlocked ? 'auto' : 'none', paddingLeft: indent ? '30px' : undefined }}
+                  onClick={() => isUnlocked && setActiveTab(s.num)}
+                >
+                  <span className="badge-icon">{s.num}</span>
+                  <span>{s.name}</span>
+                  {stale && <span title="Out of date — Setup changed since this stage was generated. Regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                </div>
+              );
+            };
+
+            const setupStage = STAGES.find((s) => s.num === 1);
+            const researchStages = STAGES.filter((s) => [2, 3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num));
+            const laterStages = STAGES.filter((s) => s.num >= 7 && selectedStages.includes(s.num));
+            const researchStale = isSetupDone && researchStages.some((s) => isStageStale(s.num));
+
             return (
-              <div
-                key={s.num}
-                className={`menu-item ${activeTab === s.num ? 'active' : ''} ${!isUnlocked ? 'disabled' : ''}`}
-                style={{ opacity: isUnlocked ? 1 : 0.5, pointerEvents: isUnlocked ? 'auto' : 'none' }}
-                onClick={() => isUnlocked && setActiveTab(s.num)}
-              >
-                <span className="badge-icon">{s.num}</span>
-                <span>{s.name}</span>
-                {stale && <span title="Out of date — Setup changed since this stage was generated. Regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
-              </div>
+              <>
+                {setupStage && renderStageItem(setupStage)}
+
+                {/* MARKET RESEARCH — collapsible phase group (stages 2-6) */}
+                {researchStages.length > 0 && (
+                  <div
+                    className="menu-item"
+                    style={{ cursor: 'pointer', fontWeight: 700, textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.03em', color: 'var(--ink-soft)' }}
+                    onClick={() => setMrCollapsed(!mrCollapsed)}
+                  >
+                    <span className="badge-icon" style={{ background: 'transparent' }}>{mrCollapsed ? '▶' : '▼'}</span>
+                    <span>Market Research</span>
+                    {researchStale && <span title="A research stage is out of date — regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                  </div>
+                )}
+                {!mrCollapsed && researchStages.map((s) => renderStageItem(s, true))}
+
+                {/* Stages 7-15 — unchanged, flat (phases to be designed later) */}
+                {laterStages.map((s) => renderStageItem(s))}
+              </>
             );
-          })}
+          })()}
         </div>
         <div style={{ 
           padding: '16px 22px', 
