@@ -212,14 +212,20 @@ function validateStageData(stageNum, data) {
     case 6:
       return Array.isArray(data.register) && data.register.length > 0;
     case 7:
+      return !!(data.corePillars && Array.isArray(data.frictionPersonas) && Array.isArray(data.hostileObjectionKit));
+    case 8:
       return !!(data.regulatoryReadiness && Array.isArray(data.brandOnboarding) && Array.isArray(data.touchpointOnboarding));
-    case 9:
-      return Array.isArray(data.branding) && Array.isArray(data.acquisition) && Array.isArray(data.engagement);
     case 10:
-      return Array.isArray(data.locations) && Array.isArray(data.btlActivities);
+      return Array.isArray(data.tMinusTracker) && Array.isArray(data.cardinalRuleBlockers);
     case 11:
-      return Array.isArray(data.kpis) && data.kpis.length > 0;
+      return Array.isArray(data.branding) && Array.isArray(data.acquisition) && Array.isArray(data.engagement);
     case 12:
+      return Array.isArray(data.locations) && Array.isArray(data.btlActivities);
+    case 13:
+      return Array.isArray(data.slaThresholds) && Array.isArray(data.rapidResponseTemplates);
+    case 14:
+      return Array.isArray(data.kpis) && data.kpis.length > 0;
+    case 15:
       return data.playbook && typeof data.playbook === 'object';
     default:
       return true;
@@ -803,9 +809,9 @@ export async function POST(req) {
       // Stages 3, 4, 6 to 11 logic
       const prompt = buildStagePrompt(stageNum, input, projectData, action);
       
-      // Factual research stages (3, 4, 6, 10) require Google Search Grounding to pull actual stats
-      // Other stages (7, 8, 9, 11, 12) are logical/SOP templates and run at maximum speed (under 2s)
-      const researchStages = [3, 4, 6, 10];
+      // Factual research stages (3, 4, 6, 12) require Google Search Grounding to pull actual stats
+      // Other stages are logical/SOP templates and run at maximum speed
+      const researchStages = [3, 4, 6, 12];
       const isResearchStage = researchStages.includes(stageNum);
 
       console.log(`[Stage ${stageNum}] Generating using model ${vertexModelOverride || geminiModelOverride || 'gemini-3.1-pro-preview'} | Grounding: ${isResearchStage}`);

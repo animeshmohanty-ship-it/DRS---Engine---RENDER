@@ -180,12 +180,53 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
 }`;
 
     case 7: {
+      const level3Name = isNat ? 'Municipality' : (projectData?.stage2?.intel?.geoSchema?.level3 || 'Gram Panchayat');
+      const population = projectData?.stage2?.intel?.stateSummary?.population?.value || 1500000;
+      
+      return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
+You are generating STAGE 7 — Narrative & Alignment — acting as a ruthless, highly pragmatic Public Affairs and Economics strategist.
+
+${contextHeader}
+${projectData.stage4 ? `STAKEHOLDERS:\n${JSON.stringify(projectData.stage4)}` : ''}
+
+TONE MANDATE:
+Do NOT use generic corporate buzzwords like "synergy", "green", "empower", or "eco-friendly". You are speaking to cut-throat local politicians and tired shopkeepers. Be ruthless, economic, and grounded in raw political and financial reality. Frame the narrative around LOSS AVERSION and ECONOMIC THREAT/OPPORTUNITY.
+
+YOUR TASK:
+Create the Narrative Core Pillars, Friction Personas, and Hostile Objection Kit to align aggressive stakeholders in ${targetLocation}.
+
+Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
+{
+  "corePillars": {
+    "triggerEvent": "The burning platform: Why does ${targetLocation} need DRS right now? (e.g. 'impending landfill collapse' or 'tourist revenue threat due to litter')",
+    "economicAnchor": "How does this make or save money for the state/businesses (2 sentences)?",
+    "politicalWin": "The exact 'ribbon-cutting' headline local politicians can claim."
+  },
+  "frictionPersonas": [
+    {
+      "personaName": "A specific, high-friction opponent (e.g., 'Skeptical Liquor Distributor Union', 'Coastal Shack Owners')",
+      "coreFear": "Their underlying loss-aversion trigger (e.g., 'Fear of bearing deposit float costs')",
+      "counterNarrative": "The aggressive, economic script to dismantle their fear.",
+      "concession": "What the DRS operator is willing to compromise on to win them over (e.g., 'Waive first month scanner fees')."
+    }
+  ],
+  "hostileObjectionKit": [
+    {
+      "hostileQuestion": "A cynical, difficult question from the media or public (e.g., 'Isn't this just a hidden tax on the poor?')",
+      "publicAnswer": "The polished, data-backed PR response.",
+      "internalReality": "The actual operational truth the project team must manage behind the scenes."
+    }
+  ]
+}`;
+    }
+
+    case 8: {
       const selectedWorkstreamsList = input.selectedWorkstreams || [1, 2, 3, 4, 5, 6, 7];
       const level3Name = isNat ? 'Municipality' : (projectData?.stage2?.intel?.geoSchema?.level3 || 'Gram Panchayat');
       const level2Name = isNat ? 'District' : (projectData?.stage2?.intel?.geoSchema?.level2 || 'Taluka');
 
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
-You are generating STAGE 7 — Execution Blueprint — for a real implementation plan.
+You are generating STAGE 8 — Execution Blueprint — for a real implementation plan.
 
 ${contextHeader}
 ${projectData.stage2 ? `GEOGRAPHY REALITY:\n- Hierarchy: ${JSON.stringify(projectData.stage2.intel?.hierarchy)}` : ''}
@@ -306,7 +347,7 @@ You MUST customize the sequence dynamically:
 `;
     }
 
-    case 8: {
+    case 9: {
       const touchpoints = projectData.stage2?.touchpoints || {};
       const groups = touchpoints.groups || [];
       const retailCount = groups.find(g => g.group.toLowerCase().includes('retail'))?.total || 100;
@@ -314,9 +355,20 @@ You MUST customize the sequence dynamically:
       const civicCount = groups.find(g => g.group.toLowerCase().includes('collection') || g.group.toLowerCase().includes('civic'))?.total || 10;
       const subDivisionsCount = cascadedDemographics?.subDivisions || projectData.stage2?.intel?.stateSummary?.talukasOrTehsils?.value || 10;
       const selectedWorkstreamsList = input.selectedWorkstreams || [1, 2, 3, 4, 5, 6, 7];
+      const isTechSolutions = implementationModel === 'Tech Solutions';
+      
+      const wsConfigs = {
+        1: { id: 1, name: isTechSolutions ? 'Government & Escrow' : 'Government & Regulatory', key: 'regulatoryReadiness' },
+        2: { id: 2, name: isTechSolutions ? 'Brand QR & API' : 'Brand/Producer & Deposit', key: 'brandOnboarding' },
+        3: { id: 3, name: 'Touchpoint Onboarding', key: 'touchpointOnboarding' },
+        4: { id: 4, name: 'Infrastructure & RVM Deployment', key: 'infrastructure' },
+        5: { id: 5, name: 'Logistics & Collection', key: 'logistics' },
+        6: { id: 6, name: 'Processing & Recycler', key: 'processing' },
+        7: { id: 7, name: 'IT & Traceability', key: 'itSystems' }
+      };
 
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
-You are generating STAGE 8 — Detailed Workstream Execution Plans — for a real implementation plan.
+You are generating STAGE 9 — Detailed Workstream Execution Plans — for a real implementation plan.
 
 ${contextHeader}
 
@@ -339,7 +391,6 @@ You MUST enforce these geography, count, and terminology overrides:
 Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape (fill in only active workstream fields; return null or empty for inactive ones):
 {
   "regulatoryReadiness": {
-    "score": 85,
     "phase1": {
       "target": "Draft representation and secure cabinet approval for ${targetLocation}",
       "actions": ["Consult with SPCB on single-use rules", "Schedule consultation with Excise Commissioner"],
@@ -524,7 +575,44 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
 }`;
     }
 
-    case 9: {
+    case 10: {
+      return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
+You are generating STAGE 10 — Launch Readiness (T-Minus Gate) — acting as a strict Project Director.
+
+${contextHeader}
+${projectData.stage9 ? `WORKSTREAMS:\n${JSON.stringify(projectData.stage9)}` : ''}
+
+YOUR TASK:
+Generate a T-Minus countdown checklist and a strict 'Cardinal Rule' Go/No-Go Gate assessment for launching DRS in ${targetLocation}.
+
+Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
+{
+  "readinessScore": 85,
+  "goNoGoStatus": "HOLD",
+  "tMinusTracker": [
+    {
+      "phase": "T-30 Days",
+      "milestone": "All core RVMs installed and tested",
+      "owner": "Infrastructure",
+      "status": "Completed"
+    },
+    {
+      "phase": "T-15 Days",
+      "milestone": "Retailer payout escrow funded",
+      "owner": "Finance",
+      "status": "Pending"
+    }
+  ],
+  "cardinalRuleBlockers": [
+    {
+      "issue": "Escrow account not finalized",
+      "resolutionRequired": "Must be funded before public announcement to guarantee retailer payouts."
+    }
+  ]
+}`;
+    }
+
+    case 11: {
       const funnelName = action === 'branding' ? 'Branding (Awareness)' 
                        : action === 'acquisition' ? 'Acquisition (Onboarding)' 
                        : action === 'engagement' ? 'Engagement (Loyalty/Retention)'
@@ -538,12 +626,11 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
       } else if (action === 'engagement') {
         funnelJson = `  "engagement": [\n    {\n      "phase": "Day 1-2|Day 3-4|Day 5-6|...",\n      "objective": "<specific micro-objective>",\n      "activity": "<tactical retention task with reward triggers>",\n      "channel": "WhatsApp Business|App Push Notification|Payout Trigger|Leaderboard Event",\n      "targetAudience": "Onboarded Merchants|App Users|Recycling Consumers",\n      "successKpi": "<measurable success metric>"\n    }\n  ]`;
       } else {
-        // Fallback for all 3
         funnelJson = `  "branding": [\n    {\n      "phase": "Day 1-2|Day 3-4|Day 5-6|...",\n      "objective": "<specific micro-objective>",\n      "activity": "<tactical branding task with real location names>",\n      "channel": "OOH / Billboards|Paid Social Ads|PR / Press|Radio Jingle",\n      "targetAudience": "Tourists|Local Residents|Store Owners",\n      "successKpi": "<measurable success metric>"\n    }\n  ],\n  "acquisition": [\n    {\n      "phase": "Day 1-2|Day 3-4|Day 5-6|...",\n      "objective": "<specific micro-objective>",\n      "activity": "<tactical onboarding/sign-up task with real location names>",\n      "channel": "Direct Field Onboarding|Distributor Referral|Partner Sign-up",\n      "targetAudience": "Beach Shack Owners|Kirana Owners|Liquor Retailers",\n      "successKpi": "<measurable success metric>"\n    }\n  ],\n  "engagement": [\n    {\n      "phase": "Day 1-2|Day 3-4|Day 5-6|...",\n      "objective": "<specific micro-objective>",\n      "activity": "<tactical retention task with reward triggers>",\n      "channel": "WhatsApp Business|App Push Notification|Payout Trigger|Leaderboard Event",\n      "targetAudience": "Onboarded Merchants|App Users|Recycling Consumers",\n      "successKpi": "<measurable success metric>"\n    }\n  ]`;
       }
 
       return `You are an elite, world-class Director of Marketing and GTM Strategy for Recykal's DRS (Deposit Return System).
-You are generating STAGE 9 — GTM Launch & Funnel Execution — acting as a master strategist. Your plan must comprehensively account for all stakeholders (government, consumers, brands, merchants, and recyclers), local constraints, and behavioral psychology to drive mass adoption.
+You are generating STAGE 11 — GTM Launch & Funnel Execution — acting as a master strategist. Your plan must comprehensively account for all stakeholders (government, consumers, brands, merchants, and recyclers), local constraints, and behavioral psychology to drive mass adoption.
 
 ${contextHeader}
 ${projectData.stage2 ? `GEOGRAPHY EVIDENCE:
@@ -570,9 +657,9 @@ ${funnelJson}
 }`;
     }
 
-    case 10:
+    case 12:
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
-You are generating STAGE 10 — Engagement & BTL Activation Playbook — for a real implementation plan.
+You are generating STAGE 12 — Engagement & BTL Activation Playbook — for a real implementation plan.
 
 ${contextHeader}
 ${projectData.stage8 ? `TOUCHPOINTS:\n- Onboarded: ${JSON.stringify(projectData.stage8.touchpointOnboarding)}` : ''}
@@ -617,9 +704,41 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
   ]
 }`;
 
-    case 11:
+    case 13:
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
-You are generating STAGE 11 — Performance Framework & Escalation Thresholds — for a real implementation plan.
+You are generating STAGE 13 — Reputation Management — acting as a Crisis Comms Lead.
+
+${contextHeader}
+
+YOUR TASK:
+Generate a Service Level Agreement (SLA) threshold matrix and a Rapid Response Playbook for managing public reputation post-launch in ${targetLocation}.
+
+Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
+{
+  "slaThresholds": [
+    {
+      "incidentType": "Machine Full / Overflowing",
+      "slaHours": 4,
+      "escalationPath": "Route Supervisor -> Zonal Manager"
+    },
+    {
+      "incidentType": "Delayed Payouts",
+      "slaHours": 24,
+      "escalationPath": "Finance -> Project Director"
+    }
+  ],
+  "rapidResponseTemplates": [
+    {
+      "scenario": "Viral social media post about overflowing RVM",
+      "draftStatement": "We apologize for the inconvenience. Due to overwhelming positive response, this machine reached capacity faster than expected. A collection team is en route.",
+      "channels": ["Twitter/X", "Instagram Comments"]
+    }
+  ]
+}`;
+
+    case 14:
+      return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
+You are generating STAGE 14 — Performance Framework & Escalation Thresholds — for a real implementation plan.
 
 ${contextHeader}
 ${projectData.stage3 ? `BENCHMARKS:\n- Benchmarks: ${JSON.stringify(projectData.stage3.materials)}` : ''}
@@ -656,9 +775,9 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
   ]
 }`;
 
-    case 12:
+    case 15:
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
-You are generating STAGE 12 — Knowledge / Reusable Blueprint — for a real implementation plan.
+You are generating STAGE 15 — Knowledge / Reusable Blueprint — for a real implementation plan.
 
 ${contextHeader}
 ${projectData.stage2 ? `GEOGRAPHY:\n- State: ${projectData.stage2.input?.state}` : ''}

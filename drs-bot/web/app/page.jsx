@@ -10,12 +10,15 @@ const STAGES = [
   { num: 4, name: 'Stakeholders', desc: 'Coalition map and alignment score' },
   { num: 5, name: 'Competitors', desc: 'Detailed competitor landscape and moat strategy' },
   { num: 6, name: 'Resistance', desc: 'Risk registry and fronts map' },
-  { num: 7, name: 'Blueprint', desc: 'Master Gantt timeline' },
-  { num: 8, name: 'Execution', desc: '7 workstream SOPs and documents' },
-  { num: 9, name: 'GTM Launch & Funnel Execution', desc: 'Micro-scheduled branding, acquisition & engagement' },
-  { num: 10, name: 'BTL Activation', desc: 'BTL reach and campaign calendar' },
-  { num: 11, name: 'KPIs', desc: 'North Star and KPI tree' },
-  { num: 12, name: 'Knowledge Base', desc: 'Packaged reusable blueprint' }
+  { num: 7, name: 'Narrative & Alignment', desc: 'Core story, personas, and FAQs' },
+  { num: 8, name: 'Blueprint', desc: 'Master Gantt timeline' },
+  { num: 9, name: 'Execution', desc: '7 workstream SOPs and documents' },
+  { num: 10, name: 'Launch Readiness', desc: 'T-Minus gate and Go/No-Go tracker' },
+  { num: 11, name: 'GTM Launch & Funnel Execution', desc: 'Micro-scheduled branding, acquisition & engagement' },
+  { num: 12, name: 'BTL Activation', desc: 'BTL reach and campaign calendar' },
+  { num: 13, name: 'Reputation Management', desc: 'Crisis SLA and media response playbook' },
+  { num: 14, name: 'KPIs', desc: 'North Star and KPI tree' },
+  { num: 15, name: 'Knowledge Base', desc: 'Packaged reusable blueprint' }
 ];
 
 const MATERIALS = ['Liquor', 'PET', 'Cans', 'MLP'];
@@ -110,7 +113,7 @@ export default function App() {
   const [projectEndMonth, setProjectEndMonth] = useState('');
   const [projectEndYear, setProjectEndYear] = useState('');
   const [targetTimeline, setTargetTimeline] = useState('180 Days');
-  const [selectedStages, setSelectedStages] = useState([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  const [selectedStages, setSelectedStages] = useState([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
   const [selectedWorkstreams, setSelectedWorkstreams] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [stagesDropdownOpen, setStagesDropdownOpen] = useState(false);
   const [workstreamsDropdownOpen, setWorkstreamsDropdownOpen] = useState(false);
@@ -404,7 +407,7 @@ export default function App() {
     setProjectEndMonth('');
     setProjectEndYear('');
     setTargetTimeline('180 Days');
-    setSelectedStages([2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+    setSelectedStages([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     setSelectedWorkstreams([1, 2, 3, 4, 5, 6, 7]);
     setCustomConstraints('');
     setProjectStages({});
@@ -865,22 +868,22 @@ export default function App() {
     }
   };
 
-  const generateStage9Funnel = async (funnel) => {
+  const generateStage11Funnel = async (funnel) => {
     setError(null);
     setGtmGeneratingStatus(funnel);
     
     try {
-      // Ensure stage9 object exists
+      // Ensure stage11 object exists
       let currentStages = { ...projectStages };
-      if (!currentStages.stage9) {
-        currentStages.stage9 = { data: { branding: [], acquisition: [], engagement: [] }, sources: [] };
+      if (!currentStages.stage11) {
+        currentStages.stage11 = { data: { branding: [], acquisition: [], engagement: [] }, sources: [] };
       }
       
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          stage: 9,
+          stage: 11,
           action: funnel,
           input: {
             ...projectStages.setup,
@@ -907,19 +910,19 @@ export default function App() {
       const newFunnelData = data.data?.[funnel] || [];
       currentStages = {
         ...currentStages,
-        stage9: {
-          ...currentStages.stage9,
+        stage11: {
+          ...currentStages.stage11,
           data: {
-            ...currentStages.stage9.data,
+            ...currentStages.stage11.data,
             [funnel]: newFunnelData
           },
-          sources: [...new Set([...(currentStages.stage9.sources || []), ...(data.sources || [])])]
+          sources: [...new Set([...(currentStages.stage11.sources || []), ...(data.sources || [])])]
         }
       };
       setProjectStages(currentStages);
       await saveProjectToStorage(currentStages);
     } catch (e) {
-      setError(`Stage 9 (${funnel}) Generation Failed: ${e.message}`);
+      setError(`Stage 11 (${funnel}) Generation Failed: ${e.message}`);
     } finally {
       setGtmGeneratingStatus(null);
     }
@@ -1817,8 +1820,8 @@ export default function App() {
             </div>
           )}
 
-          {/* GENERATION STATE WRAPPER FOR STAGES 2-10 (Bypassed for Stage 9) */}
-          {typeof activeTab === 'number' && activeTab > 1 && activeTab !== 9 && !activeStageData && (
+          {/* GENERATION STATE WRAPPER FOR STAGES 2-15 (Bypassed for Stage 11) */}
+          {typeof activeTab === 'number' && activeTab > 1 && activeTab !== 11 && !activeStageData && (
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
               <h2>Stage {activeTab} is not yet generated</h2>
               <p className="sub">The engine will pull real datasets and formulate the roadmap for this stage.</p>
@@ -2199,7 +2202,7 @@ export default function App() {
                   {selectedMaterials.map(m => <div key={m} className="heatmap-hdr">{m}</div>)}
 
                   {['Government / Regulatory', 'Retail / Trade', 'Consumer', 'Brand', 'Media', 'Political', 'Operational'].map((front) => (
-                    <>
+                    <React.Fragment key={front}>
                       <div className="heatmap-lbl">{front}</div>
                       {selectedMaterials.map((material) => {
                         const item = activeStageData.data?.register?.find(r => r.front === front && (r.material === material || r.material === 'All'));
@@ -2211,7 +2214,7 @@ export default function App() {
                           </div>
                         );
                       })}
-                    </>
+                    </React.Fragment>
                   ))}
                 </div>
               </div>
@@ -2239,8 +2242,85 @@ export default function App() {
             </div>
           )}
 
-          {/* STAGE 7 BLUEPRINT */}
+          {/* STAGE 7 NARRATIVE & ALIGNMENT */}
           {activeTab === 7 && activeStageData && (() => {
+            const narrativeData = activeStageData.data || {};
+            const corePillars = narrativeData.corePillars || {};
+            const personas = narrativeData.frictionPersonas || [];
+            const faqs = narrativeData.hostileObjectionKit || [];
+
+            return (
+              <div>
+                <div className="card">
+                  <h2>Narrative Core Pillars</h2>
+                  <div className="grid three mt-4">
+                    <div className="stat" style={{ borderLeft: '4px solid var(--accent)' }}>
+                      <span className="lbl">The Burning Platform (Trigger)</span>
+                      <p style={{ marginTop: '8px', fontSize: '15px' }}>{corePillars.triggerEvent || 'Pending'}</p>
+                    </div>
+                    <div className="stat" style={{ borderLeft: '4px solid var(--success)' }}>
+                      <span className="lbl">Economic Anchor</span>
+                      <p style={{ marginTop: '8px', fontSize: '15px' }}>{corePillars.economicAnchor || 'Pending'}</p>
+                    </div>
+                    <div className="stat" style={{ borderLeft: '4px solid var(--primary)' }}>
+                      <span className="lbl">Political Win Headline</span>
+                      <p style={{ marginTop: '8px', fontSize: '15px', fontWeight: 'bold' }}>"{corePillars.politicalWin || 'Pending'}"</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="card">
+                  <h2>Friction Personas (Anti-Personas)</h2>
+                  <table className="table" style={{ marginTop: '15px' }}>
+                    <thead>
+                      <tr>
+                        <th>Hostile Persona</th>
+                        <th>Core Fear (Loss Aversion)</th>
+                        <th>Aggressive Counter-Narrative</th>
+                        <th>Tactical Concession</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {personas.map((p, i) => (
+                        <tr key={i}>
+                          <td style={{ color: 'var(--danger)', fontWeight: 'bold' }}>{p.personaName}</td>
+                          <td className="muted">{p.coreFear}</td>
+                          <td style={{ borderLeft: '2px solid var(--accent)' }}>{p.counterNarrative}</td>
+                          <td style={{ color: 'var(--success)' }}>{p.concession}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="card">
+                  <h2>Hostile Objection Kit (PR & Internal Reality)</h2>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '15px' }}>
+                    {faqs.map((f, i) => (
+                      <div key={i} style={{ padding: '15px', background: 'var(--surface2)', borderRadius: '8px' }}>
+                        <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: 'var(--danger)', fontSize: '16px' }}>
+                          Hostile Query: "{f.hostileQuestion}"
+                        </p>
+                        <div style={{ display: 'flex', gap: '20px' }}>
+                          <div style={{ flex: 1, padding: '10px', background: '#fff', borderLeft: '3px solid var(--primary)', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--primary)' }}>Public PR Answer</span>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>{f.publicAnswer}</p>
+                          </div>
+                          <div style={{ flex: 1, padding: '10px', background: '#fff', borderLeft: '3px solid var(--accent)', borderRadius: '4px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>Internal Reality</span>
+                            <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>{f.internalReality}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* STAGE 8 BLUEPRINT */}
+          {activeTab === 8 && activeStageData && (() => {
             const activeWss = [
               { id: 2, name: 'Brand/Producer & Deposit', key: 'brandOnboarding' },
               { id: 3, name: 'Touchpoint Onboarding', key: 'touchpointOnboarding' },
@@ -2339,8 +2419,8 @@ export default function App() {
             );
           })()}
 
-          {/* STAGE 8 EXECUTION */}
-          {activeTab === 8 && activeStageData && (() => {
+          {/* STAGE 9 EXECUTION */}
+          {activeTab === 9 && activeStageData && (() => {
             const activeWss = [
               { id: 1, name: model === 'Tech Solutions' ? '1. Government & Escrow' : '1. Government & Regulatory', key: 'regulatoryReadiness' },
               { id: 2, name: model === 'Tech Solutions' ? '2. Brand QR & API' : '2. Brand/Deposit', key: 'brandOnboarding' },
@@ -2569,10 +2649,71 @@ export default function App() {
             );
           })()}
 
-          {/* STAGE 9 GTM LAUNCH & FUNNEL EXECUTION */}
-          {activeTab === 9 && (() => {
-            const stage9Data = activeStageData?.data || { branding: [], acquisition: [], engagement: [] };
-            const list = stage9Data[gtmSubTab] || [];
+          {/* STAGE 10 LAUNCH READINESS (T-MINUS GATE) */}
+          {activeTab === 10 && activeStageData && (() => {
+            const lrData = activeStageData.data || {};
+            const tMinus = lrData.tMinusTracker || [];
+            const blockers = lrData.cardinalRuleBlockers || [];
+            const readinessScore = lrData.readinessScore || 0;
+            const goNoGoStatus = lrData.goNoGoStatus || 'Pending';
+
+            return (
+              <div>
+                <div className="card" style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{ flex: 1, textAlign: 'center', padding: '20px', background: 'var(--surface2)', borderRadius: '8px' }}>
+                    <p className="muted" style={{ margin: '0 0 5px 0', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px' }}>Readiness Score</p>
+                    <h1 style={{ margin: 0, fontSize: '42px', color: readinessScore >= 100 ? 'var(--green)' : 'var(--warning)' }}>{readinessScore}%</h1>
+                  </div>
+                  <div style={{ flex: 1, textAlign: 'center', padding: '20px', background: goNoGoStatus === 'GO' ? 'var(--green)' : 'var(--red)', borderRadius: '8px', color: '#fff' }}>
+                    <p style={{ margin: '0 0 5px 0', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px', color: 'rgba(255,255,255,0.8)' }}>Cardinal Rule Gate</p>
+                    <h1 style={{ margin: 0, fontSize: '42px' }}>{goNoGoStatus}</h1>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <h2>T-Minus Countdown Tracker</h2>
+                  <table className="table" style={{ marginTop: '15px' }}>
+                    <thead>
+                      <tr>
+                        <th>T-Minus Phase</th>
+                        <th>Milestone</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tMinus.map((t, i) => (
+                        <tr key={i}>
+                          <td><strong>{t.phase}</strong></td>
+                          <td>{t.milestone}</td>
+                          <td className="muted">{t.owner}</td>
+                          <td><span className={`badge ${t.status === 'Completed' ? 'success' : 'warning'}`}>{t.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {blockers.length > 0 && (
+                  <div className="card" style={{ border: '1px solid var(--red)' }}>
+                    <h2 style={{ color: 'var(--red)' }}>Active Go/No-Go Blockers</h2>
+                    <ul style={{ paddingLeft: '20px', color: 'var(--red)', marginTop: '10px' }}>
+                      {blockers.map((b, i) => (
+                        <li key={i} style={{ marginBottom: '10px' }}>
+                          <strong>{b.issue}:</strong> {b.resolutionRequired}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* STAGE 11 GTM LAUNCH & FUNNEL EXECUTION */}
+          {activeTab === 11 && (() => {
+            const stage11Data = activeStageData?.data || { branding: [], acquisition: [], engagement: [] };
+            const list = stage11Data[gtmSubTab] || [];
             return (
               <div>
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)', background: 'var(--card-bg-subtle, #fafafa)' }}>
@@ -2645,7 +2786,7 @@ export default function App() {
                               ) : (
                                 <div>
                                   <p style={{ marginBottom: '16px' }}>No parameters generated yet for {gtmSubTab}.</p>
-                                  <button className="btn" onClick={() => generateStage9Funnel(gtmSubTab)}>Generate {gtmSubTab} Strategy</button>
+                                  <button className="btn" onClick={() => generateStage11Funnel(gtmSubTab)}>Generate {gtmSubTab} Strategy</button>
                                 </div>
                               )}
                             </td>
@@ -2659,8 +2800,8 @@ export default function App() {
             );
           })()}
 
-          {/* STAGE 10 BTL ACTIVATION */}
-          {activeTab === 10 && activeStageData && (
+          {/* STAGE 12 BTL ACTIVATION */}
+          {activeTab === 12 && activeStageData && (
             <div>
               <div className="card">
                 <h2>BTL Engagement Reach Score</h2>
@@ -2720,8 +2861,54 @@ export default function App() {
             </div>
           )}
 
-          {/* STAGE 11 KPIS */}
-          {activeTab === 11 && activeStageData && (() => {
+          {/* STAGE 13 REPUTATION MANAGEMENT */}
+          {activeTab === 13 && activeStageData && (() => {
+            const repData = activeStageData.data || {};
+            const thresholds = repData.slaThresholds || [];
+            const playbook = repData.rapidResponseTemplates || [];
+
+            return (
+              <div>
+                <div className="card">
+                  <h2>Crisis SLA & Escalation Thresholds</h2>
+                  <table className="table" style={{ marginTop: '15px' }}>
+                    <thead>
+                      <tr>
+                        <th>Incident Type</th>
+                        <th>SLA (Hours)</th>
+                        <th>Escalation Path</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {thresholds.map((t, i) => (
+                        <tr key={i}>
+                          <td><strong>{t.incidentType}</strong></td>
+                          <td><span className="badge warning">{t.slaHours}h Response</span></td>
+                          <td className="muted">{t.escalationPath}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="card">
+                  <h2>Rapid Response Playbook</h2>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '15px' }}>
+                    {playbook.map((p, i) => (
+                      <div key={i} style={{ padding: '15px', background: 'var(--surface2)', borderRadius: '8px' }}>
+                        <h3 style={{ margin: '0 0 10px 0' }}>Scenario: {p.scenario}</h3>
+                        <p style={{ margin: '0 0 10px 0', fontStyle: 'italic', color: 'var(--muted)' }}>" {p.draftStatement} "</p>
+                        <p style={{ margin: 0, fontSize: '12px' }}><strong>Channels:</strong> {p.channels.join(', ')}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* STAGE 14 KPIS */}
+          {activeTab === 14 && activeStageData && (() => {
             const kpisList = activeStageData.data?.kpis || [];
             const leadingKpis = kpisList.filter(k => k.type === 'Leading');
             const laggingKpis = kpisList.filter(k => k.type === 'Lagging');
@@ -2835,8 +3022,8 @@ export default function App() {
             );
           })()}
 
-          {/* STAGE 12 KNOWLEDGE BASE */}
-          {activeTab === 12 && activeStageData && (
+          {/* STAGE 15 KNOWLEDGE BASE */}
+          {activeTab === 15 && activeStageData && (
             <div>
               <div className="card">
                 <h2>Blueprint Reusability Score</h2>
