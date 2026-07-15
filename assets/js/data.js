@@ -29,6 +29,7 @@ const NAV = [
     { id: "government",     name: "Government Engagement",  ic: "🏛" },
     { id: "stakeholder-intel",name: "Stakeholder Intelligence", ic: "🕸" },
     { id: "resistance",     name: "Resistance & Risk",      ic: "🛡", badge:"KEY" },
+    { id: "narrative",      name: "Narrative & Alignment",  ic: "🖋", badge:"NEW" },
     { id: "marketing-system",name: "DRS Marketing System",  ic: "📣" },
     { id: "gtm",            name: "Go-To-Market",           ic: "🚀" },
     { id: "consumer",       name: "Consumer Engagement",    ic: "👥" },
@@ -39,8 +40,9 @@ const NAV = [
     { id: "infrastructure", name: "Infrastructure Planning",ic: "🏗" },
     { id: "deployment",     name: "Deployment Tracking",    ic: "📍" },
     { id: "operations",     name: "Operations Coordination",ic: "♻" },
-    { id: "launch-ready",   name: "Launch Readiness",       ic: "✅" },
+    { id: "launch-ready",   name: "Launch Readiness",       ic: "✅", badge:"GATE" },
     { id: "launch-mgmt",    name: "Launch Management",      ic: "🎬" },
+    { id: "reputation",     name: "Reputation Management",  ic: "📡", badge:"NEW" },
     { id: "post-launch",    name: "Post-Launch Optimization",ic: "📈" },
   ]},
   { group: "PERFORMANCE", items: [
@@ -512,6 +514,43 @@ MODULES["resistance"] = M({
     {ph:"Planned", t:"Early-warning signals from comms & field feedback."},
     {ph:"Vision", t:"Predictive resistance modeling per stakeholder segment."},
   ],
+});
+
+MODULES["narrative"] = M({
+  id:"narrative", name:"Narrative & Alignment", ic:"🖋", group:"Implementation",
+  tagline:"Generate the core story, persona messages, and FAQ kits before going into execution.",
+  overview:"Narrative & Alignment ensures every stakeholder repeats the same evidence-backed story. It explicitly drafts the Narrative House, Persona Messaging Matrix, and FAQ kits. Execution teams cannot proceed without an aligned script.",
+  why:"Execution fails when teams tell different stories. The Narrative House acts as the single source of truth for all downstream communications.",
+  objectives:[
+    {t:"Draft the Core Story", d:"Define the central positioning and environmental/economic angle."},
+    {t:"Tailor by Persona", d:"Create tailored messages addressing specific stakeholder resistance."},
+    {t:"Anticipate Questions", d:"Build comprehensive FAQ kits for field teams."},
+  ],
+  executionFlow:["Synthesize Evidence","Draft Core Story","Build Persona Matrix","Develop FAQ Kit","Review & Align","Lock Narrative"],
+  activities:["Drafting Narrative House","Building Persona Matrix","Developing FAQ Kits","Running alignment workshops"],
+  deliverables:["Narrative House v1","FAQ Kit","Stakeholder Briefing Kit"],
+  owners:[
+    {r:"Content Lead", x:"Owns narrative drafting & FAQs"},
+    {r:"Marketing Head", x:"Approves core story"},
+  ],
+  dependencies:["Market Intelligence (evidence)","Stakeholder Intelligence (personas)","Resistance (objections)"],
+  workflow:[
+    {t:"Drafted", d:"Core story and FAQs generated."},
+    {t:"Aligned", d:"Workshopped with stakeholders."},
+    {t:"Locked", d:"Approved for field execution."},
+  ],
+  kras:["Narrative consistency","Localization completeness","Persona coverage"],
+  kpis:[
+    {n:"Narrative Readiness %", t:"100% before execution", f:"completed_assets / required_assets"},
+  ],
+  metrics:["Personas mapped","FAQs drafted","Workshops held"],
+  dashboard:[
+    {l:"Narrative Readiness", v:"100%", t:"locked", trend:"flat"},
+    {l:"Personas Covered", v:"8/8", t:"100%", trend:"up"},
+    {l:"FAQs Generated", v:"42", t:"across 3 languages", trend:"up"},
+  ],
+  reports:["Narrative House","Persona Matrix Export","FAQ Document"],
+  ai:["Auto-draft the Narrative House from Market Assessment data","Generate localized FAQs based on common resistance"],
 });
 
 MODULES["marketing-system"] = M({
@@ -1084,10 +1123,10 @@ MODULES["launch-ready"] = M({
     {n:"Composite readiness", f:"Σ(module_readiness × criticality_weight)", d:"Weighted go-live readiness, 0–100%."},
   ],
   dashboard:[
+    {l:"T-Minus Tracker", v:"T-15", t:"on schedule", trend:"flat"},
     {l:"Readiness Score", v:"94%", t:"critical 100%", trend:"up"},
-    {l:"Open Blockers", v:"3", t:"0 critical", trend:"up"},
-    {l:"Modules Green", v:"21/24", t:"on track", trend:"up"},
-    {l:"Decision", v:"GO", t:"pending sign-off", trend:"flat"},
+    {l:"Cardinal Rule Gate", v:"BLOCKER", t:"Ops < Comms", trend:"down"},
+    {l:"Decision", v:"NO-GO", t:"pending Ops resolution", trend:"down"},
   ],
   reports:["Readiness Scorecard","Blocker Log","Go/No-Go Brief","Launch Runbook"],
   ai:["Summarize readiness status into a one-page brief","Flag criteria at risk of slipping","Draft the Go/No-Go decision memo"],
@@ -1149,6 +1188,45 @@ MODULES["launch-mgmt"] = M({
     {ph:"Planned", t:"Automated anomaly alerts during launch."},
     {ph:"Vision", t:"AI launch co-pilot recommending interventions live."},
   ],
+});
+
+MODULES["reputation"] = M({
+  id:"reputation", name:"Reputation Management", ic:"📡", group:"Implementation",
+  tagline:"Active post-launch crisis handling and sentiment tracking to protect trust. Rapid response to negative media or operational friction.",
+  overview:"Reputation Management is the active post-launch shield for the DRS. It pulls live media monitoring, social sentiment, and operational friction logs to anticipate backlash. The AI Copilot actively drafts Rapid Response Briefs to counter misinformation, governed by a strict SLA.",
+  why:"A DRS requires public trust. Unanswered friction in week one can derail a multi-year program. Rapid response is the difference between a minor hiccup and a media crisis.",
+  objectives:[
+    {t:"Monitor Sentiment", d:"Live tracking of positive, neutral, and negative press."},
+    {t:"Enforce Response SLAs", d:"Rapid Response Briefs drafted and approved within hours."},
+    {t:"Combat Misinformation", d:"Flag false narratives and issue factual corrections."},
+  ],
+  executionFlow:["Monitor Media","Detect Friction","Draft Response","Approve Brief","Publish","Capture Testimonial"],
+  activities:["Media & social monitoring","Rapid Response drafting","SLA tracking","Retail testimonial capture"],
+  deliverables:["Rapid Response Briefs","Sentiment Trend Map","Misinformation Log","Milestone Press Releases"],
+  owners:[
+    {r:"Communications Head", x:"Owns reputation & rapid response"},
+    {r:"Implementation Director", x:"Approves high-risk statements"},
+  ],
+  dependencies:["Operations (friction logs)","Consumer Engagement (feedback)"],
+  workflow:[
+    {t:"Monitoring", d:"Live listening active."},
+    {t:"Incident Logged", d:"Negative signal detected."},
+    {t:"Drafted", d:"Response ready for approval."},
+    {t:"Published", d:"SLA met and statement out."},
+  ],
+  kras:["Response time","Sentiment preservation","Misinformation countered"],
+  kpis:[
+    {n:"Reputation Trust Score", t:"≥ 80/100", f:"sentiment_index * trust_multiplier"},
+  ],
+  metrics:["Open incidents","SLA breaches","Positive testimonials"],
+  dashboard:[
+    {l:"Reputation Score", v:"82", t:"target 80", trend:"flat"},
+    {l:"Open Incidents", v:"1", t:"within SLA", trend:"down"},
+    {l:"Avg Response Time", v:"2.5h", t:"target <4h", trend:"up"},
+    {l:"Positive Sentiment", v:"68%", t:"post-launch", trend:"up"},
+  ],
+  reports:["Sentiment Trend Map","Misinformation Log","Rapid Response Archive"],
+  ai:["Draft Rapid Response statements automatically from friction logs","Extract retail testimonials from raw feedback","Analyze sentiment trends daily"],
 });
 
 MODULES["post-launch"] = M({
