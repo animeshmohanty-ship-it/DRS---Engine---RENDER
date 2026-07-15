@@ -50,7 +50,14 @@ This is a sub-project launched from a parent master plan. Use these exact counts
 ${nonIndiaWarning}
 
 MODEL SPECIFICS (Crucial):
-If the implementation model is "Tech Solutions", focus all generation outputs (descriptions, items, templates, and actions) on SaaS software, database registries, IoT device integration APIs, merchant scanner apps, central Escrow account clearances, consumer wallet flows, and material/transaction traceability (tracking QRs from factory checkouts to recycler validation), rather than physical warehousing, truck operations, or hardware shipping.`;
+If the implementation model is "Tech Solutions", focus all generation outputs (descriptions, items, templates, and actions) on SaaS software, database registries, IoT device integration APIs, merchant scanner apps, central Escrow account clearances, consumer wallet flows, and material/transaction traceability (tracking QRs from factory checkouts to recycler validation), rather than physical warehousing, truck operations, or hardware shipping.
+${objective ? `\nPRIMARY BUSINESS OBJECTIVE — every output must visibly serve this goal:\n"${objective}"` : ''}
+
+BRIEF ADHERENCE MANDATE (non-negotiable — output that ignores the brief is a failure):
+- MATERIALS: Reason ONLY about the selected materials (${materials.join(', ')}). Do not introduce, cost, or plan for any material outside this list.
+- IMPLEMENTATION MODEL: Every recommendation must be executable within the "${implementationModel}" model. Do not propose activities that model does not support (e.g. no truck logistics for "Tech Solutions"; no pure-software plays for "RVM-only").
+- CONSTRAINTS: You MUST explicitly account for the stated local constraints${customConstraints ? `: "${customConstraints}"` : ' where relevant'}.
+- TAILORING: Generic, location-agnostic output is unacceptable. Every section must tie concretely to ${targetLocation} and the brief above.`;
 
   switch (Number(stageNum)) {
     case 3:

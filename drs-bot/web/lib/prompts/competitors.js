@@ -40,6 +40,7 @@ RIGOR (mandatory):
 - NEVER fabricate figures. Every market-share and return-rate number must be labelled "(verified)", "(approximate — verify)", or given as an explicit reasoned estimate. If unknown, say "unknown".
 - Identify exactly 5 real competitor entities operating in or entering ${country} (e.g., TOMRA, Sensoneo, Envipco, Karo Sambhav, Kabadiwalla Connect, Plastic Bank, or local waste-tech/EPR firms as relevant).
 - Frame every recykalMoatStrategy around an ACTUAL Recykal/Retearn capability (name reklaim, QR tracking, or informal-network integration) — not a generic "SaaS".
+- BRIEF ADHERENCE: Focus the analysis on the selected materials (${materials.join(', ')}) and on competitors relevant to the "${implementationModel}" model${objective ? `; keep it anchored to the business objective: "${objective}"` : ''}.
 
 Return ONLY a single valid JSON object (no markdown fences, no prose) matching exactly this schema structure:
 {

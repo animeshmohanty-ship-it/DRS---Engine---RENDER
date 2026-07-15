@@ -687,6 +687,29 @@ export default function App() {
     }
   };
 
+  // Signature of the current Setup brief. Stages are stamped with this at
+  // generation time; if the brief later changes, the stamp no longer matches
+  // and the stage is flagged stale (non-destructive — data is kept).
+  const getBriefSignature = () => JSON.stringify({
+    country,
+    state,
+    model,
+    materials: [...selectedMaterials].sort(),
+    objective,
+    operationsStatus,
+    projectStartMonth,
+    projectStartYear,
+    projectEndMonth,
+    projectEndYear,
+    targetTimeline,
+    customConstraints,
+  });
+
+  const isStageStale = (n) => {
+    const st = projectStages[`stage${n}`];
+    return !!(st && st._brief && st._brief !== getBriefSignature());
+  };
+
   const generateStage = async (stageNum) => {
     setLoading(prev => ({ ...prev, [stageNum]: true }));
     setError(null);
@@ -771,10 +794,11 @@ export default function App() {
         if (!finalizeRes.ok || !finalizeData.ok) throw new Error(finalizeData.error || 'Geographical finalization compile failed');
 
         const newStagesFinal = { ...projectStages };
-        newStagesFinal.stage2 = { 
-          touchpoints: finalizeData.touchpoints, 
-          intel: finalizeData.intel, 
-          sources: searchData.sources 
+        newStagesFinal.stage2 = {
+          touchpoints: finalizeData.touchpoints,
+          intel: finalizeData.intel,
+          sources: searchData.sources,
+          _brief: getBriefSignature()
         };
         setProjectStages(newStagesFinal);
         await saveProjectToStorage(newStagesFinal);
@@ -828,9 +852,10 @@ export default function App() {
         if (!finalizeRes.ok || !finalizeData.ok) throw new Error(finalizeData.error || 'Resistance finalization compile failed');
 
         const newStagesFinal = { ...projectStages };
-        newStagesFinal.stage6 = { 
-          data: finalizeData.data, 
-          sources: searchData.sources 
+        newStagesFinal.stage6 = {
+          data: finalizeData.data,
+          sources: searchData.sources,
+          _brief: getBriefSignature()
         };
         setProjectStages(newStagesFinal);
         await saveProjectToStorage(newStagesFinal);
@@ -857,7 +882,7 @@ export default function App() {
         if (!res.ok || !data.ok) throw new Error(data.error);
 
         const newStages = { ...projectStages };
-        newStages[`stage${stageNum}`] = { data: data.data, sources: data.sources };
+        newStages[`stage${stageNum}`] = { data: data.data, sources: data.sources, _brief: getBriefSignature() };
         setProjectStages(newStages);
         await saveProjectToStorage(newStages);
       }
@@ -916,7 +941,8 @@ export default function App() {
             ...currentStages.stage11.data,
             [funnel]: newFunnelData
           },
-          sources: [...new Set([...(currentStages.stage11.sources || []), ...(data.sources || [])])]
+          sources: [...new Set([...(currentStages.stage11.sources || []), ...(data.sources || [])])],
+          _brief: getBriefSignature()
         }
       };
       setProjectStages(currentStages);
@@ -1002,6 +1028,7 @@ export default function App() {
             if (s.num !== 1 && !selectedStages.includes(s.num)) return null;
             const isSetupDone = projectId !== '';
             const isUnlocked = s.num === 1 || isSetupDone;
+            const stale = isUnlocked && s.num !== 1 && isStageStale(s.num);
             return (
               <div
                 key={s.num}
@@ -1011,6 +1038,7 @@ export default function App() {
               >
                 <span className="badge-icon">{s.num}</span>
                 <span>{s.name}</span>
+                {stale && <span title="Out of date — Setup changed since this stage was generated. Regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
               </div>
             );
           })}
@@ -1103,6 +1131,12 @@ export default function App() {
 
         <div className="workspace-content">
           {error && <div className="err" style={{ marginBottom: 16 }}><b>Error:</b> {error}</div>}
+
+          {activeTab !== 'history' && activeTab !== 1 && isStageStale(activeTab) && (
+            <div className="err" style={{ marginBottom: 16, background: '#fff7ed', borderColor: '#fdba74', color: '#9a3412' }}>
+              ⚠️ <b>Out of date:</b> your Setup has changed since this stage was generated. The data below reflects the old brief — click <b>Regenerate Stage</b> to sync it with the current Setup.
+            </div>
+          )}
 
           {/* HISTORY TAB */}
           {activeTab === 'history' && (
