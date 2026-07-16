@@ -208,6 +208,10 @@ export default function App() {
   
   // Generated Stages Cache for current project
   const [projectStages, setProjectStages] = useState({});
+  // Live mirror of projectStages so sequential writes (e.g. Generate-All) merge
+  // into the latest data instead of a stale closure snapshot (prevents stages vanishing).
+  const projectStagesRef = useRef({});
+  useEffect(() => { projectStagesRef.current = projectStages; }, [projectStages]);
   const [loading, setLoading] = useState({});
   const [error, setError] = useState(null);
   const [gtmGeneratingStatus, setGtmGeneratingStatus] = useState(null);
@@ -747,7 +751,7 @@ export default function App() {
             stage: 2,
             action: 'search',
             input: baseInput,
-            projectData: projectStages,
+            projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
           })
@@ -762,15 +766,16 @@ export default function App() {
         if (!searchRes.ok || !searchData.ok) throw new Error(searchData.error || 'Geographical research search failed');
 
         // Render intermediate numbers on screen instantly
-        const newStagesPartial = { ...projectStages };
-        newStagesPartial.stage2 = { 
-          touchpoints: searchData.touchpoints, 
-          intel: { 
+        const newStagesPartial = { ...projectStagesRef.current };
+        newStagesPartial.stage2 = {
+          touchpoints: searchData.touchpoints,
+          intel: {
             stateSummary: searchData.stateSummary,
             geoSchema: { level1: 'District', level2: 'Taluka', level3: 'Gram Panchayat' }
-          }, 
-          sources: searchData.sources 
+          },
+          sources: searchData.sources
         };
+        projectStagesRef.current = newStagesPartial;
         setProjectStages(newStagesPartial);
 
         // Step 2: Finalize compile (Fast compile, ~2s - NO search grounding)
@@ -784,7 +789,7 @@ export default function App() {
             touchpoints: searchData.touchpoints,
             stateSummary: searchData.stateSummary,
             input: baseInput,
-            projectData: projectStages,
+            projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
           })
@@ -798,13 +803,14 @@ export default function App() {
         }
         if (!finalizeRes.ok || !finalizeData.ok) throw new Error(finalizeData.error || 'Geographical finalization compile failed');
 
-        const newStagesFinal = { ...projectStages };
+        const newStagesFinal = { ...projectStagesRef.current };
         newStagesFinal.stage2 = {
           touchpoints: finalizeData.touchpoints,
           intel: finalizeData.intel,
           sources: searchData.sources,
           _brief: getBriefSignature()
         };
+        projectStagesRef.current = newStagesFinal;
         setProjectStages(newStagesFinal);
         await saveProjectToStorage(newStagesFinal);
 
@@ -818,7 +824,7 @@ export default function App() {
             stage: 6,
             action: 'search',
             input: baseInput,
-            projectData: projectStages,
+            projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
           })
@@ -842,7 +848,7 @@ export default function App() {
             action: 'finalize',
             searchReport: searchData.searchReport,
             input: baseInput,
-            projectData: projectStages,
+            projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
           })
@@ -856,12 +862,13 @@ export default function App() {
         }
         if (!finalizeRes.ok || !finalizeData.ok) throw new Error(finalizeData.error || 'Resistance finalization compile failed');
 
-        const newStagesFinal = { ...projectStages };
+        const newStagesFinal = { ...projectStagesRef.current };
         newStagesFinal.stage6 = {
           data: finalizeData.data,
           sources: searchData.sources,
           _brief: getBriefSignature()
         };
+        projectStagesRef.current = newStagesFinal;
         setProjectStages(newStagesFinal);
         await saveProjectToStorage(newStagesFinal);
       } else {
@@ -872,7 +879,7 @@ export default function App() {
           body: JSON.stringify({
             stage: stageNum,
             input: baseInput,
-            projectData: projectStages,
+            projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
           })
@@ -886,8 +893,9 @@ export default function App() {
         }
         if (!res.ok || !data.ok) throw new Error(data.error);
 
-        const newStages = { ...projectStages };
+        const newStages = { ...projectStagesRef.current };
         newStages[`stage${stageNum}`] = { data: data.data, sources: data.sources, _brief: getBriefSignature() };
+        projectStagesRef.current = newStages;
         setProjectStages(newStages);
         await saveProjectToStorage(newStages);
       }
@@ -904,7 +912,7 @@ export default function App() {
     
     try {
       // Ensure stage11 object exists
-      let currentStages = { ...projectStages };
+      let currentStages = { ...projectStagesRef.current };
       if (!currentStages.stage11) {
         currentStages.stage11 = { data: { branding: [], acquisition: [], engagement: [] }, sources: [] };
       }
@@ -950,6 +958,7 @@ export default function App() {
           _brief: getBriefSignature()
         }
       };
+      projectStagesRef.current = currentStages;
       setProjectStages(currentStages);
       await saveProjectToStorage(currentStages);
     } catch (e) {
@@ -1010,10 +1019,11 @@ export default function App() {
     setProjectStages((prev) => {
       const cur = prev.stage16 || { data: {} };
       const next = { ...prev, stage16: { ...cur, data: { ...cur.data, brief: { ...(cur.data?.brief || {}), [key]: value } } } };
+      projectStagesRef.current = next;
       return next;
     });
   };
-  const saveBrief = () => saveProjectToStorage(projectStages);
+  const saveBrief = () => saveProjectToStorage(projectStagesRef.current);
 
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
