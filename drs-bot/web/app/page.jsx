@@ -977,7 +977,7 @@ export default function App() {
 
     try {
       const activeStageKey = activeTab === 'history' ? 'setup' : `stage${activeStageNum}`;
-      const tabParam = activeTab === 'preplanning' ? 'preplanning' : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
+      const tabParam = activeTab === 'preplanning' ? 'preplanning' : activeTab === 'planning' ? 'planning' : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
       const res = await fetch('/api/copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1011,7 +1011,7 @@ export default function App() {
 
   // On the Market Research page the "active stage" is the selected sub-tab.
   // Pre-planning is stored internally as stage 16.
-  const activeStageNum = activeTab === 'research' ? researchTab : activeTab === 'preplanning' ? 16 : activeTab;
+  const activeStageNum = activeTab === 'research' ? researchTab : activeTab === 'preplanning' ? 16 : activeTab === 'planning' ? 17 : activeTab;
   const activeStageData = projectStages[`stage${activeStageNum}`];
 
   // Edit a Campaign Brief field (Pre-planning) and persist.
@@ -1029,8 +1029,12 @@ export default function App() {
     setCopilotCollapsed(false);
     setCopilotQuery(`Let's refine the "${label}" section of the Campaign Brief.`);
   };
-  // Auto-open the Copilot on the Pre-planning page (it is the editing surface).
-  useEffect(() => { if (activeTab === 'preplanning') setCopilotCollapsed(false); }, [activeTab]);
+  // Auto-open the Copilot on the Pre-planning / Planning pages (the editing surface).
+  useEffect(() => { if (activeTab === 'preplanning' || activeTab === 'planning') setCopilotCollapsed(false); }, [activeTab]);
+  const discussPlan = (label) => {
+    setCopilotCollapsed(false);
+    setCopilotQuery(`Let's refine the ${label} in the campaign plan.`);
+  };
 
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
@@ -1139,6 +1143,19 @@ export default function App() {
                   </div>
                 )}
 
+                {/* PLANNING — combined page (Campaign Plan) */}
+                {isSetupDone && (
+                  <div
+                    className={`menu-item ${activeTab === 'planning' ? 'active' : ''}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setActiveTab('planning')}
+                  >
+                    <span className="badge-icon">PL</span>
+                    <span>Planning</span>
+                    {isStageStale(17) && <span title="Setup changed — regenerate plan" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                  </div>
+                )}
+
                 {/* Stages 7-15 — unchanged, flat (phases to be designed later) */}
                 {laterStages.map((s) => renderStageItem(s))}
               </>
@@ -1167,7 +1184,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1992,12 +2009,12 @@ export default function App() {
           )}
 
           {/* GENERATION STATE WRAPPER FOR STAGES 2-15 (Bypassed for Stage 11) */}
-          {(typeof activeTab === 'number' || activeTab === 'research' || activeTab === 'preplanning') && activeStageNum > 1 && activeStageNum !== 11 && !activeStageData && (
+          {(typeof activeTab === 'number' || activeTab === 'research' || activeTab === 'preplanning' || activeTab === 'planning') && activeStageNum > 1 && activeStageNum !== 11 && !activeStageData && (
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <h2>{activeTab === 'preplanning' ? 'Campaign Brief' : STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
-              <p className="sub">{activeTab === 'preplanning' ? 'The AI Director will synthesize your research into a SWOT and a first draft of the 7-section brief. You then edit and lock it.' : 'The engine will pull real datasets and formulate the roadmap for this stage.'}</p>
+              <h2>{activeTab === 'preplanning' ? 'Campaign Brief' : activeTab === 'planning' ? 'Campaign Plan' : STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
+              <p className="sub">{activeTab === 'preplanning' ? 'The AI Director will synthesize your research into a SWOT and a first draft of the 7-section brief. You then edit and lock it.' : activeTab === 'planning' ? 'The AI will turn your locked brief into a 360° plan: moments, a campaign calendar, and a weekly content calendar (each row a task). Refine via the Copilot.' : 'The engine will pull real datasets and formulate the roadmap for this stage.'}</p>
               <button className="btn" onClick={() => generateStage(activeStageNum)} disabled={loading[activeStageNum]}>
-                {loading[activeStageNum] ? <><span className="spinner" /> Generating...</> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
+                {loading[activeStageNum] ? <><span className="spinner" /> Generating...</> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : activeTab === 'planning' ? 'Generate the Campaign Plan' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
               </button>
               {loading[activeStageNum] && (
                 <div className="muted" style={{ marginTop: 12 }}>
@@ -2072,6 +2089,101 @@ export default function App() {
                       {loading[16] ? '🔄 Re-drafting...' : '🔄 Re-draft all from research'}
                     </button>
                   </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* PLANNING — Campaign Plan */}
+          {activeTab === 'planning' && activeStageData && (() => {
+            const d = activeStageData.data || {};
+            const moments = d.moments || [];
+            const campaigns = d.campaignCalendar || [];
+            const content = d.contentCalendar || [];
+            return (
+              <div>
+                <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>How this works</span>
+                  <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI turned your locked brief into a 360° plan. Each <strong>Content Calendar</strong> row is an atomic task (with a suggested executor) that will flow into Orchestration. To change anything, discuss it with the Copilot.</p>
+                </div>
+
+                {moments.length > 0 && (
+                  <div className="card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h2>Moments &amp; Seasonality</h2>
+                      <button onClick={() => discussPlan('moments')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                    </div>
+                    <p className="sub">Real festivals/seasons worth capitalizing on across the project timeline.</p>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table>
+                        <thead><tr><th>Moment</th><th>When</th><th>Why it matters</th><th>Angle</th></tr></thead>
+                        <tbody>
+                          {moments.map((m, i) => (
+                            <tr key={i}><td><strong>{m.moment}</strong></td><td className="muted">{m.dates}</td><td className="muted">{m.why}</td><td>{m.angle}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>Campaign Calendar</h2>
+                    <button onClick={() => discussPlan('campaign calendar')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                  </div>
+                  <p className="sub">Which campaigns run when, and why — each tied to a brief objective and a moment.</p>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table>
+                      <thead><tr><th>Campaign</th><th>Objective</th><th>Window</th><th>Audience</th><th>Channels</th><th>Moment</th><th>KPI</th></tr></thead>
+                      <tbody>
+                        {campaigns.map((c, i) => (
+                          <tr key={i}>
+                            <td><strong>{c.campaign}</strong></td>
+                            <td className="muted">{c.objective}</td>
+                            <td className="muted">{c.window}</td>
+                            <td className="muted">{c.audience}</td>
+                            <td className="muted">{c.channels}</td>
+                            <td className="muted">{c.moment}</td>
+                            <td className="muted">{c.kpi}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2>Content Calendar <span className="muted" style={{ fontSize: '12px', fontWeight: 400 }}>— each row is a task</span></h2>
+                    <button onClick={() => discussPlan('content calendar')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                  </div>
+                  <p className="sub">The weekly schedule that flows into Orchestration → Execution. Executor = who runs it.</p>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table>
+                      <thead><tr><th>Week</th><th>Campaign</th><th>Channel</th><th>Format</th><th>Hook</th><th>Objective</th><th>Owner</th><th>Executor</th></tr></thead>
+                      <tbody>
+                        {content.map((t, i) => (
+                          <tr key={i}>
+                            <td className="muted">{t.week}</td>
+                            <td className="muted">{t.campaign}</td>
+                            <td><span className="phase p1">{t.channel}</span></td>
+                            <td className="muted">{t.format}</td>
+                            <td>{t.hook}</td>
+                            <td className="muted">{t.objective}</td>
+                            <td className="muted">{t.owner}</td>
+                            <td><span className={`phase ${String(t.executor).includes('human') ? 'p3' : 'p2'}`}>{t.executor}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => generateStage(17)} disabled={loading[17]}>
+                    {loading[17] ? '🔄 Re-drafting...' : '🔄 Re-draft plan from brief'}
+                  </button>
                 </div>
               </div>
             );
@@ -3504,7 +3616,7 @@ export default function App() {
       {/* 3. Collapsible Right AI Copilot drawer */}
       <div className={`copilot-panel ${copilotCollapsed ? 'collapsed' : ''}`}>
         <div className="copilot-header">
-          <h3>AI Copilot ({activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
+          <h3>AI Copilot ({activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="copilot-toggle-btn" onClick={() => setCopilotMessages([{ sender: 'assistant', text: 'Conversation reset. Ask me anything!' }])}>
               Reset

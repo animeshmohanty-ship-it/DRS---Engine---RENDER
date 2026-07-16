@@ -836,6 +836,36 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
   }
 }`;
 
+    case 17:
+      return `You are a senior Campaign Planning Director for Recykal's DRS.
+You are generating PLANNING — the actionable 360° Campaign Plan — for ${targetLocation}.
+
+${contextHeader}
+${projectData.stage16 ? `LOCKED CAMPAIGN BRIEF (obey this):\n${JSON.stringify(projectData.stage16.data?.brief || {})}` : 'NOTE: No campaign brief found — infer objectives from the setup context.'}
+${projectData.stage2 ? `GEOGRAPHY:\n${JSON.stringify(projectData.stage2.intel?.stateSummary || {})}` : ''}
+
+YOUR TASK:
+Turn the brief into an actionable, scheduled, 360° plan in THREE parts. This decides the HOW — what runs, when, on which channel, and who executes it.
+
+RULES:
+- Everything must serve the brief's objectives and North Star (Return Rate) and stay within its scope + mandatories.
+- MOMENTS: use the project's calendar months (${calendarMonths.join(', ') || 'the project timeline'}) to find real festivals/seasons/events in ${targetLocation} worth capitalizing on. Ground them; do not invent.
+- CONTENT CALENDAR: one row PER WEEK across the timeline. Each row is an atomic task. Assign a realistic executor. Tie each to the selected materials (${materials.join(', ')}) and the "${implementationModel}" model.
+- Never fabricate metrics; where a human number is needed, write [Decision needed].
+
+Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
+{
+  "moments": [
+    { "moment": "<festival/season/event>", "dates": "<when>", "why": "<why it matters for DRS here>", "angle": "<how to capitalize>" }
+  ],
+  "campaignCalendar": [
+    { "campaign": "<name>", "objective": "<from the brief>", "window": "<dates/phase>", "audience": "<who>", "channels": "<e.g. Social, WhatsApp, BTL, PR, Ads>", "moment": "<moment it rides>", "kpi": "<measurable KPI>" }
+  ],
+  "contentCalendar": [
+    { "week": "<e.g. Wk 1 (Oct 1-7)>", "campaign": "<parent campaign>", "channel": "<Social|WhatsApp|Email|Ads|BTL|PR>", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message/festival tie-in>", "objective": "<awareness|acquisition|engagement|returns>", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)" }
+  ]
+}`;
+
     case 15:
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
 You are generating STAGE 15 — Knowledge / Reusable Blueprint — for a real implementation plan.
