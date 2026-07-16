@@ -1024,6 +1024,13 @@ export default function App() {
     });
   };
   const saveBrief = () => saveProjectToStorage(projectStagesRef.current);
+  // Seed the Copilot with a section to refine, and open it.
+  const discussBriefSection = (label) => {
+    setCopilotCollapsed(false);
+    setCopilotQuery(`Let's refine the "${label}" section of the Campaign Brief.`);
+  };
+  // Auto-open the Copilot on the Pre-planning page (it is the editing surface).
+  useEffect(() => { if (activeTab === 'preplanning') setCopilotCollapsed(false); }, [activeTab]);
 
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
@@ -2023,7 +2030,7 @@ export default function App() {
               <div>
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
                   <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>How this works</span>
-                  <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI Director drafted this from your Market Research. <strong>Edit any field</strong> (it saves automatically), or open the <strong>Copilot</strong> on the right to co-author — tell it your real objectives, budget, and constraints and it will propose updates you approve.</p>
+                  <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI Director authored this from your Market Research. To change anything, <strong>discuss it with the Copilot</strong> (right) and approve the updates it proposes — tell it your real objectives, budget, and constraints. Hit <strong>💬 Discuss</strong> on any section to start.</p>
                 </div>
 
                 <div className="card">
@@ -2043,26 +2050,26 @@ export default function App() {
 
                 <div className="card">
                   <h2>Campaign Brief</h2>
-                  <p className="sub">The contract downstream planning must obey. Fields marked <em>[Decision needed]</em> are yours to fill.</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+                  <p className="sub">AI-authored — the contract downstream planning must obey. Change it only via the Copilot; fields marked <em>[Decision needed]</em> need your input there.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 8 }}>
                     {briefSections.map(([key, label], idx) => (
-                      <div key={key}>
-                        <label style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--accent)', display: 'block', marginBottom: 6 }}>{idx + 1}. {label}</label>
-                        <textarea
-                          value={brief[key] || ''}
-                          onChange={(e) => updateBriefField(key, e.target.value)}
-                          onBlur={saveBrief}
-                          rows={key === 'objectives' || key === 'mandatories' ? 4 : 3}
-                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface, #fff)', color: 'var(--ink)', fontSize: '14px', fontFamily: 'inherit', lineHeight: 1.5, resize: 'vertical' }}
-                          placeholder={`Draft the ${label} here…`}
-                        />
+                      <div key={key} style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--grey-soft)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--accent)' }}>{idx + 1}. {label}</span>
+                          <button
+                            onClick={() => discussBriefSection(label)}
+                            style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
+                          >💬 Discuss</button>
+                        </div>
+                        <p style={{ fontSize: '14px', margin: '8px 0 0', color: 'var(--ink)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                          {brief[key] || <span style={{ color: 'var(--ink-soft)', fontStyle: 'italic' }}>Not yet drafted — ask the Copilot.</span>}
+                        </p>
                       </div>
                     ))}
                   </div>
-                  <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
-                    <button className="btn" onClick={saveBrief}>💾 Save Brief</button>
+                  <div style={{ marginTop: 16 }}>
                     <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => generateStage(16)} disabled={loading[16]}>
-                      {loading[16] ? '🔄 Re-drafting...' : '🔄 Re-draft from research'}
+                      {loading[16] ? '🔄 Re-drafting...' : '🔄 Re-draft all from research'}
                     </button>
                   </div>
                 </div>
@@ -3497,7 +3504,7 @@ export default function App() {
       {/* 3. Collapsible Right AI Copilot drawer */}
       <div className={`copilot-panel ${copilotCollapsed ? 'collapsed' : ''}`}>
         <div className="copilot-header">
-          <h3>AI Copilot ({STAGES.find(s => s.num === activeTab)?.name || 'Setup'})</h3>
+          <h3>AI Copilot ({activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="copilot-toggle-btn" onClick={() => setCopilotMessages([{ sender: 'assistant', text: 'Conversation reset. Ask me anything!' }])}>
               Reset
