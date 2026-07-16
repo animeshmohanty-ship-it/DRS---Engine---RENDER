@@ -2304,6 +2304,34 @@ export default function App() {
                 </div>
               )}
 
+              {activeStageData.data?.porterFiveForces && (
+                <div className="card">
+                  <h2>Porter's Five Forces — Market Structure</h2>
+                  <p className="sub">The structural read of the market, derived from the competitor landscape below.</p>
+                  <table>
+                    <thead><tr><th>Force</th><th>Rating</th><th>Read</th></tr></thead>
+                    <tbody>
+                      {[
+                        ['Competitive Rivalry', 'competitiveRivalry'],
+                        ['Threat of New Entrants', 'threatOfNewEntrants'],
+                        ['Supplier Power', 'supplierPower'],
+                        ['Buyer Power', 'buyerPower'],
+                        ['Threat of Substitutes', 'threatOfSubstitutes'],
+                      ].map(([label, key]) => {
+                        const f = activeStageData.data.porterFiveForces[key] || {};
+                        return (
+                          <tr key={key}>
+                            <td><strong>{label}</strong></td>
+                            <td><span className={`phase ${f.rating === 'High' ? 'p2' : f.rating === 'Medium' ? 'p1' : 'p3'}`}>{f.rating || '—'}</span></td>
+                            <td className="muted">{f.note}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               <div className="card">
                 <h2>Competitor Landscape Comparison</h2>
                 <p className="sub">Side-by-side comparison of active circular operators, waste-tech platforms, and DRS systems in {country}.</p>
@@ -2423,6 +2451,31 @@ export default function App() {
           {/* STAGE 6 RESISTANCE */}
           {activeStageNum === 6 && activeStageData && (
             <div>
+              {activeStageData.data?.pestle && (
+                <div className="card">
+                  <h2>PESTLE — Macro Environment</h2>
+                  <p className="sub">The macro forces behind the resistance register below.</p>
+                  <table>
+                    <thead><tr><th>Factor</th><th>Read for this geography</th></tr></thead>
+                    <tbody>
+                      {[
+                        ['Political', 'political'],
+                        ['Economic', 'economic'],
+                        ['Social', 'social'],
+                        ['Technological', 'technological'],
+                        ['Legal', 'legal'],
+                        ['Environmental', 'environmental'],
+                      ].map(([label, key]) => (
+                        <tr key={key}>
+                          <td><strong>{label}</strong></td>
+                          <td className="muted">{activeStageData.data.pestle[key]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               <div className="card">
                 <h2>Resistance Index</h2>
                 <div className="grid four mt-4">

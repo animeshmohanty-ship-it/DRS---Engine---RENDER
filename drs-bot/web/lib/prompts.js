@@ -889,7 +889,7 @@ ${searchReport}
 ---
 
 YOUR TASK:
-Compile the finalized resistance index, risk register, and predicted threats.
+Compile the finalized resistance index, risk register, predicted threats, and a PESTLE macro-environment scan (the "so what" context behind the register).
 You must follow these strict logical reasoning rules to assign the SEVERITY ("High"|"Medium"|"Low") of each front:
 
 1. Government / Regulatory Front:
@@ -928,7 +928,15 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
       "threat": "<AI predicted future threat>",
       "mitigation": "<pre-emptive action>"
     }
-  ]
+  ],
+  "pestle": {
+    "political": "<macro political factors for DRS in ${targetLocation} — govt appetite, mandates, election cycles>",
+    "economic": "<deposit value sensitivity, retailer/producer cost, funding, tourism/seasonality>",
+    "social": "<consumer attitudes, transient populations, informal-sector livelihoods, litter sentiment>",
+    "technological": "<payment/UPI penetration, QR/computer-vision viability, connectivity gaps>",
+    "legal": "<packaging-waste rules, deposit-scheme law, excise/licensing regulations>",
+    "environmental": "<litter/marine plastic, seasonal/monsoon logistics, material recovery differences>"
+  }
 }`;
 }
 

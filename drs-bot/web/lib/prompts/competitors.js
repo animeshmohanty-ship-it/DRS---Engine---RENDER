@@ -34,7 +34,7 @@ RECYKAL / RETEARN CAPABILITY (the basis of the moat — name the actual product)
 - Recykal: nationwide collection/aggregation network + informal-sector integration + traceability (already running a live DRS deployment in Goa).
 
 YOUR TASK:
-Using the search reports provided, deliver a competitive picture with THREE parts: (a) 5 direct competitors, (b) IN-COUNTRY benchmark schemes/precedents from ${country} ONLY (prioritise ${targetLocation}), and (c) the no-DRS baseline the market sits at today.
+Using the search reports provided, deliver a competitive picture with FOUR parts: (a) 5 direct competitors, (b) IN-COUNTRY benchmark schemes/precedents from ${country} ONLY (prioritise ${targetLocation}), (c) the no-DRS baseline the market sits at today, and (d) a Porter's Five Forces read of the market structure (derived from the competitor landscape — the "so what").
 
 RIGOR (mandatory):
 - NEVER fabricate figures. Every market-share and return-rate number must be labelled "(verified)", "(approximate — verify)", or given as an explicit reasoned estimate. If unknown, say "unknown".
@@ -46,6 +46,13 @@ RIGOR (mandatory):
 Return ONLY a single valid JSON object (no markdown fences, no prose) matching exactly this schema structure:
 {
   "positioningVerdict": "<2-3 lines: where Recykal realistically stands and what it should compete on>",
+  "porterFiveForces": {
+    "competitiveRivalry": { "rating": "High|Medium|Low", "note": "<1-2 lines on rivalry among current DRS/RVM players>" },
+    "threatOfNewEntrants": { "rating": "High|Medium|Low", "note": "<barriers to entry; who could enter>" },
+    "supplierPower": { "rating": "High|Medium|Low", "note": "<RVM/hardware/logistics dependency; note Retearn owns its hardware>" },
+    "buyerPower": { "rating": "High|Medium|Low", "note": "<leverage of brands/retailers/government who fund or host the scheme>" },
+    "threatOfSubstitutes": { "rating": "High|Medium|Low", "note": "<informal sector, kerbside, do-nothing baseline>" }
+  },
   "competitors": [
     {
       "name": "<actual company/platform name>",
