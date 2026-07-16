@@ -967,12 +967,13 @@ export default function App() {
     setCopilotLoading(true);
 
     try {
-      const activeStageKey = activeTab === 'history' ? 'setup' : `stage${activeTab}`;
+      const activeStageKey = activeTab === 'history' ? 'setup' : `stage${activeStageNum}`;
+      const tabParam = activeTab === 'preplanning' ? 'preplanning' : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
       const res = await fetch('/api/copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tab: STAGES.find(s => s.num === activeTab)?.name || 'Setup',
+          tab: tabParam,
           stateData: projectStages[activeStageKey] || { country, state, model, selectedMaterials, objective },
           query: userMsg.text,
           history: copilotMessages.slice(-6),
@@ -981,8 +982,17 @@ export default function App() {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
-      
-      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: data.text }]);
+
+      // Co-author mode: parse ::brief-update:: proposals out of the reply.
+      let display = data.text || '';
+      const proposals = [];
+      const re = /::brief-update::\s*([\s\S]*?)\s*::end::/g;
+      let m;
+      while ((m = re.exec(data.text || '')) !== null) {
+        try { const p = JSON.parse(m[1].trim()); if (p.section && p.content) proposals.push(p); } catch {}
+      }
+      display = display.replace(re, '').trim();
+      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: display || 'I have proposed brief updates below.', proposals: proposals.length ? proposals : undefined }]);
     } catch (err) {
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
     } finally {
@@ -991,8 +1001,19 @@ export default function App() {
   };
 
   // On the Market Research page the "active stage" is the selected sub-tab.
-  const activeStageNum = activeTab === 'research' ? researchTab : activeTab;
+  // Pre-planning is stored internally as stage 16.
+  const activeStageNum = activeTab === 'research' ? researchTab : activeTab === 'preplanning' ? 16 : activeTab;
   const activeStageData = projectStages[`stage${activeStageNum}`];
+
+  // Edit a Campaign Brief field (Pre-planning) and persist.
+  const updateBriefField = (key, value) => {
+    setProjectStages((prev) => {
+      const cur = prev.stage16 || { data: {} };
+      const next = { ...prev, stage16: { ...cur, data: { ...cur.data, brief: { ...(cur.data?.brief || {}), [key]: value } } } };
+      return next;
+    });
+  };
+  const saveBrief = () => saveProjectToStorage(projectStages);
 
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
@@ -1088,6 +1109,19 @@ export default function App() {
                   </div>
                 )}
 
+                {/* PRE-PLANNING — combined page (Campaign Brief) */}
+                {isSetupDone && (
+                  <div
+                    className={`menu-item ${activeTab === 'preplanning' ? 'active' : ''}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setActiveTab('preplanning')}
+                  >
+                    <span className="badge-icon">PP</span>
+                    <span>Pre-planning</span>
+                    {isStageStale(16) && <span title="Setup changed — regenerate brief" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                  </div>
+                )}
+
                 {/* Stages 7-15 — unchanged, flat (phases to be designed later) */}
                 {laterStages.map((s) => renderStageItem(s))}
               </>
@@ -1116,7 +1150,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1941,12 +1975,12 @@ export default function App() {
           )}
 
           {/* GENERATION STATE WRAPPER FOR STAGES 2-15 (Bypassed for Stage 11) */}
-          {(typeof activeTab === 'number' || activeTab === 'research') && activeStageNum > 1 && activeStageNum !== 11 && !activeStageData && (
+          {(typeof activeTab === 'number' || activeTab === 'research' || activeTab === 'preplanning') && activeStageNum > 1 && activeStageNum !== 11 && !activeStageData && (
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
-              <h2>{STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
-              <p className="sub">The engine will pull real datasets and formulate the roadmap for this stage.</p>
+              <h2>{activeTab === 'preplanning' ? 'Campaign Brief' : STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
+              <p className="sub">{activeTab === 'preplanning' ? 'The AI Director will synthesize your research into a SWOT and a first draft of the 7-section brief. You then edit and lock it.' : 'The engine will pull real datasets and formulate the roadmap for this stage.'}</p>
               <button className="btn" onClick={() => generateStage(activeStageNum)} disabled={loading[activeStageNum]}>
-                {loading[activeStageNum] ? <><span className="spinner" /> Generating...</> : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`}
+                {loading[activeStageNum] ? <><span className="spinner" /> Generating...</> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
               </button>
               {loading[activeStageNum] && (
                 <div className="muted" style={{ marginTop: 12 }}>
@@ -1955,6 +1989,76 @@ export default function App() {
               )}
             </div>
           )}
+
+          {/* PRE-PLANNING — Campaign Brief */}
+          {activeTab === 'preplanning' && activeStageData && (() => {
+            const swot = activeStageData.data?.swot || {};
+            const brief = activeStageData.data?.brief || {};
+            const briefSections = [
+              ['situation', 'Situation / Why Now'],
+              ['challenge', 'The Challenge'],
+              ['objectives', 'Objectives & North Star'],
+              ['audience', 'Target Audience'],
+              ['ask', 'The Ask (single-minded proposition)'],
+              ['scope', 'Scope — In / Out'],
+              ['mandatories', 'Mandatories & Constraints'],
+            ];
+            const quad = [
+              ['strengths', 'Strengths', 'var(--green)'],
+              ['weaknesses', 'Weaknesses', '#b42318'],
+              ['opportunities', 'Opportunities', 'var(--accent)'],
+              ['threats', 'Threats', '#b54708'],
+            ];
+            return (
+              <div>
+                <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>How this works</span>
+                  <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI Director drafted this from your Market Research. <strong>Edit any field</strong> (it saves automatically), or open the <strong>Copilot</strong> on the right to co-author — tell it your real objectives, budget, and constraints and it will propose updates you approve.</p>
+                </div>
+
+                <div className="card">
+                  <h2>SWOT — Strategic Snapshot</h2>
+                  <p className="sub">Synthesized from Stages 2–6. Regenerate the brief to refresh it.</p>
+                  <div className="grid two">
+                    {quad.map(([key, label, color]) => (
+                      <div key={key} style={{ borderLeft: `4px solid ${color}`, padding: '10px 14px', background: 'var(--grey-soft)', borderRadius: '0 8px 8px 0' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color }}>{label}</span>
+                        <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: '13px' }}>
+                          {(Array.isArray(swot[key]) ? swot[key] : []).map((it, i) => <li key={i} style={{ marginBottom: 4 }}>{it}</li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="card">
+                  <h2>Campaign Brief</h2>
+                  <p className="sub">The contract downstream planning must obey. Fields marked <em>[Decision needed]</em> are yours to fill.</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+                    {briefSections.map(([key, label], idx) => (
+                      <div key={key}>
+                        <label style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--accent)', display: 'block', marginBottom: 6 }}>{idx + 1}. {label}</label>
+                        <textarea
+                          value={brief[key] || ''}
+                          onChange={(e) => updateBriefField(key, e.target.value)}
+                          onBlur={saveBrief}
+                          rows={key === 'objectives' || key === 'mandatories' ? 4 : 3}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--surface, #fff)', color: 'var(--ink)', fontSize: '14px', fontFamily: 'inherit', lineHeight: 1.5, resize: 'vertical' }}
+                          placeholder={`Draft the ${label} here…`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+                    <button className="btn" onClick={saveBrief}>💾 Save Brief</button>
+                    <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => generateStage(16)} disabled={loading[16]}>
+                      {loading[16] ? '🔄 Re-drafting...' : '🔄 Re-draft from research'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* STAGE 2 GEOGRAPHY INTEL */}
           {activeStageNum === 2 && activeStageData && (
@@ -3452,6 +3556,34 @@ export default function App() {
             return (
               <div key={i} className={`chat-message ${msg.sender === 'user' ? 'user' : 'assistant'}`}>
                 <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+                {msg.proposals && msg.proposals.map((p, pi) => {
+                  const applied = msg._applied && msg._applied[pi];
+                  return (
+                    <div key={pi} style={{ marginTop: 8, padding: '10px', border: '1px solid var(--accent)', borderRadius: 8, background: 'var(--accent-soft, #eef6f3)' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>Proposed → {p.section}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--ink)', marginBottom: 8 }}>{p.content}</div>
+                      {applied ? (
+                        <span style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 600 }}>✓ Applied to brief</span>
+                      ) : (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="btn"
+                            style={{ padding: '4px 12px', fontSize: '12px' }}
+                            onClick={() => {
+                              updateBriefField(p.section, p.content);
+                              setTimeout(saveBrief, 0);
+                              setCopilotMessages(prev => prev.map((mm, mi) => mi === i ? { ...mm, _applied: { ...(mm._applied || {}), [pi]: true } } : mm));
+                            }}
+                          >Apply</button>
+                          <button
+                            style={{ padding: '4px 12px', fontSize: '12px', background: 'transparent', border: '1px solid var(--line)', borderRadius: 6, cursor: 'pointer', color: 'var(--ink-soft)' }}
+                            onClick={() => setCopilotMessages(prev => prev.map((mm, mi) => mi === i ? { ...mm, _applied: { ...(mm._applied || {}), [pi]: 'rejected' } } : mm))}
+                          >Dismiss</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}

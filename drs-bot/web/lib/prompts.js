@@ -798,6 +798,44 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
   ]
 }`;
 
+    case 16:
+      return `You are a senior Campaign / Strategy Director for Recykal's DRS.
+You are generating PRE-PLANNING — the Campaign Brief (Charter) — for ${targetLocation}.
+
+${contextHeader}
+${projectData.stage2 ? `GEOGRAPHY INTEL:\n${JSON.stringify(projectData.stage2.intel?.stateSummary || projectData.stage2.intel || {})}` : ''}
+${projectData.stage3 ? `MARKET OPPORTUNITY:\n${JSON.stringify(projectData.stage3.opportunityScores || {})}` : ''}
+${projectData.stage4 ? `STAKEHOLDERS:\n${JSON.stringify({ champions: projectData.stage4.champions, blockers: projectData.stage4.blockers })}` : ''}
+${projectData.stage5 ? `COMPETITORS:\n${JSON.stringify(projectData.stage5.positioningVerdict || '')}` : ''}
+${projectData.stage6 ? `RESISTANCE:\n${JSON.stringify(projectData.stage6.register?.slice(0, 5) || [])}` : ''}
+
+YOUR TASK:
+Synthesize ALL of the Market Research above into (1) a SWOT snapshot and (2) a first draft of the 7-section Campaign Brief. This brief is the contract the downstream plan must obey — decide WHAT, WHY, FOR WHOM, and WITHIN WHAT LIMITS, never HOW.
+
+RULES:
+- Ground every point in the research above. Never fabricate. Where a human decision is needed (real budget, hard dates, leadership mandates), leave a clear prompt like "[Decision needed: ...]" for the human to complete.
+- The Ask = the single core message/behaviour. Objectives must be measurable (return rate, merchants, timeline) with the North Star being Return Rate.
+- Tie everything to ${targetLocation}, the selected materials, and the "${implementationModel}" model.
+
+Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
+{
+  "swot": {
+    "strengths": ["<internal Recykal/Retearn advantage>"],
+    "weaknesses": ["<internal gap>"],
+    "opportunities": ["<external market opening>"],
+    "threats": ["<external risk>"]
+  },
+  "brief": {
+    "situation": "<why this DRS, why here, why now — 2-3 lines from research>",
+    "challenge": "<the core problem the campaign must crack>",
+    "objectives": "<measurable goals + North Star (Return Rate); mark human targets as [Decision needed]>",
+    "audience": "<priority stakeholders + consumer/merchant segments to move first>",
+    "ask": "<the single core message/behaviour we want>",
+    "scope": "<what this campaign covers and explicitly does NOT cover>",
+    "mandatories": "<non-negotiables: budget boundary, hard dates, brand/regulatory guardrails — mark unknowns as [Decision needed]>"
+  }
+}`;
+
     case 15:
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
 You are generating STAGE 15 — Knowledge / Reusable Blueprint — for a real implementation plan.

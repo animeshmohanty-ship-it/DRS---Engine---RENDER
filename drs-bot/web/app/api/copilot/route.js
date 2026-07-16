@@ -43,8 +43,20 @@ export async function POST(req) {
       .map((msg) => `${msg.sender === 'user' ? 'User' : 'Copilot'}: ${msg.text}`)
       .join('\n');
 
+    const coAuthorBlock = tab === 'preplanning' ? `
+
+CO-AUTHOR MODE (Pre-planning Campaign Brief):
+You are the Campaign / Strategy Director co-authoring the brief with the user. Discuss, challenge weak or vague inputs, and pull real answers out of them (objectives, budget boundary, hard dates, non-negotiables).
+When you and the user settle content for a brief section, EMIT A PROPOSAL BLOCK on its own lines, in addition to your normal chat reply:
+::brief-update::
+{"section":"<one of: situation|challenge|objectives|audience|ask|scope|mandatories>","content":"<the proposed text for that section>"}
+::end::
+You may emit multiple blocks. Only emit a block when you have concrete content to propose. Keep your conversational reply separate from the blocks. Never invent budgets or dates — ask the user for those.
+` : '';
+
     const systemPrompt = `You are the context-aware AI Copilot for the Recykal DRS (Deposit Return System) Roadmap Engine.
 You are helping the DRS Pod Leader who is currently viewing the "${tab}" tab.
+${coAuthorBlock}
 
 PROJECT CONTEXT & CURRENT TAB DATA:
 ${JSON.stringify(stateData, null, 2)}
