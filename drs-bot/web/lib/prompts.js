@@ -850,8 +850,9 @@ Turn the brief into an actionable, scheduled, 360° plan in THREE parts. This de
 RULES:
 - Everything must serve the brief's objectives and North Star (Return Rate) and stay within its scope + mandatories.
 - MOMENTS: use the project's calendar months (${calendarMonths.join(', ') || 'the project timeline'}) to find real festivals/seasons/events in ${targetLocation} worth capitalizing on. Ground them; do not invent.
-- CONTENT CALENDAR: one row PER WEEK across the timeline. Each row is an atomic task. Assign a realistic executor. Tie each to the selected materials (${materials.join(', ')}) and the "${implementationModel}" model.
-- Never fabricate metrics; where a human number is needed, write [Decision needed].
+- CONTENT CALENDAR: produce 8–12 rows MAXIMUM covering the most important weeks/moments (NOT every single week). Each row is an atomic task. Keep "hook" and "objective" to ONE short line each. Assign a realistic executor. Tie each to the selected materials (${materials.join(', ')}) and the "${implementationModel}" model.
+- CAMPAIGN CALENDAR: 3–6 campaigns maximum. MOMENTS: 3–5 maximum.
+- Keep the ENTIRE JSON compact so it is never truncated. Never fabricate metrics; where a human number is needed, write [Decision needed].
 
 Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
 {

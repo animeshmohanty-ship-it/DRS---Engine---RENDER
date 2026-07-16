@@ -65,7 +65,7 @@ export async function generateGrounded(prompt, { temperature = 0.1, customModel 
 
   const config = {
     temperature,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
   };
 
   if (grounding) {

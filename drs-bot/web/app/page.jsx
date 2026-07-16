@@ -2100,12 +2100,21 @@ export default function App() {
             const moments = d.moments || [];
             const campaigns = d.campaignCalendar || [];
             const content = d.contentCalendar || [];
+            const isEmpty = !moments.length && !campaigns.length && !content.length;
             return (
               <div>
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
                   <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>How this works</span>
                   <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI turned your locked brief into a 360° plan. Each <strong>Content Calendar</strong> row is an atomic task (with a suggested executor) that will flow into Orchestration. To change anything, discuss it with the Copilot.</p>
                 </div>
+
+                {isEmpty && (
+                  <div className="card" style={{ borderLeft: '4px solid #b54708', background: '#fff7ed' }}>
+                    <h3 style={{ margin: 0, color: '#9a3412' }}>The plan came back empty</h3>
+                    <p style={{ fontSize: '13px', color: '#9a3412', margin: '6px 0 12px' }}>The AI response was empty or got cut off (often when the timeline is long). Click Re-draft to try again — the plan is now capped to stay within limits.</p>
+                    <button className="btn" onClick={() => generateStage(17)} disabled={loading[17]}>{loading[17] ? 'Re-drafting…' : '🔄 Re-draft plan'}</button>
+                  </div>
+                )}
 
                 {moments.length > 0 && (
                   <div className="card">
