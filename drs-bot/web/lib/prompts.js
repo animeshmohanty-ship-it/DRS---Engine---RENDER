@@ -850,7 +850,8 @@ Turn the brief into an actionable, scheduled, 360° plan in THREE parts. This de
 RULES:
 - Everything must serve the brief's objectives and North Star (Return Rate) and stay within its scope + mandatories.
 - MOMENTS: use the project's calendar months (${calendarMonths.join(', ') || 'the project timeline'}) to find real festivals/seasons/events in ${targetLocation} worth capitalizing on. Ground them; do not invent.
-- CONTENT CALENDAR: produce 8–12 rows MAXIMUM covering the most important weeks/moments (NOT every single week). Each row is an atomic task. Keep "hook" and "objective" to ONE short line each. Assign a realistic executor. Tie each to the selected materials (${materials.join(', ')}) and the "${implementationModel}" model.
+- CONTENT CALENDAR: produce 8–12 rows MAXIMUM covering the most important weeks/moments (NOT every single week). Each row is an atomic task. Keep "hook" and "objective" to ONE short line each. Assign a realistic executor. Tie each to the selected materials (${materials.join(', ')}) and the "${implementationModel}" model. INCLUDE at least 2 on-ground / BTL rows (booths, events, activations at real venues) with executor "BTL Agency (human)".
+- NARRATIVE: derive the messaging directly from the brief's "Ask". 3 core pillars, 2-3 friction personas, 2-3 objections — keep each to one short line.
 - CAMPAIGN CALENDAR: 3–6 campaigns maximum. MOMENTS: 3–5 maximum.
 - Keep the ENTIRE JSON compact so it is never truncated. Never fabricate metrics; where a human number is needed, write [Decision needed].
 
@@ -864,7 +865,12 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
   ],
   "contentCalendar": [
     { "week": "<e.g. Wk 1 (Oct 1-7)>", "campaign": "<parent campaign>", "channel": "<Social|WhatsApp|Email|Ads|BTL|PR>", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message/festival tie-in>", "objective": "<awareness|acquisition|engagement|returns>", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)" }
-  ]
+  ],
+  "narrative": {
+    "corePillars": ["<3 core message pillars grounded in the brief's Ask>"],
+    "frictionPersonas": [ { "persona": "<who resists>", "fear": "<their loss-aversion>", "counter": "<the counter-message>" } ],
+    "objectionKit": [ { "objection": "<hostile question>", "response": "<the answer>" } ]
+  }
 }`;
 
     case 15:

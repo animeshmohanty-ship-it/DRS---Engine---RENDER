@@ -1156,8 +1156,8 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Stages 7-15 — unchanged, flat (phases to be designed later) */}
-                {laterStages.map((s) => renderStageItem(s))}
+                {/* Stages 7-15 removed from the active flow for now (code + render blocks retained;
+                    Narrative & BTL folded into Planning; revisit rest for Orchestration/Execution/Monitoring). */}
               </>
             );
           })()}
@@ -2100,6 +2100,7 @@ export default function App() {
             const moments = d.moments || [];
             const campaigns = d.campaignCalendar || [];
             const content = d.contentCalendar || [];
+            const narrative = d.narrative || {};
             const isEmpty = !moments.length && !campaigns.length && !content.length;
             return (
               <div>
@@ -2133,6 +2134,50 @@ export default function App() {
                         </tbody>
                       </table>
                     </div>
+                  </div>
+                )}
+
+                {(narrative.corePillars?.length > 0 || narrative.frictionPersonas?.length > 0) && (
+                  <div className="card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h2>Narrative &amp; Messaging</h2>
+                      <button onClick={() => discussPlan('narrative & messaging')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                    </div>
+                    <p className="sub">The messaging that grounds every hook in the calendar below.</p>
+                    {narrative.corePillars?.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)' }}>Core Pillars</span>
+                        <ul style={{ margin: '6px 0 0', paddingLeft: 18, fontSize: '13px' }}>
+                          {narrative.corePillars.map((p, i) => <li key={i} style={{ marginBottom: 4 }}>{p}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {narrative.frictionPersonas?.length > 0 && (
+                      <div style={{ overflowX: 'auto', marginTop: 12 }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Friction Personas</span>
+                        <table style={{ marginTop: 4 }}>
+                          <thead><tr><th>Persona</th><th>Their Fear</th><th>Counter-message</th></tr></thead>
+                          <tbody>
+                            {narrative.frictionPersonas.map((p, i) => (
+                              <tr key={i}><td><strong>{p.persona}</strong></td><td className="muted">{p.fear}</td><td>{p.counter}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {narrative.objectionKit?.length > 0 && (
+                      <div style={{ overflowX: 'auto', marginTop: 12 }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Objection Kit</span>
+                        <table style={{ marginTop: 4 }}>
+                          <thead><tr><th>Objection</th><th>Response</th></tr></thead>
+                          <tbody>
+                            {narrative.objectionKit.map((o, i) => (
+                              <tr key={i}><td className="muted">{o.objection}</td><td>{o.response}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
                 )}
 
