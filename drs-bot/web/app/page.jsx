@@ -103,111 +103,6 @@ function fmt(n) {
   if (n === null || n === undefined) return '—';
   if (typeof n !== 'number') return n;
   return n.toLocaleString('en-IN');
-'use client';
-
-import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase.js';
-
-const STAGES = [
-  { num: 1, name: 'Setup', desc: 'Project context and setup' },
-  { num: 2, name: 'Geography Intel', desc: 'Grounded admin & touchpoint data' },
-  { num: 3, name: 'Market Intel', desc: 'Regulatory and economic opportunity' },
-  { num: 4, name: 'Stakeholders', desc: 'Coalition map and alignment score' },
-  { num: 5, name: 'Competitors', desc: 'Detailed competitor landscape and moat strategy' },
-  { num: 6, name: 'Resistance', desc: 'Risk registry and fronts map' },
-  { num: 7, name: 'Narrative & Alignment', desc: 'Core story, personas, and FAQs' },
-  { num: 8, name: 'Blueprint', desc: 'Master Gantt timeline' },
-  { num: 9, name: 'Execution', desc: '7 workstream SOPs and documents' },
-  { num: 10, name: 'Launch Readiness', desc: 'T-Minus gate and Go/No-Go tracker' },
-  { num: 11, name: 'GTM Launch & Funnel Execution', desc: 'Micro-scheduled branding, acquisition & engagement' },
-  { num: 12, name: 'BTL Activation', desc: 'BTL reach and campaign calendar' },
-  { num: 13, name: 'Reputation Management', desc: 'Crisis SLA and media response playbook' },
-  { num: 14, name: 'KPIs', desc: 'North Star and KPI tree' },
-  { num: 15, name: 'Knowledge Base', desc: 'Packaged reusable blueprint' }
-];
-
-const MATERIALS = ['Liquor', 'PET', 'Cans', 'MLP'];
-const MODELS = ['End-to-End DRS (Scheme Operator)', 'RVM-only Provider to Retail', 'Tech Solutions'];
-
-// DRS Business Unit POD — team roster + skills (for Orchestrator skill-based assignment).
-const TEAM_MEMBERS = [
-  { name: 'Alokesh Sinha', role: 'POD Lead', skills: ['Strategy', 'Leadership', 'Approvals', 'Oversight'] },
-  { name: 'Akanksha', role: 'PR', skills: ['PR', 'Media', 'PR Agency', 'Website', 'Digital'] },
-  { name: 'Vinod', role: 'Implementation', skills: ['Operational Execution', 'Team Leadership', 'Operations', 'Delivery'] },
-  { name: 'Tarak', role: 'Video', skills: ['Video Production', 'Visual Content', 'Video', 'Creative', 'Design'] },
-  { name: 'Siva', role: 'Data', skills: ['Lead Generation', 'Ad Management', 'Ads', 'Paid', 'Performance'] },
-  { name: 'Sai Kiran', role: 'Data', skills: ['Research', 'Content', 'Data Analysis', 'Copywriting', 'Analytics'] },
-  { name: 'Narendra', role: 'Social & Campaign', skills: ['Social Media', 'Campaign Management', 'Social', 'Campaigns'] },
-  { name: 'Richard', role: 'Execution', skills: ['Field Operations', 'Tactical Execution', 'Field', 'Operations'] },
-  { name: 'Yash', role: 'Events + Execution', skills: ['Event Management', 'On-ground Activation', 'Events', 'BTL', 'Activation'] },
-];
-
-// Token-overlap skill matcher: returns the best-fit member name for a task's required skills.
-const _SKILL_STOP = new Set(['and', 'the', 'of', 'for', 'a', 'an', 'amp', 'to']);
-const _tokenize = (s) => (String(s || '').toLowerCase().match(/[a-z]+/g) || []).filter((t) => !_SKILL_STOP.has(t));
-const bestAssignee = (requiredSkills) => {
-  const req = new Set((Array.isArray(requiredSkills) ? requiredSkills : [requiredSkills]).flatMap(_tokenize));
-  if (!req.size) return null;
-  let best = null, bestScore = 0;
-  for (const m of TEAM_MEMBERS) {
-    const mt = new Set(m.skills.flatMap(_tokenize));
-    let score = 0;
-    req.forEach((t) => { if (mt.has(t)) score++; });
-    if (score > bestScore) { bestScore = score; best = m.name; }
-  }
-  return best;
-};
-
-const PREDEFINED_STATES = {
-  "India": [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
-    "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
-    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", 
-    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", 
-    "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", 
-    "Lakshadweep", "Puducherry"
-  ],
-  "United States": [
-    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", 
-    "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", 
-    "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", 
-    "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", 
-    "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", 
-    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", 
-    "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"
-  ],
-  "United Kingdom": [
-    "England", "Scotland", "Wales", "Northern Ireland"
-  ]
-};
-
-const ALL_COUNTRIES = [
-  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", 
-  "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", 
-  "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", 
-  "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", 
-  "Croatia", "Cuba", "Cyprus", "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", 
-  "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", 
-  "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guyana", "Haiti", 
-  "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", 
-  "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", 
-  "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", 
-  "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", 
-  "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", 
-  "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", 
-  "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", 
-  "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Samoa", "San Marino", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", 
-  "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", 
-  "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", 
-  "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", 
-  "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", 
-  "Zimbabwe"
-];
-
-function fmt(n) {
-  if (n === null || n === undefined) return '—';
-  if (typeof n !== 'number') return n;
-  return n.toLocaleString('en-IN');
 }
 
 function Badge({ level }) {
@@ -215,27 +110,6 @@ function Badge({ level }) {
   const cls = String(level).replace(/\s+/g, '-');
   return <span className={`badge ${cls}`}>{level}</span>;
 }
-
-const MODEL_OPTIONS = [
-  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (Vertex AI)', icon: 'gemini' },
-  { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash (Vertex AI)', icon: 'gemini' },
-  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (AI Studio)', icon: 'gemini' },
-  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (AI Studio)', icon: 'gemini' },
-  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro (AI Studio)', icon: 'gemini' },
-  { value: 'llama-3.3-70b', label: 'Groq Llama 3.3 (Fast)', icon: 'meta' },
-  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', icon: 'anthropic' }
-];
-
-const renderModelIcon = (type) => {
-  if (type === 'gemini') {
-    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{marginRight: '8px', flexShrink: 0}}><path d="M12 0C12 0 12 10.5 24 12C24 12 12 13.5 12 24C12 24 12 13.5 0 12C0 12 12 10.5 12 0Z" fill="url(#gemini-grad)"/><defs><linearGradient id="gemini-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#9B72CB"/><stop offset="1" stopColor="#D96570"/></linearGradient></defs></svg>;
-  } else if (type === 'meta') {
-    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{marginRight: '8px', flexShrink: 0}}><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 17.5C8.96 17.5 6.5 15.04 6.5 12C6.5 8.96 8.96 6.5 12 6.5C15.04 6.5 17.5 8.96 17.5 12C17.5 15.04 15.04 17.5 12 17.5Z" fill="#0668E1"/></svg>;
-  } else if (type === 'anthropic') {
-    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{marginRight: '8px', flexShrink: 0}}><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="#D97757"/></svg>;
-  }
-  return null;
-};
 
 export default function App() {
   const [projects, setProjects] = useState([]);
@@ -251,7 +125,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('drs_selected_model', selectedModel);
   }, [selectedModel]);
-  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   
   // Configuration State (Stage 1 Setup)
   const [projectId, setProjectId] = useState('');
@@ -1185,6 +1058,332 @@ export default function App() {
           projectId: projectId
           }),
           signal: controller.signal
+        });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || `Failed to generate ${funnel}`);
+      
+      const newFunnelData = data.data?.[funnel] || [];
+      currentStages = {
+        ...currentStages,
+        stage11: {
+          ...currentStages.stage11,
+          data: {
+            ...currentStages.stage11.data,
+            [funnel]: newFunnelData
+          },
+          sources: [...new Set([...(currentStages.stage11.sources || []), ...(data.sources || [])])],
+          _brief: getBriefSignature()
+        }
+      };
+      projectStagesRef.current = currentStages;
+      setProjectStages(currentStages);
+      await saveProjectToStorage(currentStages);
+    } catch (e) {
+      setError(`Stage 11 (${funnel}) Generation Failed: ${e.message}`);
+    } finally {
+      setGtmGeneratingStatus(null);
+    }
+  };
+
+  const handleCopilotSend = async () => {
+    if (!copilotQuery.trim()) return;
+    const userMsg = { sender: 'user', text: copilotQuery };
+    setCopilotMessages(prev => [...prev, userMsg]);
+    setCopilotQuery('');
+    setCopilotLoading(true);
+
+    try {
+      const activeStageKey = activeTab === 'history' ? 'setup' : `stage${activeStageNum}`;
+      const tabParam = activeTab === 'preplanning' ? 'preplanning' : activeTab === 'planning' ? 'planning' : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
+      const res = await fetch('/api/copilot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tab: tabParam,
+          stateData: projectStages[activeStageKey] || { country, state, model, selectedMaterials, objective },
+          query: userMsg.text,
+          history: copilotMessages.slice(-6),
+          model: selectedModel
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+
+      // Co-author mode: parse ::brief-update:: proposals out of the reply.
+      let display = data.text || '';
+      const proposals = [];
+      const re = /::brief-update::\s*([\s\S]*?)\s*::end::/g;
+      let m;
+      while ((m = re.exec(data.text || '')) !== null) {
+        try { const p = JSON.parse(m[1].trim()); if (p.section && p.content) proposals.push(p); } catch {}
+      }
+      display = display.replace(re, '').trim();
+      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: display || 'I have proposed brief updates below.', proposals: proposals.length ? proposals : undefined }]);
+    } catch (err) {
+      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
+    } finally {
+      setCopilotLoading(false);
+    }
+  };
+
+  // On the Market Research page the "active stage" is the selected sub-tab.
+  // Pre-planning is stored internally as stage 16.
+  const activeStageNum = activeTab === 'research' ? researchTab : activeTab === 'preplanning' ? 16 : activeTab === 'planning' ? 17 : activeTab;
+  const activeStageData = projectStages[`stage${activeStageNum}`];
+
+  // Edit a Campaign Brief field (Pre-planning) and persist.
+  const updateBriefField = (key, value) => {
+    setProjectStages((prev) => {
+      const cur = prev.stage16 || { data: {} };
+      const next = { ...prev, stage16: { ...cur, data: { ...cur.data, brief: { ...(cur.data?.brief || {}), [key]: value } } } };
+      projectStagesRef.current = next;
+      return next;
+    });
+  };
+  const saveBrief = () => saveProjectToStorage(projectStagesRef.current);
+  // Seed the Copilot with a section to refine, and open it.
+  const discussBriefSection = (label) => {
+    setCopilotCollapsed(false);
+    setCopilotQuery(`Let's refine the "${label}" section of the Campaign Brief.`);
+  };
+  // Auto-open the Copilot on the Pre-planning / Planning pages (the editing surface).
+  useEffect(() => { if (activeTab === 'preplanning' || activeTab === 'planning') setCopilotCollapsed(false); }, [activeTab]);
+  const discussPlan = (label) => {
+    setCopilotCollapsed(false);
+    setCopilotQuery(`Let's refine the ${label} in the campaign plan.`);
+  };
+
+  // Orchestrator: assign a team member to a planned task (index into stage17 content calendar).
+  const updateAssignee = (idx, name) => {
+    setProjectStages((prev) => {
+      const s17 = prev.stage17;
+      if (!s17?.data?.contentCalendar) return prev;
+      const cc = s17.data.contentCalendar.map((t, i) => (i === idx ? { ...t, assignee: name } : t));
+      const next = { ...prev, stage17: { ...s17, data: { ...s17.data, contentCalendar: cc } } };
+      projectStagesRef.current = next;
+      return next;
+    });
+    setTimeout(() => saveProjectToStorage(projectStagesRef.current), 0);
+  };
+  // Fill every unassigned task with its best skill-match.
+  const autoAssignAll = () => {
+    setProjectStages((prev) => {
+      const s17 = prev.stage17;
+      if (!s17?.data?.contentCalendar) return prev;
+      const cc = s17.data.contentCalendar.map((t) => t.assignee ? t : { ...t, assignee: bestAssignee(t.requiredSkills) || '' });
+      const next = { ...prev, stage17: { ...s17, data: { ...s17.data, contentCalendar: cc } } };
+      projectStagesRef.current = next;
+      return next;
+    });
+    setTimeout(() => saveProjectToStorage(projectStagesRef.current), 0);
+  };
+
+  // Generate all selected research stages (2-6) in dependency order (2 -> 6).
+  const generateAllResearch = async () => {
+    const toRun = [2, 3, 4, 5, 6].filter((n) => selectedStages.includes(n));
+    setResearchGenerating(true);
+    try {
+      for (const n of toRun) {
+        setResearchTab(n);
+        setResearchProgress(`Generating Stage ${n} — ${STAGES.find((s) => s.num === n)?.name}…`);
+        await generateStage(n);
+      }
+      setResearchProgress('All research generated ✓');
+    } finally {
+      setResearchGenerating(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="dashboard">
+      
+      {/* Mobile Header (Only visible on small screens) */}
+      <div className="mobile-header">
+        <button className="mobile-hamburger" onClick={() => setIsMobileMenuOpen(true)}>☰</button>
+        <h1>DRS Bot</h1>
+      </div>
+
+      {/* 1. Left Sidebar Navigation */}
+      <div className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
+
+        <div className="sidebar-header" style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '10px', 
+          padding: '20px 22px 16px',
+          borderBottom: '1px solid var(--line)'
+        }}>
+          <img src="/logo.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+          <div>
+            <h1 style={{ fontSize: '16px', fontWeight: 700, margin: 0, lineHeight: 1.1 }}>DRS Bot</h1>
+            <p style={{ fontSize: '10px', color: 'var(--ink-soft)', margin: '2px 0 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Roadmap Engine</p>
+          </div>
+        </div>
+        
+        <div className="sidebar-menu">
+          <div className={`menu-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+            <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/logo.png" alt="Logo" className="spin-slow" style={{ width: '16px', height: '16px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+            </div>
+            <span>Project History</span>
+          </div>
+
+          <div style={{ padding: '8px 14px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-soft)' }}>ROADMAP FLOW</div>
+
+          {(() => {
+            const isSetupDone = projectId !== '';
+            const renderStageItem = (s, indent = false) => {
+              const isUnlocked = s.num === 1 || isSetupDone;
+              const stale = isUnlocked && s.num !== 1 && isStageStale(s.num);
+              return (
+                <div
+                  key={s.num}
+                  className={`menu-item ${activeTab === s.num ? 'active' : ''} ${!isUnlocked ? 'disabled' : ''}`}
+                  style={{ opacity: isUnlocked ? 1 : 0.5, pointerEvents: isUnlocked ? 'auto' : 'none', paddingLeft: indent ? '30px' : undefined }}
+                  onClick={() => isUnlocked && setActiveTab(s.num)}
+                >
+                  <span className="badge-icon">{s.num}</span>
+                  <span>{s.name}</span>
+                  {stale && <span title="Out of date — Setup changed since this stage was generated. Regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                </div>
+              );
+            };
+
+            const setupStage = STAGES.find((s) => s.num === 1);
+            const researchStages = STAGES.filter((s) => [2, 3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num));
+            const laterStages = STAGES.filter((s) => s.num >= 7 && selectedStages.includes(s.num));
+            const researchStale = isSetupDone && researchStages.some((s) => isStageStale(s.num));
+
+            return (
+              <>
+                {setupStage && renderStageItem(setupStage)}
+
+                {/* MARKET RESEARCH — single combined page (stages 2-6 live inside as sub-tabs) */}
+                {researchStages.length > 0 && (
+                  <div
+                    className={`menu-item ${activeTab === 'research' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                    style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                    onClick={() => isSetupDone && setActiveTab('research')}
+                  >
+                    <span className="badge-icon">MR</span>
+                    <span>Market Research</span>
+                    {researchStale && <span title="A research stage is out of date — regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                  </div>
+                )}
+
+                {/* PRE-PLANNING — visible always, accessible once Setup is saved */}
+                <div
+                  className={`menu-item ${activeTab === 'preplanning' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('preplanning')}
+                >
+                  <span className="badge-icon">PP</span>
+                  <span>Pre-planning</span>
+                  {isSetupDone && isStageStale(16) && <span title="Setup changed — regenerate brief" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                </div>
+
+                {/* PLANNING — visible always, accessible once Setup is saved */}
+                <div
+                  className={`menu-item ${activeTab === 'planning' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('planning')}
+                >
+                  <span className="badge-icon">PL</span>
+                  <span>Planning</span>
+                  {isSetupDone && isStageStale(17) && <span title="Setup changed — regenerate plan" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                </div>
+
+                {/* ORCHESTRATOR — visible always, accessible once Setup is saved */}
+                <div
+                  className={`menu-item ${activeTab === 'orchestrator' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('orchestrator')}
+                >
+                  <span className="badge-icon">OR</span>
+                  <span>Orchestrator</span>
+                </div>
+
+                {/* Stages 7-15 removed from the active flow for now (code + render blocks retained;
+                    Narrative & BTL folded into Planning; revisit rest for Orchestration/Execution/Monitoring). */}
+              </>
+            );
+          })()}
+        </div>
+        <div style={{ 
+          padding: '16px 22px', 
+          borderTop: '1px solid var(--line)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px' 
+        }}>
+          <img src="/logo.png" alt="Logo" style={{ width: '18px', height: '18px', objectFit: 'contain', opacity: 0.8 }} />
+          <span className="muted" style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.02em', color: 'var(--ink-soft)' }}>Powered by Recykal</span>
+        </div>
+      </div>
+      
+      {/* Mobile Sidebar Overlay */}
+      <div 
+        className={`mobile-overlay ${isMobileMenuOpen ? 'active' : ''}`} 
+        onClick={() => setIsMobileMenuOpen(false)}
+      ></div>
+
+      {/* 2. Main Workspace */}
+      <div className="workspace">
+        <div className="workspace-header">
+          <h2>
+            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+          </h2>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {projectId && (
+              <span className="muted" style={{ fontWeight: 600, marginRight: 8, display: 'inline-flex', alignItems: 'center' }}>
+                {projectId} · {getProjectTitle({ country, state })}
+                {parentProjectId && (
+                  <span
+                    style={{
+                      marginLeft: 8,
+                      color: 'var(--accent)',
+                      cursor: 'pointer',
+                      fontSize: '11px',
+                      textDecoration: 'underline'
+                    }}
+                    onClick={() => {
+                      const parentObj = projects.find(proj => proj.id === parentProjectId);
+                      if (parentObj) loadProject(parentObj);
+                    }}
+                  >
+                    ↳ Parent: {parentProjectId}
+                  </span>
+                )}
+              </span>
+            )}
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              style={{
+                background: 'var(--grey-soft)',
+                color: 'var(--ink)',
+                border: '1px solid var(--line)',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            >
+               <option value="gemini-3.1-pro-preview">⭐ Gemini 3.1 Pro (Vertex AI)</option>
+              <option value="gemini-3.5-flash">⚡ Gemini 3.5 Flash (Vertex AI)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (AI Studio)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (AI Studio)</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (AI Studio)</option>
+              <option value="llama-3.3-70b">⚡ Groq Llama 3.3 (Fast)</option>
+              <option value="claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
+            </select>
+            {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && (
+              <button
+                className={`copilot-toggle-btn ${loading[activeStageNum] ? 'danger' : ''}`}
+                style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
                 onClick={() => loading[activeStageNum] ? cancelGeneration(activeStageNum) : generateStage(activeStageNum)}
               >
                 {loading[activeStageNum] ? <>🛑 Stop Generating</> : '🔄 Regenerate Stage'}
