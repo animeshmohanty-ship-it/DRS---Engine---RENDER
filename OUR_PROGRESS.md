@@ -126,6 +126,23 @@ _Format: date — what changed — files touched — why — verified?_
 
 ---
 
+## 6b. NEXT BUILD SPEC — richer, multi-query Planning generation (agreed 2026-07-17, not built)
+
+**Problem:** Campaign + Content calendars are too thin (~1 campaign/month) because case 17 output was capped to avoid truncation. Need dense, timeline-driven calendars (campaigns spread across the real Setup dates; content/social calendar at ~1 entry per 3 days) with proper flow.
+
+**Solution (agreed):** split Planning's single generation (case 17) into MULTIPLE sequential API calls — one per section — each loading progressively (same pattern as Market Research "Generate All" 2→6). Small calls = no truncation + each section can be rich.
+
+**Proposed flow (Generate Plan):**
+1. Market Entry (call 1, from brief+research) → 2. Funnel Strategy (call 2, uses entry) → 3. Moments (call 3) → 4. Narrative (call 4) → 5. Campaign Calendar (call 5 — RICH: many campaigns across the timeline, not 1/month) → 6. Content Calendar (call 6+ — DENSE).
+
+**Density logic:** content cadence derived from Setup timeline (e.g. totalDays/3 ≈ entries). For long timelines, generate the content calendar **per campaign** (a loop) so each call stays small but the aggregate is dense (~every 3 days). Each row keeps `requiredSkills` + `funnel` + `executor` (feeds Orchestrator).
+
+**Implementation notes:**
+- Backend: add a `planSection` param (or cases 17a-f) so the prompt builder can return ONE section's JSON at a time. Reuse `buildStagePrompt`/route generic path.
+- Frontend: a `generatePlan()` orchestrator that runs the sections in order, merging each into `projectStages.stage17.data.<section>` via the **projectStagesRef live-merge pattern** (avoids the vanishing-stages bug), with per-section progress UI ("Market Entry ✓ · Funnel ✓ · Content ⏳").
+- Keep the existing single-call case 17 as a fallback or replace it.
+- Raise/keep Vertex maxOutputTokens (currently 16384); per-section calls should comfortably fit.
+
 ## 7. NEXT UP (candidate work — not yet started)
 
 - **DONE (2026-07-15):** Stage 4 & Stage 5 rebuilt to MRD standard (pending user's live Render test).
