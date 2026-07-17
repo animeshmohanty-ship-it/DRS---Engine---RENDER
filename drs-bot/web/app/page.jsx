@@ -242,6 +242,18 @@ export default function App() {
   const projectStagesRef = useRef({});
   useEffect(() => { projectStagesRef.current = projectStages; }, [projectStages]);
   const [loading, setLoading] = useState({});
+  const [abortControllers, setAbortControllers] = useState({});
+  
+  const cancelGeneration = (stageNum) => {
+    if (abortControllers[stageNum]) {
+      abortControllers[stageNum].abort();
+      setAbortControllers(prev => {
+        const next = { ...prev };
+        delete next[stageNum];
+        return next;
+      });
+    }
+  };
   const [error, setError] = useState(null);
   const [gtmGeneratingStatus, setGtmGeneratingStatus] = useState(null);
   
@@ -391,7 +403,13 @@ export default function App() {
         setProjects([]);
       }
     } catch (e) {
-      console.error(e);
+      if (e.name === 'AbortError') {
+        setError('Generation for Campaign Plan was stopped.');
+      } else {
+        console.error(e);
+        setError(`Planning failed: ${e.message}`);
+      }
+      setProjectStages(prev => { return prev; });
     }
   };
 
@@ -752,10 +770,14 @@ export default function App() {
   // Multi-query Planning: generate the strategy+campaigns core (1 call), then the
   // DENSE content calendar one campaign at a time (loads progressively; no truncation).
   const generatePlan = async (baseInput) => {
+    const controller = new AbortController();
+    setAbortControllers(prev => ({ ...prev, 17: controller }));
     setPlanProgress('Generating strategy & campaigns…');
+    setLoading(prev => ({ ...prev, 17: true }));
     const coreRes = await fetch('/api/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage: 17, action: 'core', input: baseInput, projectData: projectStagesRef.current, model: selectedModel, projectId }),
+      signal: controller.signal
     });
     const coreText = await coreRes.text();
     let core;
@@ -776,6 +798,7 @@ export default function App() {
         const cRes = await fetch('/api/generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ stage: 18, action: 'content', input: { ...baseInput, targetCampaign: camps[i] }, projectData: projectStagesRef.current, model: selectedModel, projectId }),
+          signal: controller.signal
         });
         const cText = await cRes.text();
         let cData;
@@ -792,11 +815,14 @@ export default function App() {
     }
     setPlanProgress('Plan complete ✓');
     setTimeout(() => setPlanProgress(''), 2500);
+    setLoading(prev => ({ ...prev, 17: false }));
   };
 
   const generateStage = async (stageNum) => {
-    setLoading(prev => ({ ...prev, [stageNum]: true }));
     setError(null);
+    const controller = new AbortController();
+    setAbortControllers(prev => ({ ...prev, [stageNum]: controller }));
+    setLoading(prev => ({ ...prev, [stageNum]: true }));
     try {
       const baseInput = {
         country,
@@ -835,7 +861,8 @@ export default function App() {
             projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
-          })
+          }),
+          signal: controller.signal
         });
         const searchText = await searchRes.text();
         let searchData;
@@ -873,7 +900,8 @@ export default function App() {
             projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
-          })
+          }),
+          signal: controller.signal
         });
         const finalizeText = await finalizeRes.text();
         let finalizeData;
@@ -908,7 +936,8 @@ export default function App() {
             projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
-          })
+          }),
+          signal: controller.signal
         });
         const searchText = await searchRes.text();
         let searchData;
@@ -932,7 +961,8 @@ export default function App() {
             projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
-          })
+          }),
+          signal: controller.signal
         });
         const finalizeText = await finalizeRes.text();
         let finalizeData;
@@ -963,7 +993,8 @@ export default function App() {
             projectData: projectStagesRef.current,
             model: selectedModel,
             projectId: projectId
-          })
+          }),
+          signal: controller.signal
         });
         const text = await res.text();
         let data;
@@ -981,7 +1012,11 @@ export default function App() {
         await saveProjectToStorage(newStages);
       }
     } catch (e) {
-      setError(`Stage ${stageNum} Generation Failed: ${e.message}`);
+      if (e.name === 'AbortError') {
+        setError(`Generation for Stage ${stageNum} was stopped.`);
+      } else {
+        setError(`Stage ${stageNum} Generation Failed: ${e.message}`);
+      }
     } finally {
       setLoading(prev => ({ ...prev, [stageNum]: false }));
     }
@@ -1021,8 +1056,9 @@ export default function App() {
           projectData: currentStages,
           model: selectedModel,
           projectId: projectId
-        })
-      });
+          }),
+          signal: controller.signal
+        });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || `Failed to generate ${funnel}`);
       
@@ -2125,8 +2161,8 @@ export default function App() {
             <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
               <h2>{activeTab === 'preplanning' ? 'Campaign Brief' : activeTab === 'planning' ? 'Campaign Plan' : STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
               <p className="sub">{activeTab === 'preplanning' ? 'The AI Director will synthesize your research into a SWOT and a first draft of the 7-section brief. You then edit and lock it.' : activeTab === 'planning' ? 'The AI will turn your locked brief into a 360° plan: moments, a campaign calendar, and a weekly content calendar (each row a task). Refine via the Copilot.' : 'The engine will pull real datasets and formulate the roadmap for this stage.'}</p>
-              <button className="btn" onClick={() => generateStage(activeStageNum)} disabled={loading[activeStageNum]}>
-                {loading[activeStageNum] ? <><span className="spinner" /> Generating...</> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : activeTab === 'planning' ? 'Generate the Campaign Plan' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
+              <button className={`btn ${loading[activeStageNum] ? 'danger' : ''}`} style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => loading[activeStageNum] ? cancelGeneration(activeStageNum) : generateStage(activeStageNum)}>
+                {loading[activeStageNum] ? <>🛑 Stop Generating</> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : activeTab === 'planning' ? 'Generate the Campaign Plan' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
               </button>
               {loading[activeStageNum] && (
                 <div className="muted" style={{ marginTop: 12 }}>
