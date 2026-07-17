@@ -1,0 +1,364 @@
+<style>
+  :root {
+    --bg: #EEF2F1;
+    --surface: #FFFFFF;
+    --surface-2: #F5F8F7;
+    --ink: #14201D;
+    --ink-soft: #55635F;
+    --line: #D8E0DE;
+    --accent: #0E7C66;
+    --accent-soft: #E1F0EB;
+    --human: #B0611A;
+    --human-soft: #F6E9DB;
+    --future: #8A9793;
+    --future-soft: #E9EDEC;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --maxw: 940px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0E1614; --surface: #16211E; --surface-2: #1B2724;
+      --ink: #EAF1EF; --ink-soft: #9BAEAA; --line: #273631;
+      --accent: #4BBB9E; --accent-soft: #16302A;
+      --human: #E0973F; --human-soft: #2E2416;
+      --future: #5D6B67; --future-soft: #1B2422;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1614; --surface: #16211E; --surface-2: #1B2724;
+    --ink: #EAF1EF; --ink-soft: #9BAEAA; --line: #273631;
+    --accent: #4BBB9E; --accent-soft: #16302A;
+    --human: #E0973F; --human-soft: #2E2416;
+    --future: #5D6B67; --future-soft: #1B2422;
+  }
+  :root[data-theme="light"] {
+    --bg: #EEF2F1; --surface: #FFFFFF; --surface-2: #F5F8F7;
+    --ink: #14201D; --ink-soft: #55635F; --line: #D8E0DE;
+    --accent: #0E7C66; --accent-soft: #E1F0EB;
+    --human: #B0611A; --human-soft: #F6E9DB;
+    --future: #8A9793; --future-soft: #E9EDEC;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .wrap {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    line-height: 1.6; padding: 48px 24px 80px; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .doc { max-width: var(--maxw); margin: 0 auto; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); font-weight: 600;
+  }
+  h1 {
+    font-size: 40px; line-height: 1.08; letter-spacing: -0.02em; font-weight: 800;
+    margin: 12px 0 0; text-wrap: balance;
+  }
+  .lede { font-size: 17px; color: var(--ink-soft); max-width: 62ch; margin: 14px 0 0; }
+  .meta {
+    font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
+    margin-top: 18px; display: flex; gap: 18px; flex-wrap: wrap;
+  }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  .rule { height: 1px; background: var(--line); border: 0; margin: 34px 0; }
+
+  /* lifecycle strip */
+  .flowstrip {
+    display: flex; align-items: stretch; gap: 6px; flex-wrap: wrap;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 14px; padding: 16px; margin-top: 26px;
+  }
+  .node {
+    flex: 1 1 120px; border-radius: 9px; padding: 11px 12px; border: 1px solid var(--line);
+    background: var(--surface-2); min-width: 110px;
+  }
+  .node .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
+  .node .v { font-weight: 700; font-size: 14px; margin-top: 3px; }
+  .node.built { border-color: var(--accent); background: var(--accent-soft); }
+  .node.built .k { color: var(--accent); }
+  .node.now { border-color: var(--human); background: var(--human-soft); }
+  .node.now .k { color: var(--human); }
+  .node.future { opacity: 0.75; }
+  .node.future .v { color: var(--future); }
+  .node .tat { font-family: var(--mono); font-size: 10px; margin-top: 7px; font-weight: 700; color: var(--human); }
+  .node .tat.done { color: var(--ink-soft); font-weight: 600; }
+  .tat-badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; font-weight: 700; color: var(--human); background: var(--human-soft); border: 1px solid var(--human); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  /* phase blocks */
+  .phase { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 26px 28px; }
+  .phase-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+  .phase h2 { font-size: 25px; letter-spacing: -0.015em; margin: 6px 0 0; font-weight: 800; }
+  .phase .purpose { color: var(--ink-soft); margin: 10px 0 0; max-width: 64ch; }
+
+  .badge { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+  .badge.built { background: var(--accent); color: #fff; }
+  .badge.designed { background: var(--human); color: #fff; }
+  .badge.future { background: var(--future-soft); color: var(--future); border: 1px solid var(--line); }
+
+  .connector { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 0; }
+  .connector .arrow { color: var(--accent); font-size: 18px; line-height: 1; }
+  .connector .lbl { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: 0.04em; text-align: center; max-width: 46ch; }
+
+  .subhead { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 24px 0 10px; font-weight: 600; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 11px; font-size: 13px; font-weight: 600; }
+  .chip small { display: block; font-weight: 400; color: var(--ink-soft); font-size: 11.5px; }
+
+  .role { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 5px; font-weight: 700; text-transform: uppercase; }
+  .role.ai { background: var(--accent-soft); color: var(--accent); }
+  .role.human { background: var(--human-soft); color: var(--human); }
+
+  .tablewrap { overflow-x: auto; margin-top: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; }
+  td b { font-weight: 700; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .num { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+
+  .steps { display: grid; gap: 8px; margin-top: 6px; counter-reset: s; }
+  .step { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+  .step .n { font-family: var(--mono); font-weight: 700; color: var(--accent); font-size: 14px; }
+  .step .n.h { color: var(--human); }
+  .step b { font-weight: 700; }
+  .step p { margin: 2px 0 0; color: var(--ink-soft); font-size: 13px; }
+
+  .out { margin-top: 20px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 11px; padding: 14px 16px; }
+  .out .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .out p { margin: 5px 0 0; font-weight: 600; }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+  @media (max-width: 640px) { .twocol { grid-template-columns: 1fr; } h1 { font-size: 31px; } .phase { padding: 22px 18px; } }
+  .mini { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 13px 15px; }
+  .mini h4 { margin: 0; font-size: 13.5px; }
+  .mini p { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+
+  .footnote { color: var(--ink-soft); font-size: 13px; margin-top: 10px; }
+  a.jumpback { color: var(--accent); }
+</style>
+
+<div class="wrap">
+<h2 class="sr-only">Framework document for the DRS marketing engine, covering the flow from Setup through Market Research to the Pre-planning campaign brief.</h2>
+<div class="doc">
+
+  <header>
+    <div class="eyebrow">DRS Marketing Engine · Framework v0.4</div>
+    <h1>From Setup to Execution</h1>
+    <p class="lede">The full pipeline. Our bot is the brain that researches, decides, and plans a 360° campaign — then orchestrates it into owned, approved tasks and drives execution. AI does the generation; humans own and approve every gate.</p>
+    <div class="meta">
+      <span><b>Scope</b> Setup → Execution (full pipeline)</span>
+      <span><b>Built so far</b> Market Research</span>
+      <span><b>Delivery</b> Pre-planning 17 Jul · Planning 20 Jul · Orchestration 22 Jul</span>
+    </div>
+  </header>
+
+  <!-- LIFECYCLE -->
+  <div class="flowstrip" role="list" aria-label="Marketing lifecycle phases">
+    <div class="node" role="listitem"><div class="k">Foundation</div><div class="v">Setup</div><div class="tat done">Done</div></div>
+    <div class="node built" role="listitem"><div class="k">Built</div><div class="v">Market Research</div><div class="tat done">Done</div></div>
+    <div class="node now" role="listitem"><div class="k">In build</div><div class="v">Pre-planning</div><div class="tat">TAT · 17 Jul</div></div>
+    <div class="node future" role="listitem"><div class="k">Next</div><div class="v">Planning</div><div class="tat">TAT · 20 Jul</div></div>
+    <div class="node future" role="listitem"><div class="k">Milestone</div><div class="v">Orchestration</div><div class="tat">TAT · 22 Jul</div></div>
+    <div class="node future" role="listitem"><div class="k">Goal</div><div class="v">Execution</div><div class="tat done">Later</div></div>
+  </div>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--accent)"></span> AI-generated</span>
+    <span><span class="dot" style="background:var(--human)"></span> Human decision / input</span>
+    <span><span class="dot" style="background:var(--future)"></span> Not yet designed</span>
+  </div>
+
+  <hr class="rule" />
+
+  <!-- SETUP -->
+  <section class="phase">
+    <div class="phase-head">
+      <div>
+        <div class="eyebrow">Phase 0 · Foundation</div>
+        <h2>Setup</h2>
+      </div>
+      <span class="badge built">Built</span>
+    </div>
+    <p class="purpose">The brief that seeds everything. Nothing else unlocks until Setup is saved, and every downstream stage is tailored to it.</p>
+
+    <div class="subhead">What it captures <span class="role human">Human</span></div>
+    <div class="chips">
+      <div class="chip">Country &amp; State</div>
+      <div class="chip">Materials <small>Liquor · PET · Cans · MLP</small></div>
+      <div class="chip">Implementation Model <small>Tech · RVM · End-to-End</small></div>
+      <div class="chip">Timeline &amp; Phasing</div>
+      <div class="chip">Business Objective</div>
+      <div class="chip">Local Constraints</div>
+    </div>
+
+    <div class="out">
+      <div class="k">Output</div>
+      <p>A locked project brief — the single input every later phase reads and must obey (the "Brief Adherence Mandate").</p>
+    </div>
+  </section>
+
+  <div class="connector">
+    <div class="arrow">↓</div>
+    <div class="lbl">Setup constrains every stage — materials, model, objective &amp; constraints are enforced downstream</div>
+  </div>
+
+  <!-- MARKET RESEARCH -->
+  <section class="phase">
+    <div class="phase-head">
+      <div>
+        <div class="eyebrow">Phase 1 · "What's the situation?"</div>
+        <h2>Market Research</h2>
+      </div>
+      <span class="badge built">Built</span>
+    </div>
+    <p class="purpose">AI-generated, web-grounded intelligence about the market. One combined page with five sub-tabs, generated in dependency order. The human reads and regenerates; the AI does the work.</p>
+
+    <div class="subhead">The five research sub-tabs <span class="role ai">AI generates</span></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Sub-tab</th><th>Answers</th></tr></thead>
+        <tbody>
+          <tr><td class="num">2</td><td><b>Geography Intel</b></td><td>Population, touchpoints, hierarchy, container base — the market-sizing foundation</td></tr>
+          <tr><td class="num">3</td><td><b>Market Intel</b></td><td>Opportunity per material, business case, benchmarks</td></tr>
+          <tr><td class="num">4</td><td><b>Stakeholders</b></td><td>Power/interest map, stance + evidence, informal sector, Recykal/Retearn leverage</td></tr>
+          <tr><td class="num">5</td><td><b>Competitors</b></td><td>Direct rivals, domestic benchmarks (incl. Recykal Goa), the no-DRS baseline</td></tr>
+          <tr><td class="num">6</td><td><b>Resistance</b></td><td>7 fronts of friction, risk register, predicted future resistance</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subhead">How it runs</div>
+    <div class="chips">
+      <div class="chip">⚡ Generate All <small>runs 2 → 6 in order</small></div>
+      <div class="chip">🔄 Per-tab regenerate</div>
+      <div class="chip">Google-grounded <small>real sources</small></div>
+      <div class="chip">Domestic-only benchmarks</div>
+      <div class="chip">Fact / estimate labelled</div>
+      <div class="chip">DRS-only <small>no EPR</small></div>
+    </div>
+
+    <div class="subhead">Analytical lenses — added on top <span class="role ai">AI synthesis</span></div>
+    <p class="footnote" style="margin-top:0">Each lens is a <b>synthesis of the stage's own data</b> (not new research), shown <b>above</b> the raw findings as the "so what". It generates <b>with</b> the stage in the one-tap run and refreshes on that stage's regenerate — no separate button.</p>
+    <div class="twocol">
+      <div class="mini"><h4>Porter's Five Forces → atop Stage 5</h4><p>Turns the competitor list into a market-structure read: rivalry, new entrants, supplier &amp; buyer power, and substitutes (the informal sector).</p></div>
+      <div class="mini"><h4>PESTLE → atop Stage 6</h4><p>Scans the macro environment — Political, Economic, Social, Tech, Legal, Environmental — behind the resistance register.</p></div>
+    </div>
+
+    <div class="out">
+      <div class="k">Output</div>
+      <p>A situational picture of the market — the raw intelligence Pre-planning turns into decisions.</p>
+    </div>
+  </section>
+
+  <div class="connector">
+    <div class="arrow">↓</div>
+    <div class="lbl">Research findings feed the Pre-planning brief — the AI drafts from this, the human decides on it</div>
+  </div>
+
+  <!-- PRE-PLANNING -->
+  <section class="phase" style="border-color: var(--human);">
+    <div class="phase-head">
+      <div>
+        <div class="eyebrow" style="color: var(--human)">Phase 2 · "What are we going to do?"</div>
+        <h2>Pre-planning — the Campaign Brief</h2>
+      </div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+        <span class="badge designed">Designed</span>
+        <span class="tat-badge">TAT · 17 Jul</span>
+      </div>
+    </div>
+    <p class="purpose">The first human + AI phase. Its job is to write one artifact — the <b>Campaign Brief (Charter)</b> — that Planning must obey. It decides <b>what, why, for whom, and within what limits</b> — never <b>how</b> (that's downstream).</p>
+
+    <div class="subhead">SWOT — the strategic snapshot <span class="role ai">AI synthesis</span></div>
+    <p class="footnote" style="margin-top:0">Auto-drawn from all of Market Research (Stages 2–6) and shown at the top of Pre-planning — the one-page read of where Recykal stands. The AI uses it to draft the brief's <b>Situation</b> &amp; <b>Challenge</b>; you can edit it like any other section.</p>
+    <div class="twocol">
+      <div class="mini"><h4>Strengths / Weaknesses</h4><p>Recykal &amp; Retearn's internal position — the assets and the gaps.</p></div>
+      <div class="mini"><h4>Opportunities / Threats</h4><p>The external market forces working for and against the rollout.</p></div>
+    </div>
+
+    <div class="subhead">The brief, section by section</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Section</th><th>Answers</th><th>Drafted by</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td><b>Situation / Why Now</b></td><td>Why this DRS, why here, why now — synthesized from research</td><td><span class="role ai">AI</span> → you confirm</td></tr>
+          <tr><td class="num">2</td><td><b>The Challenge</b></td><td>The core problem the campaign must crack</td><td><span class="role ai">AI</span> → you refine</td></tr>
+          <tr><td class="num">3</td><td><b>Objectives &amp; North Star</b></td><td>Measurable goals — return rate, merchants, timeline</td><td><span class="role human">You</span> set targets</td></tr>
+          <tr><td class="num">4</td><td><b>Target Audience</b></td><td>Priority stakeholders + consumer / merchant segments</td><td><span class="role ai">AI</span> → you prioritize</td></tr>
+          <tr><td class="num">5</td><td><b>The Ask</b></td><td>The one core message / behaviour we want</td><td><span class="role ai">AI</span> + <span class="role human">You</span></td></tr>
+          <tr><td class="num">6</td><td><b>Scope — In / Out</b></td><td>What the campaign covers and explicitly doesn't</td><td><span class="role human">You</span> lead</td></tr>
+          <tr><td class="num">7</td><td><b>Mandatories &amp; Constraints</b></td><td>Budget boundary, hard dates, brand / regulatory guardrails, mandates</td><td><span class="role human">You</span> supply</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subhead">The chat co-author — how the brief gets written</div>
+    <p class="footnote" style="margin-top:0">The Copilot stops being a read-only Q&amp;A and becomes a co-author. Two artifacts stay in lock-step: the <b>conversation</b> and the <b>living brief</b>.</p>
+    <div class="twocol">
+      <div class="mini"><h4>Propose → approve</h4><p>The AI proposes a brief update ("set Objective = …"); you accept, tweak, or reject. It never silently puts words in your mouth.</p></div>
+      <div class="mini"><h4>Grounded in research</h4><p>The chat always has the Phase 1 findings loaded, so it answers from your real stakeholder map — not generically.</p></div>
+      <div class="mini"><h4>Completeness nudging</h4><p>It tracks which sections are still blank and pushes you until the brief is whole.</p></div>
+      <div class="mini"><h4>Two paths, one truth</h4><p>Edit a section by hand or through chat — both write to the same brief. The brief is the single source of truth.</p></div>
+    </div>
+
+    <div class="subhead">The flow of the phase</div>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><div><b>Entry</b><p>Pre-planning opens with the Market Research output loaded.</p></div></div>
+      <div class="step"><span class="n">2</span><div><b>Draft</b> <span class="role ai">AI</span><p>The AI Director drafts each brief section it can from the research.</p></div></div>
+      <div class="step"><span class="n h">3</span><div><b>Human</b> <span class="role human">You</span><p>You edit, override, and inject real-world inputs — mandates, hard dates, budget boundary, non-negotiables.</p></div></div>
+      <div class="step"><span class="n">4</span><div><b>Challenge</b> <span class="role ai">AI</span><p>The Director pressure-tests your calls — flags contradictions, vague objectives, priorities the research doesn't support.</p></div></div>
+      <div class="step"><span class="n h">5</span><div><b>Decide</b> <span class="role human">You</span><p>Confirm direction and lock the brief when it's whole.</p></div></div>
+      <div class="step"><span class="n">6</span><div><b>Lock</b><p>The Campaign Brief becomes the source of truth for everything downstream.</p></div></div>
+    </div>
+
+    <div class="out" style="background: var(--human-soft); border-color: var(--human);">
+      <div class="k" style="color: var(--human)">Output</div>
+      <p>A locked <b>Campaign Brief</b> — the contract Planning is built against.</p>
+    </div>
+  </section>
+
+  <div class="connector">
+    <div class="arrow">↓</div>
+    <div class="lbl">The locked brief drives the downstream build — still to be designed</div>
+  </div>
+
+  <!-- DOWNSTREAM -->
+  <section class="phase" style="opacity: 0.92;">
+    <div class="phase-head">
+      <div>
+        <div class="eyebrow" style="color: var(--future)">Phases 3–5 · downstream (the goal)</div>
+        <h2 style="color: var(--future)">Planning · Orchestration · Execution</h2>
+      </div>
+      <span class="badge future">Not yet designed</span>
+    </div>
+    <p class="purpose">Where the campaign gets built, routed, approved, and run. The near-term milestone is a working <b>Orchestration</b> layer; execution can lean on the team's existing bots at first, but the ultimate goal is to build execution here too.</p>
+
+    <div class="steps" style="margin-top:16px">
+      <div class="step"><span class="n">3</span><div><b>Planning</b> <span class="tat-badge">TAT · 20 Jul</span><p>Turn the locked brief into a 360° campaign plan, broken into atomic, ownable <b>tasks</b>. This task shape is the contract with execution — it stays the same whether an external bot or a native module runs it.</p></div></div>
+      <div class="step"><span class="n">4</span><div><b>Orchestration</b> — the milestone <span class="tat-badge">TAT · 22 Jul</span><p>Each task gets an <b>owner</b>, an <b>approver</b>, and a <b>capable executor</b> (skill-based routing) → approve → dispatch → track in a control tower.</p></div></div>
+      <div class="step"><span class="n">5</span><div><b>Execution</b> — the goal <span class="tat-badge" style="color:var(--future); background:var(--future-soft); border-color:var(--future);">TAT · later</span><p><b>Interim:</b> route approved tasks to the team's existing bots (ad runner, WhatsApp, social). <b>Ultimate goal:</b> build execution natively in this bot.</p></div></div>
+    </div>
+
+    <div class="mini" style="margin-top:16px; border-color: var(--human);">
+      <h4 style="color: var(--human)">Sequencing</h4>
+      <p>Build the brain first (Research → Pre-planning → Planning). Get everything working through <b>Orchestration</b>. Only then decide native vs. separate execution bots.</p>
+    </div>
+  </section>
+
+  <hr class="rule" />
+  <p class="footnote"><b>Open for this review:</b> do the three phases read at the right altitude? Is the Campaign Brief's 7-section anatomy complete? And where should Narrative &amp; Alignment live — here as "The Ask", or downstream in Planning?</p>
+
+</div>
+</div>
