@@ -1382,12 +1382,11 @@ export default function App() {
             </select>
             {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && (
               <button
-                className="copilot-toggle-btn"
-                style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
-                disabled={loading[activeStageNum]}
-                onClick={() => generateStage(activeStageNum)}
+                className={`copilot-toggle-btn ${loading[activeStageNum] ? 'danger' : ''}`}
+                style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
+                onClick={() => loading[activeStageNum] ? cancelGeneration(activeStageNum) : generateStage(activeStageNum)}
               >
-                {loading[activeStageNum] ? '🔄 Regenerating...' : '🔄 Regenerate Stage'}
+                {loading[activeStageNum] ? <>🛑 Stop Generating</> : '🔄 Regenerate Stage'}
               </button>
             )}
             <button className="copilot-toggle-btn" onClick={() => setCopilotCollapsed(!copilotCollapsed)}>
@@ -2148,8 +2147,8 @@ export default function App() {
                     );
                   })}
                 </div>
-                <button className="btn" onClick={generateAllResearch} disabled={researchGenerating}>
-                  {researchGenerating ? <><span className="spinner" /> Generating…</> : '⚡ Generate All Research'}
+                <button className={`btn ${researchGenerating ? 'danger' : ''}`} style={researchGenerating ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => researchGenerating ? cancelGeneration('all_research') : generateAllResearch()}>
+                  {researchGenerating ? <>🛑 Stop Generating</> : '⚡ Generate All Research'}
                 </button>
               </div>
               {researchGenerating && <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{researchProgress}</div>}
@@ -2233,8 +2232,8 @@ export default function App() {
                     ))}
                   </div>
                   <div style={{ marginTop: 16 }}>
-                    <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => generateStage(16)} disabled={loading[16]}>
-                      {loading[16] ? '🔄 Re-drafting...' : '🔄 Re-draft all from research'}
+                    <button className={`copilot-toggle-btn ${loading[16] ? 'danger' : ''}`} style={loading[16] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => loading[16] ? cancelGeneration(16) : generateStage(16)}>
+                      {loading[16] ? <>🛑 Stop Generating</> : '✨ Re-draft all from research'}
                     </button>
                   </div>
                 </div>
@@ -2268,7 +2267,9 @@ export default function App() {
                   <div className="card" style={{ borderLeft: '4px solid #b54708', background: '#fff7ed' }}>
                     <h3 style={{ margin: 0, color: '#9a3412' }}>The plan came back empty</h3>
                     <p style={{ fontSize: '13px', color: '#9a3412', margin: '6px 0 12px' }}>The AI response was empty or got cut off (often when the timeline is long). Click Re-draft to try again — the plan is now capped to stay within limits.</p>
-                    <button className="btn" onClick={() => generateStage(17)} disabled={loading[17]}>{loading[17] ? 'Re-drafting…' : '🔄 Re-draft plan'}</button>
+                    <button className={`btn ${loading[17] ? 'danger' : ''}`} style={loading[17] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => loading[17] ? cancelGeneration(17) : generateStage(17)}>
+                      {loading[17] ? <>🛑 Stop Generating</> : '✨ Re-draft plan'}
+                    </button>
                   </div>
                 )}
 
@@ -2448,8 +2449,8 @@ export default function App() {
                 </div>
 
                 <div style={{ marginTop: 16 }}>
-                  <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => generateStage(17)} disabled={loading[17]}>
-                    {loading[17] ? '🔄 Re-drafting...' : '🔄 Re-draft plan from brief'}
+                  <button className={`copilot-toggle-btn ${loading[17] ? 'danger' : ''}`} style={loading[17] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => loading[17] ? cancelGeneration(17) : generateStage(17)}>
+                    {loading[17] ? <>🛑 Stop Generating</> : '✨ Re-draft plan from brief'}
                   </button>
                 </div>
               </div>
