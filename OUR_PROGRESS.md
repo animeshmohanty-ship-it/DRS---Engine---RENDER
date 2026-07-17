@@ -126,7 +126,11 @@ _Format: date — what changed — files touched — why — verified?_
 
 ---
 
-## 6b. NEXT BUILD SPEC — richer, multi-query Planning generation (agreed 2026-07-17, not built)
+## 6b. DONE (2026-07-17) — multi-query Planning generation (dense calendars)
+
+**Built + deployed `4f7af46`.** Planning now generates in multiple progressive calls: `case 17` (action 'core') returns strategy + funnel + moments + narrative + a RICH campaign calendar (6-12 campaigns across the real timeline) with `contentCalendar` left empty; new `case 18` generates the DENSE content calendar for ONE campaign (~1 entry / 3 days). `generatePlan()` runs core then loops per-campaign, appending content rows via the projectStagesRef live-merge, with a progress line. `generateStage(17)` short-circuits into it. **Verified live (Arunachal): content grew to 35+ rows progressively, no truncation, no errors.** (Original spec kept below for reference.)
+
+### Original spec — richer, multi-query Planning generation
 
 **Problem:** Campaign + Content calendars are too thin (~1 campaign/month) because case 17 output was capped to avoid truncation. Need dense, timeline-driven calendars (campaigns spread across the real Setup dates; content/social calendar at ~1 entry per 3 days) with proper flow.
 
