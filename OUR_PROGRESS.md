@@ -126,6 +126,11 @@ _Format: date — what changed — files touched — why — verified?_
 - **2026-07-17** - **Merged Campaign & Content Calendars into grouped UI.** - `app/page.jsx`. - The two separate tables in the Planning stage were disjointed. Replaced them with a single "Omnichannel Campaign Matrix" card. It renders each Master Campaign as a header block (showing Window, Objective, KPI) and directly nests all of its granular tactical tasks (from the content calendar) underneath it. This clearly visualizes the Parent-Child relationship between strategic initiatives and POD execution tasks. - verified live.
 - **2026-07-17** - **Added "Stop Generating" AbortController functionality.** - `app/page.jsx`. - The generation buttons used to trap the user for 30+ seconds. Added `AbortController` instances to the React state and injected `signal: controller.signal` into all `fetch('/api/generate')` backend calls (for Research, Pre-planning, and Planning). The button now turns red ("🛑 Stop Generating") while active, and clicking it aborts the generation cleanly without crashing the UI. - verified live.
 
+
+- **2026-07-17 [Antigravity]** - **Model Selector UI Upgrade.** - `app/page.jsx` - Replaced standard `<select>` with a custom React dropdown featuring SVG logos for Gemini, Meta (Llama), and Anthropic (Claude) to improve premium look and feel. - verified live.
+- **2026-07-17 [Antigravity]** - **Orchestrator Copilot Header Fix.** - `app/page.jsx` - Fixed a bug where the Copilot header defaulted to "Setup" on the Orchestrator tab due to a missing switch condition. It now correctly reads "Task Orchestrator". - verified live.
+- **2026-07-17 [Antigravity]** - **Binny Persistent & Multi-Thread Chat.** - `app/page.jsx` - Overhauled Copilot memory. Chats are now persistently saved in `localStorage` scoped to `projectId` (no more disappearing on refresh). Replaced the "Reset" button with a sleek "Chats ?" dropdown allowing users to create new chat threads, switch between past threads, and delete them, bringing it up to parity with ChatGPT/Gemini UI. - verified live.
+
 ---
 
 ## 6b. DONE (2026-07-17) — multi-query Planning generation (dense calendars)
