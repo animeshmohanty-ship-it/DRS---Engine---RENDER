@@ -2101,7 +2101,9 @@ export default function App() {
             const campaigns = d.campaignCalendar || [];
             const content = d.contentCalendar || [];
             const narrative = d.narrative || {};
-            const isEmpty = !moments.length && !campaigns.length && !content.length;
+            const entry = d.marketEntry || {};
+            const funnel = d.funnelStrategy || {};
+            const isEmpty = !moments.length && !campaigns.length && !content.length && !entry.posture;
             return (
               <div>
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
@@ -2133,6 +2135,55 @@ export default function App() {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                )}
+
+                {(entry.posture || entry.targetSequencing?.length > 0) && (
+                  <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h2>Market-Entry Strategy {entry.operationsBasis && <span className="phase p1" style={{ marginLeft: 6, verticalAlign: 'middle' }}>{entry.operationsBasis}</span>}</h2>
+                      <button onClick={() => discussPlan('market-entry strategy')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                    </div>
+                    {entry.posture && (<div style={{ marginTop: 8 }}><span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Entry Posture</span><p style={{ fontSize: '14px', margin: '4px 0 0', color: 'var(--ink)' }}>{entry.posture}</p></div>)}
+                    {entry.differentiation && (<div style={{ marginTop: 12, background: 'var(--grey-soft)', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)' }}><span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)' }}>🎯 Our Wedge vs Incumbents</span><p style={{ fontSize: '14px', margin: '4px 0 0', fontWeight: 500, color: 'var(--ink)' }}>{entry.differentiation}</p></div>)}
+                    {entry.targetSequencing?.length > 0 && (
+                      <div style={{ overflowX: 'auto', marginTop: 12 }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Target Sequencing — who we win first</span>
+                        <table style={{ marginTop: 4 }}>
+                          <thead><tr><th>Phase</th><th>Target</th><th>Why first</th><th>Secure</th></tr></thead>
+                          <tbody>
+                            {entry.targetSequencing.map((p, i) => (
+                              <tr key={i}><td><span className="phase p2">{p.phase}</span></td><td><strong>{p.target}</strong></td><td className="muted">{p.why}</td><td className="muted">{p.secure}</td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {entry.implications && (<div style={{ marginTop: 12, background: '#fff7ed', padding: '10px 12px', borderRadius: 8, border: '1px solid #fdba74' }}><span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#9a3412' }}>⚖️ Implications of {entry.operationsBasis || 'this'} entry</span><p style={{ fontSize: '13px', margin: '4px 0 0', color: '#9a3412' }}>{entry.implications}</p></div>)}
+                  </div>
+                )}
+
+                {(funnel.branding || funnel.acquisition || funnel.engagement) && (
+                  <div className="card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h2>Funnel Strategy</h2>
+                      <button onClick={() => discussPlan('funnel strategy')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                    </div>
+                    <p className="sub">Awareness → onboarding → loyalty, sequenced to serve the entry strategy above.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
+                      {[['branding', 'Branding', 'Awareness'], ['acquisition', 'Acquisition', 'Onboarding'], ['engagement', 'Engagement', 'Loyalty']].map(([key, label, sub]) => {
+                        const f = funnel[key] || {};
+                        return (
+                          <div key={key} style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '12px', background: 'var(--grey-soft)' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)' }}>{label} <span style={{ fontWeight: 400, color: 'var(--ink-soft)', fontSize: '11px' }}>· {sub}</span></div>
+                            {f.objective && <p style={{ fontSize: '12px', margin: '8px 0 0', color: 'var(--ink)' }}><strong>Goal:</strong> {f.objective}</p>}
+                            {f.channels && <p style={{ fontSize: '12px', margin: '4px 0 0', color: 'var(--ink-soft)' }}><strong>Channels:</strong> {f.channels}</p>}
+                            {f.keyMessage && <p style={{ fontSize: '12px', margin: '4px 0 0', color: 'var(--ink)' }}><strong>Message:</strong> {f.keyMessage}</p>}
+                            {f.kpi && <p style={{ fontSize: '12px', margin: '4px 0 0', color: 'var(--ink-soft)' }}><strong>KPI:</strong> {f.kpi}</p>}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -2189,11 +2240,12 @@ export default function App() {
                   <p className="sub">Which campaigns run when, and why — each tied to a brief objective and a moment.</p>
                   <div style={{ overflowX: 'auto' }}>
                     <table>
-                      <thead><tr><th>Campaign</th><th>Objective</th><th>Window</th><th>Audience</th><th>Channels</th><th>Moment</th><th>KPI</th></tr></thead>
+                      <thead><tr><th>Campaign</th><th>Funnel</th><th>Objective</th><th>Window</th><th>Audience</th><th>Channels</th><th>Moment</th><th>KPI</th></tr></thead>
                       <tbody>
                         {campaigns.map((c, i) => (
                           <tr key={i}>
                             <td><strong>{c.campaign}</strong></td>
+                            <td>{c.funnel && <span className="phase p1">{c.funnel}</span>}</td>
                             <td className="muted">{c.objective}</td>
                             <td className="muted">{c.window}</td>
                             <td className="muted">{c.audience}</td>
@@ -2215,12 +2267,13 @@ export default function App() {
                   <p className="sub">The weekly schedule that flows into Orchestration → Execution. Executor = who runs it.</p>
                   <div style={{ overflowX: 'auto' }}>
                     <table>
-                      <thead><tr><th>Week</th><th>Campaign</th><th>Channel</th><th>Format</th><th>Hook</th><th>Objective</th><th>Owner</th><th>Executor</th></tr></thead>
+                      <thead><tr><th>Week</th><th>Campaign</th><th>Funnel</th><th>Channel</th><th>Format</th><th>Hook</th><th>Objective</th><th>Owner</th><th>Executor</th></tr></thead>
                       <tbody>
                         {content.map((t, i) => (
                           <tr key={i}>
                             <td className="muted">{t.week}</td>
                             <td className="muted">{t.campaign}</td>
+                            <td>{t.funnel && <span className="phase p1">{t.funnel}</span>}</td>
                             <td><span className="phase p1">{t.channel}</span></td>
                             <td className="muted">{t.format}</td>
                             <td>{t.hook}</td>

@@ -843,28 +843,50 @@ You are generating PLANNING — the actionable 360° Campaign Plan — for ${tar
 ${contextHeader}
 ${projectData.stage16 ? `LOCKED CAMPAIGN BRIEF (obey this):\n${JSON.stringify(projectData.stage16.data?.brief || {})}` : 'NOTE: No campaign brief found — infer objectives from the setup context.'}
 ${projectData.stage2 ? `GEOGRAPHY:\n${JSON.stringify(projectData.stage2.intel?.stateSummary || {})}` : ''}
+${projectData.stage4 ? `STAKEHOLDER PRIORITIES (for target sequencing):\n${JSON.stringify({ champions: projectData.stage4.champions, blockers: projectData.stage4.blockers, stakeholders: (projectData.stage4.stakeholders || []).map((s) => ({ name: s.name, influence: s.influence, stance: s.stance, priority: s.priority })) })}` : ''}
+${projectData.stage5 ? `COMPETITIVE POSITION (for the wedge):\n${JSON.stringify({ verdict: projectData.stage5.positioningVerdict, porter: projectData.stage5.porterFiveForces, competitors: (projectData.stage5.competitors || []).map((c) => ({ name: c.name, threat: c.threatLevel })) })}` : ''}
 
 YOUR TASK:
-Turn the brief into an actionable, scheduled, 360° plan in THREE parts. This decides the HOW — what runs, when, on which channel, and who executes it.
+Turn the brief into a STRATEGIC, actionable 360° plan. Lead with the MARKET-ENTRY STRATEGY, then the funnel, then the schedule. Strategy first: how we enter THIS market, and who we win first.
 
 RULES:
+- MARKET ENTRY IS THE CORE, and the WHOLE strategy branches on Operations Status = "${operationsStatus}":
+  * GREENFIELD (no existing presence) -> build-from-zero: secure the enabling mandate/regulator FIRST, deploy infrastructure, brand from scratch, land 2-3 anchor champions, THEN broaden. Expect a longer ramp and heavier early Branding.
+  * BROWNFIELD (we already operate here) -> leverage-and-expand: convert existing partners/assets first, use existing data & relationships, faster Acquisition, emphasize conversion + retention over cold branding.
+  Name the real incumbent(s) (e.g. TOMRA) from the competitive data and state our differentiated WEDGE. Derive the target SEQUENCING (Beachhead -> Expand -> Scale) from the P0/P1/P2 stakeholder priorities (win mandate/regulator/anchors before broad public).
+- FUNNEL: tag every campaign and content row with its funnel stage (Branding|Acquisition|Engagement), sequenced to serve the entry strategy (e.g. Greenfield early Branding targets mandate-holders + anchors, NOT broad public).
 - Everything must serve the brief's objectives and North Star (Return Rate) and stay within its scope + mandatories.
-- MOMENTS: use the project's calendar months (${calendarMonths.join(', ') || 'the project timeline'}) to find real festivals/seasons/events in ${targetLocation} worth capitalizing on. Ground them; do not invent.
-- CONTENT CALENDAR: produce 8–12 rows MAXIMUM covering the most important weeks/moments (NOT every single week). Each row is an atomic task. Keep "hook" and "objective" to ONE short line each. Assign a realistic executor. Tie each to the selected materials (${materials.join(', ')}) and the "${implementationModel}" model. INCLUDE at least 2 on-ground / BTL rows (booths, events, activations at real venues) with executor "BTL Agency (human)".
-- NARRATIVE: derive the messaging directly from the brief's "Ask". 3 core pillars, 2-3 friction personas, 2-3 objections — keep each to one short line.
-- CAMPAIGN CALENDAR: 3–6 campaigns maximum. MOMENTS: 3–5 maximum.
-- Keep the ENTIRE JSON compact so it is never truncated. Never fabricate metrics; where a human number is needed, write [Decision needed].
+- MOMENTS (3-5): use the calendar months (${calendarMonths.join(', ') || 'the project timeline'}) to find real festivals/seasons/events in ${targetLocation}. Ground them; do not invent.
+- CONTENT CALENDAR: 8-12 rows MAX covering the key weeks. Each row is an atomic task; keep "hook"/"objective" to one short line; assign a realistic executor; include at least 2 on-ground/BTL rows (executor "BTL Agency (human)"). Tie to materials (${materials.join(', ')}) and the "${implementationModel}" model.
+- NARRATIVE: from the brief's "Ask" — 3 pillars, 2-3 personas, 2-3 objections, one line each.
+- CAMPAIGN CALENDAR: 3-6 campaigns. Keep the ENTIRE JSON compact so it is never truncated. Never fabricate metrics; where a human number is needed, write [Decision needed].
 
 Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
 {
+  "marketEntry": {
+    "operationsBasis": "Greenfield|Brownfield",
+    "posture": "<how we enter given the market, incumbents, and greenfield/brownfield — 2 lines>",
+    "differentiation": "<our wedge vs the named incumbent(s), grounded in the competitive data>",
+    "targetSequencing": [
+      { "phase": "Beachhead", "target": "<who we win FIRST>", "why": "<why them first>", "secure": "<what we need from them>" },
+      { "phase": "Expand", "target": "<next>", "why": "<why>", "secure": "<what>" },
+      { "phase": "Scale", "target": "<broad>", "why": "<why>", "secure": "<what>" }
+    ],
+    "implications": "<honest trade-offs of the ${operationsStatus} choice — ramp time, where spend goes, key risk>"
+  },
+  "funnelStrategy": {
+    "branding": { "objective": "<awareness goal>", "channels": "<primary channels>", "keyMessage": "<one line>", "kpi": "<metric>" },
+    "acquisition": { "objective": "<sign-up / first-return goal>", "channels": "<primary channels>", "keyMessage": "<one line>", "kpi": "<metric>" },
+    "engagement": { "objective": "<retention / loyalty goal>", "channels": "<primary channels>", "keyMessage": "<one line>", "kpi": "<metric>" }
+  },
   "moments": [
     { "moment": "<festival/season/event>", "dates": "<when>", "why": "<why it matters for DRS here>", "angle": "<how to capitalize>" }
   ],
   "campaignCalendar": [
-    { "campaign": "<name>", "objective": "<from the brief>", "window": "<dates/phase>", "audience": "<who>", "channels": "<e.g. Social, WhatsApp, BTL, PR, Ads>", "moment": "<moment it rides>", "kpi": "<measurable KPI>" }
+    { "campaign": "<name>", "funnel": "Branding|Acquisition|Engagement", "objective": "<from the brief>", "window": "<dates/phase>", "audience": "<who>", "channels": "<e.g. Social, WhatsApp, BTL, PR, Ads>", "moment": "<moment it rides>", "kpi": "<measurable KPI>" }
   ],
   "contentCalendar": [
-    { "week": "<e.g. Wk 1 (Oct 1-7)>", "campaign": "<parent campaign>", "channel": "<Social|WhatsApp|Email|Ads|BTL|PR>", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message/festival tie-in>", "objective": "<awareness|acquisition|engagement|returns>", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)" }
+    { "week": "<e.g. Wk 1 (Oct 1-7)>", "campaign": "<parent campaign>", "funnel": "Branding|Acquisition|Engagement", "channel": "<Social|WhatsApp|Email|Ads|BTL|PR>", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message/festival tie-in>", "objective": "<awareness|acquisition|engagement|returns>", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)" }
   ],
   "narrative": {
     "corePillars": ["<3 core message pillars grounded in the brief's Ask>"],
