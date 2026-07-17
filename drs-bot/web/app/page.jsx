@@ -314,7 +314,129 @@ export default function App() {
   const [copilotMessages, setCopilotMessages] = useState([
     { sender: 'assistant', text: 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.' }
   ]);
+  
   const [copilotLoading, setCopilotLoading] = useState(false);
+  const [chatThreads, setChatThreads] = useState([]);
+  const [activeThreadId, setActiveThreadId] = useState(null);
+  const [chatHistoryDropdownOpen, setChatHistoryDropdownOpen] = useState(false);
+  const chatDropdownRef = useRef(null);
+
+  // Chat Persistence Logic
+  const loadChatThreads = (pid) => {
+    if (!pid || pid === 'NEW_PROJECT_PLACEHOLDER') return;
+    const stored = localStorage.getItem('drs_chats_' + pid);
+    if (stored) {
+      try {
+        const threads = JSON.parse(stored);
+        if (threads && threads.length > 0) {
+          setChatThreads(threads);
+          setActiveThreadId(threads[0].id);
+          setCopilotMessages(threads[0].messages);
+          return;
+        }
+      } catch (e) {}
+    }
+    const defaultThread = {
+      id: 'thread_' + Date.now(),
+      title: 'New Chat',
+      messages: [{ sender: 'assistant', text: 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.' }]
+    };
+    setChatThreads([defaultThread]);
+    setActiveThreadId(defaultThread.id);
+    setCopilotMessages(defaultThread.messages);
+    localStorage.setItem('drs_chats_' + pid, JSON.stringify([defaultThread]));
+  };
+
+  useEffect(() => {
+    if (projectId) {
+      loadChatThreads(projectId);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId || !activeThreadId) return;
+    // Debounce or directly save on message change
+    setChatThreads(prev => {
+      // Find current thread to see if messages are actually different
+      const current = prev.find(t => t.id === activeThreadId);
+      if (current && current.messages.length === copilotMessages.length) {
+        // Quick check, might not need save, but let's save to be safe
+      }
+      
+      const updated = prev.map(t => {
+        if (t.id === activeThreadId) {
+          // Auto-name thread based on first user query if it is still "New Chat"
+          let title = t.title;
+          if (title === 'New Chat' && copilotMessages.length > 1) {
+            const firstUser = copilotMessages.find(m => m.sender === 'user');
+            if (firstUser) {
+              title = firstUser.text.substring(0, 20) + (firstUser.text.length > 20 ? '...' : '');
+            }
+          }
+          return { ...t, title, messages: copilotMessages };
+        }
+        return t;
+      });
+      localStorage.setItem('drs_chats_' + projectId, JSON.stringify(updated));
+      return updated;
+    });
+  }, [copilotMessages, projectId, activeThreadId]);
+
+  const createNewThread = () => {
+    const newThread = {
+      id: 'thread_' + Date.now(),
+      title: 'New Chat',
+      messages: [{ sender: 'assistant', text: 'Conversation reset. Ask me anything!' }]
+    };
+    setChatThreads(prev => {
+      const updated = [newThread, ...prev];
+      localStorage.setItem('drs_chats_' + projectId, JSON.stringify(updated));
+      return updated;
+    });
+    setActiveThreadId(newThread.id);
+    setCopilotMessages(newThread.messages);
+    setChatHistoryDropdownOpen(false);
+  };
+
+  const switchThread = (id) => {
+    const thread = chatThreads.find(t => t.id === id);
+    if (thread) {
+      setActiveThreadId(thread.id);
+      setCopilotMessages(thread.messages);
+      setChatHistoryDropdownOpen(false);
+    }
+  };
+
+  const deleteThread = (id, e) => {
+    e.stopPropagation();
+    const updated = chatThreads.filter(t => t.id !== id);
+    let finalUpdated = updated;
+    if (updated.length === 0) {
+      const defaultThread = {
+        id: 'thread_' + Date.now(),
+        title: 'New Chat',
+        messages: [{ sender: 'assistant', text: 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.' }]
+      };
+      finalUpdated = [defaultThread];
+    }
+    setChatThreads(finalUpdated);
+    localStorage.setItem('drs_chats_' + projectId, JSON.stringify(finalUpdated));
+    if (activeThreadId === id) {
+      setActiveThreadId(finalUpdated[0].id);
+      setCopilotMessages(finalUpdated[0].messages);
+    }
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (chatDropdownRef.current && !chatDropdownRef.current.contains(e.target)) {
+        setChatHistoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
   const [copilotCollapsed, setCopilotCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
