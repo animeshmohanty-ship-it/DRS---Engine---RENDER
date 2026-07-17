@@ -4145,9 +4145,75 @@ export default function App() {
         <div className="copilot-header">
           <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="copilot-toggle-btn" onClick={() => setCopilotMessages([{ sender: 'assistant', text: 'Conversation reset. Ask me anything!' }])}>
-              Reset
-            </button>
+            <div style={{ position: 'relative' }} ref={chatDropdownRef}>
+              <button className="copilot-toggle-btn" onClick={() => setChatHistoryDropdownOpen(!chatHistoryDropdownOpen)}>
+                Chats ?
+              </button>
+              {chatHistoryDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  background: '#ffffff',
+                  border: '1px solid var(--line)',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  width: '200px',
+                  maxHeight: '300px',
+                  overflowY: 'auto'
+                }}>
+                  <div 
+                    onClick={createNewThread}
+                    style={{
+                      padding: '10px 12px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--line)',
+                      color: 'var(--accent)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>+ New Chat</span>
+                  </div>
+                  {chatThreads.map(t => (
+                    <div 
+                      key={t.id}
+                      onClick={() => switchThread(t.id)}
+                      style={{
+                        padding: '8px 12px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: activeThreadId === t.id ? '#f1f5f9' : '#fff',
+                        color: activeThreadId === t.id ? 'var(--ink)' : 'var(--ink-soft)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = activeThreadId === t.id ? '#f1f5f9' : '#fff'}
+                    >
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                        {t.title}
+                      </span>
+                      <span 
+                        onClick={(e) => deleteThread(t.id, e)}
+                        title="Delete Chat"
+                        style={{ opacity: 0.5, cursor: 'pointer', fontSize: '14px' }}
+                        onMouseEnter={(e) => e.target.style.opacity = 1}
+                        onMouseLeave={(e) => e.target.style.opacity = 0.5}
+                      >
+                        ???
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             {/* Close button for mobile bottom sheet */}
             <button 
               className="copilot-toggle-btn mobile-only-btn" 
