@@ -2385,12 +2385,12 @@ export default function App() {
                   </div>
                 )}
 
-                <div className=\"card\">
+                <div className="card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h2>Omnichannel Campaign Matrix</h2>
                     <button onClick={() => discussPlan('campaign matrix')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>✨ Discuss</button>
                   </div>
-                  <p className=\"sub\">Master campaigns and their granular, actionable deliverables flowing into Orchestration.</p>
+                  <p className="sub">Master campaigns and their granular, actionable deliverables flowing into Orchestration.</p>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
                     {campaigns.map((c, i) => {
@@ -2400,12 +2400,12 @@ export default function App() {
                           <div style={{ background: 'var(--surface2)', padding: '16px', borderBottom: '1px solid var(--border-color)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                               <h3 style={{ margin: 0, fontSize: '16px' }}>{c.campaign}</h3>
-                              {c.funnel && <span className=\"phase p1\">{c.funnel}</span>}
+                              {c.funnel && <span className="phase p1">{c.funnel}</span>}
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', fontSize: '13px' }}>
-                              <div><strong className=\"muted\">Window:</strong> {c.window}</div>
-                              <div><strong className=\"muted\">Objective:</strong> {c.objective}</div>
-                              <div><strong className=\"muted\">KPI:</strong> {c.kpi}</div>
+                              <div><strong className="muted">Window:</strong> {c.window}</div>
+                              <div><strong className="muted">Objective:</strong> {c.objective}</div>
+                              <div><strong className="muted">KPI:</strong> {c.kpi}</div>
                             </div>
                           </div>
                           
@@ -2425,11 +2425,11 @@ export default function App() {
                                 <tbody>
                                   {campaignTasks.map((t, idx) => (
                                     <tr key={idx}>
-                                      <td className=\"muted\">{t.week}</td>
-                                      <td><span className=\"phase p1\">{t.channel}</span></td>
-                                      <td className=\"muted\">{t.format}</td>
+                                      <td className="muted">{t.week}</td>
+                                      <td><span className="phase p1">{t.channel}</span></td>
+                                      <td className="muted">{t.format}</td>
                                       <td>{t.hook}</td>
-                                      <td className=\"muted\">{t.objective}</td>
+                                      <td className="muted">{t.objective}</td>
                                       <td><span className={`phase ${String(t.executor).includes('human') ? 'p3' : 'p2'}`}>{t.executor}</span></td>
                                     </tr>
                                   ))}
@@ -4550,3 +4550,4 @@ export default function App() {
     </>
   );
 }
+
