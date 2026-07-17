@@ -111,7 +111,30 @@ function Badge({ level }) {
   return <span className={`badge ${cls}`}>{level}</span>;
 }
 
+
+const MODEL_OPTIONS = [
+  { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (Vertex AI)', icon: 'gemini' },
+  { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash (Vertex AI)', icon: 'gemini' },
+  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (AI Studio)', icon: 'gemini' },
+  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (AI Studio)', icon: 'gemini' },
+  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro (AI Studio)', icon: 'gemini' },
+  { value: 'llama-3.3-70b', label: 'Groq Llama 3.3 (Fast)', icon: 'meta' },
+  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', icon: 'anthropic' }
+];
+
+const renderModelIcon = (type) => {
+  if (type === 'gemini') {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{marginRight: '8px', flexShrink: 0}}><path d="M12 0C12 0 12 10.5 24 12C24 12 12 13.5 12 24C12 24 12 13.5 0 12C0 12 12 10.5 12 0Z" fill="url(#gemini-grad)"/><defs><linearGradient id="gemini-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse"><stop stopColor="#4285F4"/><stop offset="0.5" stopColor="#9B72CB"/><stop offset="1" stopColor="#D96570"/></linearGradient></defs></svg>;
+  } else if (type === 'meta') {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{marginRight: '8px', flexShrink: 0}}><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 17.5C8.96 17.5 6.5 15.04 6.5 12C6.5 8.96 8.96 6.5 12 6.5C15.04 6.5 17.5 8.96 17.5 12C17.5 15.04 15.04 17.5 12 17.5Z" fill="#0668E1"/></svg>;
+  } else if (type === 'anthropic') {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{marginRight: '8px', flexShrink: 0}}><path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" fill="#D97757"/></svg>;
+  }
+  return null;
+};
+
 export default function App() {
+  const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
   const [projects, setProjects] = useState([]);
   const [activeTab, setActiveTab] = useState('history'); // 'history' | 1 to 12
   const [gtmSubTab, setGtmSubTab] = useState('branding'); // 'branding' | 'acquisition' | 'engagement'
@@ -1357,29 +1380,71 @@ export default function App() {
                 )}
               </span>
             )}
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              style={{
-                background: 'var(--grey-soft)',
-                color: 'var(--ink)',
-                border: '1px solid var(--line)',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-            >
-               <option value="gemini-3.1-pro-preview">⭐ Gemini 3.1 Pro (Vertex AI)</option>
-              <option value="gemini-3.5-flash">⚡ Gemini 3.5 Flash (Vertex AI)</option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro (AI Studio)</option>
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (AI Studio)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (AI Studio)</option>
-              <option value="llama-3.3-70b">⚡ Groq Llama 3.3 (Fast)</option>
-              <option value="claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
-            </select>
+            
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                style={{
+                  background: 'var(--grey-soft)',
+                  color: 'var(--ink)',
+                  border: '1px solid var(--line)',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  userSelect: 'none'
+                }}
+              >
+                {(() => {
+                  const active = MODEL_OPTIONS.find(m => m.value === selectedModel) || MODEL_OPTIONS[0];
+                  return <>{renderModelIcon(active.icon)}{active.label} <span style={{marginLeft: '8px', fontSize: '10px'}}>?</span></>;
+                })()}
+              </div>
+              
+              {modelDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  background: '#ffffff',
+                  border: '1px solid var(--line)',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  minWidth: '220px',
+                  overflow: 'hidden'
+                }}>
+                  {MODEL_OPTIONS.map(opt => (
+                    <div 
+                      key={opt.value}
+                      onClick={() => {
+                        setSelectedModel(opt.value);
+                        setModelDropdownOpen(false);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        background: selectedModel === opt.value ? '#f1f5f9' : '#fff',
+                        color: 'var(--ink)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = selectedModel === opt.value ? '#f1f5f9' : '#fff'}
+                    >
+                      {renderModelIcon(opt.icon)}
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && (
               <button
                 className={`copilot-toggle-btn ${loading[activeStageNum] ? 'danger' : ''}`}
