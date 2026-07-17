@@ -886,7 +886,7 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
     { "campaign": "<name>", "funnel": "Branding|Acquisition|Engagement", "objective": "<from the brief>", "window": "<dates/phase>", "audience": "<who>", "channels": "<e.g. Social, WhatsApp, BTL, PR, Ads>", "moment": "<moment it rides>", "kpi": "<measurable KPI>" }
   ],
   "contentCalendar": [
-    { "week": "<e.g. Wk 1 (Oct 1-7)>", "campaign": "<parent campaign>", "funnel": "Branding|Acquisition|Engagement", "channel": "<Social|WhatsApp|Email|Ads|BTL|PR>", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message/festival tie-in>", "objective": "<awareness|acquisition|engagement|returns>", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)" }
+    { "week": "<e.g. Wk 1 (Oct 1-7)>", "campaign": "<parent campaign>", "funnel": "Branding|Acquisition|Engagement", "channel": "<Social|WhatsApp|Email|Ads|BTL|PR>", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message/festival tie-in>", "objective": "<awareness|acquisition|engagement|returns>", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)", "requiredSkills": ["<1-2 skills from: PR/Media, Website/Digital, Video/Visual Content, Paid Ads/Lead Generation, Research/Data Analysis, Content/Copywriting, Social Media/Campaigns, Field Operations, Events/On-ground Activation, Operations/Delivery>"] }
   ],
   "narrative": {
     "corePillars": ["<3 core message pillars grounded in the brief's Ask>"],

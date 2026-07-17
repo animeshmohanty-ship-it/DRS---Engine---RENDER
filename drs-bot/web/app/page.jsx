@@ -24,6 +24,35 @@ const STAGES = [
 const MATERIALS = ['Liquor', 'PET', 'Cans', 'MLP'];
 const MODELS = ['End-to-End DRS (Scheme Operator)', 'RVM-only Provider to Retail', 'Tech Solutions'];
 
+// DRS Business Unit POD — team roster + skills (for Orchestrator skill-based assignment).
+const TEAM_MEMBERS = [
+  { name: 'Alokesh Sinha', role: 'POD Lead', skills: ['Strategy', 'Leadership', 'Approvals', 'Oversight'] },
+  { name: 'Akanksha', role: 'PR', skills: ['PR', 'Media', 'PR Agency', 'Website', 'Digital'] },
+  { name: 'Vinod', role: 'Implementation', skills: ['Operational Execution', 'Team Leadership', 'Operations', 'Delivery'] },
+  { name: 'Tarak', role: 'Video', skills: ['Video Production', 'Visual Content', 'Video', 'Creative', 'Design'] },
+  { name: 'Siva', role: 'Data', skills: ['Lead Generation', 'Ad Management', 'Ads', 'Paid', 'Performance'] },
+  { name: 'Sai Kiran', role: 'Data', skills: ['Research', 'Content', 'Data Analysis', 'Copywriting', 'Analytics'] },
+  { name: 'Narendra', role: 'Social & Campaign', skills: ['Social Media', 'Campaign Management', 'Social', 'Campaigns'] },
+  { name: 'Richard', role: 'Execution', skills: ['Field Operations', 'Tactical Execution', 'Field', 'Operations'] },
+  { name: 'Yash', role: 'Events + Execution', skills: ['Event Management', 'On-ground Activation', 'Events', 'BTL', 'Activation'] },
+];
+
+// Token-overlap skill matcher: returns the best-fit member name for a task's required skills.
+const _SKILL_STOP = new Set(['and', 'the', 'of', 'for', 'a', 'an', 'amp', 'to']);
+const _tokenize = (s) => (String(s || '').toLowerCase().match(/[a-z]+/g) || []).filter((t) => !_SKILL_STOP.has(t));
+const bestAssignee = (requiredSkills) => {
+  const req = new Set((Array.isArray(requiredSkills) ? requiredSkills : [requiredSkills]).flatMap(_tokenize));
+  if (!req.size) return null;
+  let best = null, bestScore = 0;
+  for (const m of TEAM_MEMBERS) {
+    const mt = new Set(m.skills.flatMap(_tokenize));
+    let score = 0;
+    req.forEach((t) => { if (mt.has(t)) score++; });
+    if (score > bestScore) { bestScore = score; best = m.name; }
+  }
+  return best;
+};
+
 const PREDEFINED_STATES = {
   "India": [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
@@ -1036,6 +1065,31 @@ export default function App() {
     setCopilotQuery(`Let's refine the ${label} in the campaign plan.`);
   };
 
+  // Orchestrator: assign a team member to a planned task (index into stage17 content calendar).
+  const updateAssignee = (idx, name) => {
+    setProjectStages((prev) => {
+      const s17 = prev.stage17;
+      if (!s17?.data?.contentCalendar) return prev;
+      const cc = s17.data.contentCalendar.map((t, i) => (i === idx ? { ...t, assignee: name } : t));
+      const next = { ...prev, stage17: { ...s17, data: { ...s17.data, contentCalendar: cc } } };
+      projectStagesRef.current = next;
+      return next;
+    });
+    setTimeout(() => saveProjectToStorage(projectStagesRef.current), 0);
+  };
+  // Fill every unassigned task with its best skill-match.
+  const autoAssignAll = () => {
+    setProjectStages((prev) => {
+      const s17 = prev.stage17;
+      if (!s17?.data?.contentCalendar) return prev;
+      const cc = s17.data.contentCalendar.map((t) => t.assignee ? t : { ...t, assignee: bestAssignee(t.requiredSkills) || '' });
+      const next = { ...prev, stage17: { ...s17, data: { ...s17.data, contentCalendar: cc } } };
+      projectStagesRef.current = next;
+      return next;
+    });
+    setTimeout(() => saveProjectToStorage(projectStagesRef.current), 0);
+  };
+
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
     const toRun = [2, 3, 4, 5, 6].filter((n) => selectedStages.includes(n));
@@ -1156,6 +1210,18 @@ export default function App() {
                   </div>
                 )}
 
+                {/* ORCHESTRATOR — assign planned tasks to team members by skill */}
+                {isSetupDone && (
+                  <div
+                    className={`menu-item ${activeTab === 'orchestrator' ? 'active' : ''}`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setActiveTab('orchestrator')}
+                  >
+                    <span className="badge-icon">OR</span>
+                    <span>Orchestrator</span>
+                  </div>
+                )}
+
                 {/* Stages 7-15 removed from the active flow for now (code + render blocks retained;
                     Narrative & BTL folded into Planning; revisit rest for Orchestration/Execution/Monitoring). */}
               </>
@@ -1184,7 +1250,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1232,7 +1298,7 @@ export default function App() {
               <option value="llama-3.3-70b">⚡ Groq Llama 3.3 (Fast)</option>
               <option value="claude-3-5-sonnet">🧠 Claude 3.5 Sonnet</option>
             </select>
-            {activeTab !== 'history' && activeTab !== 1 && (
+            {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && (
               <button
                 className="copilot-toggle-btn"
                 style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
@@ -2291,6 +2357,78 @@ export default function App() {
                   <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => generateStage(17)} disabled={loading[17]}>
                     {loading[17] ? '🔄 Re-drafting...' : '🔄 Re-draft plan from brief'}
                   </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ORCHESTRATOR — assign tasks to team by skill */}
+          {activeTab === 'orchestrator' && (() => {
+            const tasks = projectStages.stage17?.data?.contentCalendar || [];
+            if (!tasks.length) {
+              return (
+                <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
+                  <h2>No tasks to assign yet</h2>
+                  <p className="sub">Generate the <strong>Planning</strong> stage first — its content-calendar tasks flow here for team assignment.</p>
+                  <button className="btn" onClick={() => setActiveTab('planning')}>Go to Planning</button>
+                </div>
+              );
+            }
+            const assignedCount = tasks.filter((t) => t.assignee).length;
+            return (
+              <div>
+                <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>Task Assignment</span>
+                      <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>Every planned task, matched to the right person by skill. Defaults are auto-suggested from each member's skill set — change anyone via the dropdown. ({assignedCount}/{tasks.length} locked)</p>
+                    </div>
+                    <button className="btn" onClick={autoAssignAll}>✨ Auto-assign by skill</button>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <h2>Task Assignments</h2>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table>
+                      <thead><tr><th>Task</th><th>Funnel</th><th>Skill Required</th><th>Assignee</th></tr></thead>
+                      <tbody>
+                        {tasks.map((t, i) => {
+                          const req = t.requiredSkills || [];
+                          const suggested = bestAssignee(req);
+                          const current = t.assignee || suggested || '';
+                          return (
+                            <tr key={i}>
+                              <td><strong>{t.hook || t.format || t.campaign}</strong><div className="muted" style={{ fontSize: '11px' }}>{t.week} · {t.channel}</div></td>
+                              <td>{t.funnel && <span className="phase p1">{t.funnel}</span>}</td>
+                              <td className="muted">{Array.isArray(req) ? req.join(', ') : req}</td>
+                              <td>
+                                <select value={current} onChange={(e) => updateAssignee(i, e.target.value)} style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--surface, #fff)', color: 'var(--ink)', fontSize: '13px', minWidth: 160 }}>
+                                  <option value="">— Unassigned —</option>
+                                  {TEAM_MEMBERS.map((m) => <option key={m.name} value={m.name}>{m.name} · {m.role}</option>)}
+                                </select>
+                                {!t.assignee && suggested && <div className="muted" style={{ fontSize: '10px', marginTop: 2 }}>auto: skill match</div>}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="card">
+                  <h3>Team — DRS Business Unit POD</h3>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table>
+                      <thead><tr><th>Member</th><th>Role</th><th>Skills</th></tr></thead>
+                      <tbody>
+                        {TEAM_MEMBERS.map((m) => (
+                          <tr key={m.name}><td><strong>{m.name}</strong></td><td className="muted">{m.role}</td><td className="muted">{m.skills.slice(0, 3).join(', ')}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             );
