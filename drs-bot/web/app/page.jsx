@@ -724,6 +724,7 @@ export default function App() {
   const [researchTab, setResearchTab] = useState(2);
   const [researchGenerating, setResearchGenerating] = useState(false);
   const [researchProgress, setResearchProgress] = useState('');
+  const [planProgress, setPlanProgress] = useState('');
 
   // Signature of the current Setup brief. Stages are stamped with this at
   // generation time; if the brief later changes, the stamp no longer matches
@@ -748,6 +749,51 @@ export default function App() {
     return !!(st && st._brief && st._brief !== getBriefSignature());
   };
 
+  // Multi-query Planning: generate the strategy+campaigns core (1 call), then the
+  // DENSE content calendar one campaign at a time (loads progressively; no truncation).
+  const generatePlan = async (baseInput) => {
+    setPlanProgress('Generating strategy & campaigns…');
+    const coreRes = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 17, action: 'core', input: baseInput, projectData: projectStagesRef.current, model: selectedModel, projectId }),
+    });
+    const coreText = await coreRes.text();
+    let core;
+    try { core = JSON.parse(coreText); } catch { throw new Error('Plan core returned non-JSON'); }
+    if (!coreRes.ok || !core.ok || !core.data) throw new Error(core.error || 'Plan core generation failed');
+
+    // Seed stage17 with the core plan and an empty content calendar.
+    const seeded = { ...projectStagesRef.current, stage17: { data: { ...core.data, contentCalendar: [] }, sources: core.sources, _brief: getBriefSignature() } };
+    projectStagesRef.current = seeded;
+    setProjectStages(seeded);
+    await saveProjectToStorage(seeded);
+
+    // Dense content, one campaign at a time.
+    const camps = Array.isArray(core.data.campaignCalendar) ? core.data.campaignCalendar : [];
+    for (let i = 0; i < camps.length; i++) {
+      setPlanProgress(`Content calendar ${i + 1}/${camps.length}: ${camps[i].campaign || ''}…`);
+      try {
+        const cRes = await fetch('/api/generate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stage: 18, action: 'content', input: { ...baseInput, targetCampaign: camps[i] }, projectData: projectStagesRef.current, model: selectedModel, projectId }),
+        });
+        const cText = await cRes.text();
+        let cData;
+        try { cData = JSON.parse(cText); } catch { continue; }
+        const rows = cData.data?.contentCalendar || [];
+        if (rows.length) {
+          const prevS = projectStagesRef.current.stage17;
+          const merged = { ...projectStagesRef.current, stage17: { ...prevS, data: { ...prevS.data, contentCalendar: [...(prevS.data.contentCalendar || []), ...rows] } } };
+          projectStagesRef.current = merged;
+          setProjectStages(merged);
+          await saveProjectToStorage(merged);
+        }
+      } catch { /* skip a failed campaign, keep going */ }
+    }
+    setPlanProgress('Plan complete ✓');
+    setTimeout(() => setPlanProgress(''), 2500);
+  };
+
   const generateStage = async (stageNum) => {
     setLoading(prev => ({ ...prev, [stageNum]: true }));
     setError(null);
@@ -769,6 +815,12 @@ export default function App() {
         selectedWorkstreams,
         customConstraints
       };
+
+      // Planning uses a multi-query generation (core + per-campaign content).
+      if (Number(stageNum) === 17) {
+        await generatePlan(baseInput);
+        return;
+      }
 
       if (stageNum === 2) {
         // Step 1: Execute Demographics and Touchpoint Google search (Fast, ~4-5s)
@@ -2169,6 +2221,11 @@ export default function App() {
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
                   <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>How this works</span>
                   <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI turned your locked brief into a 360° plan. Each <strong>Content Calendar</strong> row is an atomic task (with a suggested executor) that will flow into Orchestration. To change anything, discuss it with the Copilot.</p>
+                  {planProgress && (
+                    <div style={{ marginTop: 10, fontSize: '13px', fontWeight: 600, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {loading[17] && <span className="spinner" />}{planProgress}
+                    </div>
+                  )}
                 </div>
 
                 {isEmpty && (

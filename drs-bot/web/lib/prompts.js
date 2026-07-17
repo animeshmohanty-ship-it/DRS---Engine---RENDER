@@ -857,9 +857,9 @@ RULES:
 - FUNNEL: tag every campaign and content row with its funnel stage (Branding|Acquisition|Engagement), sequenced to serve the entry strategy (e.g. Greenfield early Branding targets mandate-holders + anchors, NOT broad public).
 - Everything must serve the brief's objectives and North Star (Return Rate) and stay within its scope + mandatories.
 - MOMENTS (3-5): use the calendar months (${calendarMonths.join(', ') || 'the project timeline'}) to find real festivals/seasons/events in ${targetLocation}. Ground them; do not invent.
-- CONTENT CALENDAR: 8-12 rows MAX covering the key weeks. Each row is an atomic task; keep "hook"/"objective" to one short line; assign a realistic executor; include at least 2 on-ground/BTL rows (executor "BTL Agency (human)"). Tie to materials (${materials.join(', ')}) and the "${implementationModel}" model.
+- CONTENT CALENDAR: leave "contentCalendar" as an EMPTY array []. The detailed, dense content calendar is generated SEPARATELY, one campaign at a time — do NOT fill it here.
 - NARRATIVE: from the brief's "Ask" — 3 pillars, 2-3 personas, 2-3 objections, one line each.
-- CAMPAIGN CALENDAR: 3-6 campaigns. Keep the ENTIRE JSON compact so it is never truncated. Never fabricate metrics; where a human number is needed, write [Decision needed].
+- CAMPAIGN CALENDAR: generate a RICH set — roughly one campaign per key moment/phase across the ENTIRE timeline (aim for 6-12 campaigns), spread across the selected dates and the funnel stages (Branding early, Acquisition mid, Engagement later). Each needs a real window within the timeline. Keep the ENTIRE JSON compact so it is never truncated. Never fabricate metrics; where a human number is needed, write [Decision needed].
 
 Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACTLY this shape:
 {
@@ -894,6 +894,29 @@ Return ONLY a single valid JSON object (no markdown fences, no prose) with EXACT
     "objectionKit": [ { "objection": "<hostile question>", "response": "<the answer>" } ]
   }
 }`;
+
+    case 18: {
+      const camp = input.targetCampaign || {};
+      return `You are a Campaign Planning Director for Recykal's DRS.
+Produce ONLY the dense content-calendar rows for THIS ONE campaign in ${targetLocation}:
+${JSON.stringify(camp)}
+
+${contextHeader}
+
+RULES:
+- Cover the campaign's window ("${camp.window || targetTimeline}") at a TIGHT cadence — roughly ONE entry every 3 days. Be dense and specific, not sparse.
+- Each row is an atomic, executable task. Funnel = "${camp.funnel || 'Branding'}" unless a row clearly differs. Tie to the materials (${materials.join(', ')}) and the "${implementationModel}" model.
+- Vary channel/format across the run (social reels/posts, WhatsApp broadcasts, paid ads, PR, on-ground/BTL booths & events). Include on-ground/BTL rows where relevant (executor "BTL Agency (human)").
+- requiredSkills MUST be 1-2 from: PR/Media, Website/Digital, Video/Visual Content, Paid Ads/Lead Generation, Research/Data Analysis, Content/Copywriting, Social Media/Campaigns, Field Operations, Events/On-ground Activation, Operations/Delivery.
+- Never fabricate metrics; use [Decision needed] for human numbers. Keep the JSON compact.
+
+Return ONLY a single valid JSON object (no markdown fences, no prose):
+{
+  "contentCalendar": [
+    { "week": "<e.g. Wk 2 · Oct 8-10>", "campaign": "${String(camp.campaign || '').replace(/"/g, '')}", "funnel": "Branding|Acquisition|Engagement", "channel": "Social|WhatsApp|Email|Ads|BTL|PR", "format": "<reel/post/broadcast/booth/op-ed>", "hook": "<message / festival tie-in>", "objective": "awareness|acquisition|engagement|returns", "audience": "<who>", "owner": "<accountable role>", "executor": "Social bot|WhatsApp bot|Ad Campaign Runner|BTL Agency (human)|PR (human)", "requiredSkills": ["<1-2 skills>"] }
+  ]
+}`;
+    }
 
     case 15:
       return `You are the DRS (Deposit Return System) roadmap engine for Recykal.
