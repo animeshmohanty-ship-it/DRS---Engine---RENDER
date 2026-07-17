@@ -1184,43 +1184,37 @@ export default function App() {
                   </div>
                 )}
 
-                {/* PRE-PLANNING — combined page (Campaign Brief) */}
-                {isSetupDone && (
-                  <div
-                    className={`menu-item ${activeTab === 'preplanning' ? 'active' : ''}`}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setActiveTab('preplanning')}
-                  >
-                    <span className="badge-icon">PP</span>
-                    <span>Pre-planning</span>
-                    {isStageStale(16) && <span title="Setup changed — regenerate brief" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
-                  </div>
-                )}
+                {/* PRE-PLANNING — visible always, accessible once Setup is saved */}
+                <div
+                  className={`menu-item ${activeTab === 'preplanning' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('preplanning')}
+                >
+                  <span className="badge-icon">PP</span>
+                  <span>Pre-planning</span>
+                  {isSetupDone && isStageStale(16) && <span title="Setup changed — regenerate brief" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                </div>
 
-                {/* PLANNING — combined page (Campaign Plan) */}
-                {isSetupDone && (
-                  <div
-                    className={`menu-item ${activeTab === 'planning' ? 'active' : ''}`}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setActiveTab('planning')}
-                  >
-                    <span className="badge-icon">PL</span>
-                    <span>Planning</span>
-                    {isStageStale(17) && <span title="Setup changed — regenerate plan" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
-                  </div>
-                )}
+                {/* PLANNING — visible always, accessible once Setup is saved */}
+                <div
+                  className={`menu-item ${activeTab === 'planning' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('planning')}
+                >
+                  <span className="badge-icon">PL</span>
+                  <span>Planning</span>
+                  {isSetupDone && isStageStale(17) && <span title="Setup changed — regenerate plan" style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                </div>
 
-                {/* ORCHESTRATOR — assign planned tasks to team members by skill */}
-                {isSetupDone && (
-                  <div
-                    className={`menu-item ${activeTab === 'orchestrator' ? 'active' : ''}`}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setActiveTab('orchestrator')}
-                  >
-                    <span className="badge-icon">OR</span>
-                    <span>Orchestrator</span>
-                  </div>
-                )}
+                {/* ORCHESTRATOR — visible always, accessible once Setup is saved */}
+                <div
+                  className={`menu-item ${activeTab === 'orchestrator' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('orchestrator')}
+                >
+                  <span className="badge-icon">OR</span>
+                  <span>Orchestrator</span>
+                </div>
 
                 {/* Stages 7-15 removed from the active flow for now (code + render blocks retained;
                     Narrative & BTL folded into Planning; revisit rest for Orchestration/Execution/Monitoring). */}
