@@ -2147,7 +2147,7 @@ export default function App() {
                     );
                   })}
                 </div>
-                <button className={`btn ${researchGenerating ? 'danger' : ''}`} style={researchGenerating ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => researchGenerating ? cancelGeneration('all_research') : generateAllResearch()}>
+                <button className={`btn ${researchGenerating ? 'danger' : ''}`} style={researchGenerating ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => researchGenerating ? cancelGeneration(researchTab) : generateAllResearch()}>
                   {researchGenerating ? <>🛑 Stop Generating</> : '⚡ Generate All Research'}
                 </button>
               </div>
@@ -4551,4 +4551,5 @@ export default function App() {
     </>
   );
 }
+
 
