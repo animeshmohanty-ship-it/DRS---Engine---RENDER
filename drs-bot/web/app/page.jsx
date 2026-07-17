@@ -4208,12 +4208,13 @@ export default function App() {
                         onMouseEnter={(e) => e.target.style.opacity = 1}
                         onMouseLeave={(e) => e.target.style.opacity = 0.5}
                       >
-                        ???
+                        ❌
                       </span>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
+            </div>
             {/* Close button for mobile bottom sheet */}
             <button 
               className="copilot-toggle-btn mobile-only-btn" 
