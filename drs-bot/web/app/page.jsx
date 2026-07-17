@@ -2349,58 +2349,65 @@ export default function App() {
                   </div>
                 )}
 
-                <div className="card">
+                <div className=\"card\">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>Campaign Calendar</h2>
-                    <button onClick={() => discussPlan('campaign calendar')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                    <h2>Omnichannel Campaign Matrix</h2>
+                    <button onClick={() => discussPlan('campaign matrix')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>✨ Discuss</button>
                   </div>
-                  <p className="sub">Which campaigns run when, and why — each tied to a brief objective and a moment.</p>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table>
-                      <thead><tr><th>Campaign</th><th>Funnel</th><th>Objective</th><th>Window</th><th>Audience</th><th>Channels</th><th>Moment</th><th>KPI</th></tr></thead>
-                      <tbody>
-                        {campaigns.map((c, i) => (
-                          <tr key={i}>
-                            <td><strong>{c.campaign}</strong></td>
-                            <td>{c.funnel && <span className="phase p1">{c.funnel}</span>}</td>
-                            <td className="muted">{c.objective}</td>
-                            <td className="muted">{c.window}</td>
-                            <td className="muted">{c.audience}</td>
-                            <td className="muted">{c.channels}</td>
-                            <td className="muted">{c.moment}</td>
-                            <td className="muted">{c.kpi}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div className="card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h2>Content Calendar <span className="muted" style={{ fontSize: '12px', fontWeight: 400 }}>— each row is a task</span></h2>
-                    <button onClick={() => discussPlan('content calendar')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
-                  </div>
-                  <p className="sub">The weekly schedule that flows into Orchestration → Execution. Executor = who runs it.</p>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table>
-                      <thead><tr><th>Week</th><th>Campaign</th><th>Funnel</th><th>Channel</th><th>Format</th><th>Hook</th><th>Objective</th><th>Owner</th><th>Executor</th></tr></thead>
-                      <tbody>
-                        {content.map((t, i) => (
-                          <tr key={i}>
-                            <td className="muted">{t.week}</td>
-                            <td className="muted">{t.campaign}</td>
-                            <td>{t.funnel && <span className="phase p1">{t.funnel}</span>}</td>
-                            <td><span className="phase p1">{t.channel}</span></td>
-                            <td className="muted">{t.format}</td>
-                            <td>{t.hook}</td>
-                            <td className="muted">{t.objective}</td>
-                            <td className="muted">{t.owner}</td>
-                            <td><span className={`phase ${String(t.executor).includes('human') ? 'p3' : 'p2'}`}>{t.executor}</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <p className=\"sub\">Master campaigns and their granular, actionable deliverables flowing into Orchestration.</p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
+                    {campaigns.map((c, i) => {
+                      const campaignTasks = content.filter(t => t.campaign === c.campaign);
+                      return (
+                        <div key={i} style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                          <div style={{ background: 'var(--surface2)', padding: '16px', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                              <h3 style={{ margin: 0, fontSize: '16px' }}>{c.campaign}</h3>
+                              {c.funnel && <span className=\"phase p1\">{c.funnel}</span>}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', fontSize: '13px' }}>
+                              <div><strong className=\"muted\">Window:</strong> {c.window}</div>
+                              <div><strong className=\"muted\">Objective:</strong> {c.objective}</div>
+                              <div><strong className=\"muted\">KPI:</strong> {c.kpi}</div>
+                            </div>
+                          </div>
+                          
+                          {campaignTasks.length > 0 ? (
+                            <div style={{ overflowX: 'auto', padding: '0 16px 16px' }}>
+                              <table style={{ marginTop: '16px' }}>
+                                <thead>
+                                  <tr>
+                                    <th>Week</th>
+                                    <th>Channel</th>
+                                    <th>Format</th>
+                                    <th>Hook</th>
+                                    <th>Objective</th>
+                                    <th>Executor</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {campaignTasks.map((t, idx) => (
+                                    <tr key={idx}>
+                                      <td className=\"muted\">{t.week}</td>
+                                      <td><span className=\"phase p1\">{t.channel}</span></td>
+                                      <td className=\"muted\">{t.format}</td>
+                                      <td>{t.hook}</td>
+                                      <td className=\"muted\">{t.objective}</td>
+                                      <td><span className={`phase ${String(t.executor).includes('human') ? 'p3' : 'p2'}`}>{t.executor}</span></td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div style={{ padding: '16px', fontSize: '13px', color: 'var(--muted)', fontStyle: 'italic' }}>
+                              No granular tasks assigned to this campaign yet.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
