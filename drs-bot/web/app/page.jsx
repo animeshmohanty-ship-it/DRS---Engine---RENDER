@@ -53,6 +53,36 @@ const bestAssignee = (requiredSkills) => {
   return best;
 };
 
+// Strip markdown to clean prose for text-to-speech (so it never reads "asterisk").
+const stripMarkdown = (s) => String(s || '')
+  .replace(/```[\s\S]*?```/g, ' ')
+  .replace(/`([^`]+)`/g, '$1')
+  .replace(/\*\*([^*]+)\*\*/g, '$1')
+  .replace(/\*([^*]+)\*/g, '$1')
+  .replace(/__([^_]+)__/g, '$1')
+  .replace(/_([^_]+)_/g, '$1')
+  .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+  .replace(/^#{1,6}\s*/gm, '')
+  .replace(/^\s*[-*+]\s+/gm, '')
+  .replace(/^\s*>\s?/gm, '')
+  .replace(/[*_#`>]/g, '')
+  .replace(/\n{2,}/g, '. ')
+  .replace(/[ \t]+/g, ' ')
+  .trim();
+
+// Lightweight, CSP-safe markdown → HTML for the chat bubble (escape first, then whitelist tags).
+const renderMarkdown = (s) => {
+  let h = String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  h = h.replace(/`([^`]+)`/g, '<code style="background:var(--grey-soft);padding:1px 4px;border-radius:4px;font-size:12px">$1</code>');
+  h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  h = h.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  h = h.replace(/^#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
+  h = h.replace(/\n/g, '<br/>');
+  return h;
+};
+
 const PREDEFINED_STATES = {
   "India": [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
@@ -447,10 +477,11 @@ export default function App() {
 
   // Speak text via Google TTS (same service account as Vertex). Used when Voice mode is on.
   const speak = async (text) => {
-    if (!text || !text.trim()) return;
+    const clean = stripMarkdown(text);
+    if (!clean) return;
     try {
       if (ttsAudioRef.current) { try { ttsAudioRef.current.pause(); } catch {} ttsAudioRef.current = null; }
-      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 4500) }) });
+      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: clean.slice(0, 4500) }) });
       const j = await res.json();
       if (!j.ok || !j.audioContent) return;
       const audio = new Audio('data:audio/mp3;base64,' + j.audioContent);
@@ -4364,7 +4395,7 @@ export default function App() {
             }
             return (
               <div key={i} className={`chat-message ${msg.sender === 'user' ? 'user' : 'assistant'}`}>
-                <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
+                <div style={{ lineHeight: 1.5, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
                 {msg.proposals && msg.proposals.map((p, pi) => {
                   const applied = msg._applied && msg._applied[pi];
                   const label = `${p.op || 'set'} · ${p.target}${Number.isInteger(p.index) ? ` · row ${p.index + 1}` : ''}${p.field ? ` · ${p.field}` : ''}`;
