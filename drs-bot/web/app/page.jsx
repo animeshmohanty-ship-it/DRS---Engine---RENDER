@@ -442,6 +442,23 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
   const chatEndRef = useRef(null);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const ttsAudioRef = useRef(null);
+
+  // Speak text via Google TTS (same service account as Vertex). Used when Voice mode is on.
+  const speak = async (text) => {
+    if (!text || !text.trim()) return;
+    try {
+      if (ttsAudioRef.current) { try { ttsAudioRef.current.pause(); } catch {} ttsAudioRef.current = null; }
+      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 4500) }) });
+      const j = await res.json();
+      if (!j.ok || !j.audioContent) return;
+      const audio = new Audio('data:audio/mp3;base64,' + j.audioContent);
+      ttsAudioRef.current = audio;
+      audio.play().catch(() => {});
+    } catch { /* ignore playback errors */ }
+  };
+  const stopSpeaking = () => { if (ttsAudioRef.current) { try { ttsAudioRef.current.pause(); } catch {} ttsAudioRef.current = null; } };
 
   useEffect(() => {
     fetchProjects();
@@ -1293,7 +1310,9 @@ export default function App() {
       }
       for (const [s, e] of cuts.reverse()) display = display.slice(0, s) + display.slice(e);
       display = display.replace(/::end::/g, '').trim();
-      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: display || 'I have proposed changes below.', proposals: proposals.length ? proposals : undefined, tab: tabParam }]);
+      const spokenText = display || 'I have proposed changes below.';
+      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: spokenText, proposals: proposals.length ? proposals : undefined, tab: tabParam }]);
+      if (voiceMode) speak(spokenText);
     } catch (err) {
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
     } finally {
@@ -4204,6 +4223,14 @@ export default function App() {
         <div className="copilot-header">
           <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className="copilot-toggle-btn"
+              title={voiceMode ? 'Voice replies ON — Binny speaks' : 'Voice replies OFF'}
+              style={{ background: voiceMode ? 'var(--accent)' : 'var(--grey-soft)', color: voiceMode ? '#fff' : 'var(--ink)', border: '1px solid var(--line)' }}
+              onClick={() => { const nv = !voiceMode; setVoiceMode(nv); if (!nv) stopSpeaking(); }}
+            >
+              {voiceMode ? '🔊 Voice' : '🔇 Voice'}
+            </button>
             <div style={{ position: 'relative' }} ref={chatDropdownRef}>
               <button className="copilot-toggle-btn" onClick={() => setChatHistoryDropdownOpen(!chatHistoryDropdownOpen)}>
                 Chats ?
