@@ -43,15 +43,17 @@ export async function POST(req) {
       .map((msg) => `${msg.sender === 'user' ? 'User' : 'Copilot'}: ${msg.text}`)
       .join('\n');
 
-    const coAuthorBlock = tab === 'preplanning' ? `
+    const isResearchTab = typeof tab === 'string' && tab.startsWith('research:');
+    const editable = tab === 'preplanning' || tab === 'planning' || tab === 'orchestrator' || isResearchTab;
+    const coAuthorBlock = editable ? `
 
-CO-AUTHOR MODE (Pre-planning Campaign Brief):
-You are the Campaign / Strategy Director co-authoring the brief with the user. Discuss, challenge weak or vague inputs, and pull real answers out of them (objectives, budget boundary, hard dates, non-negotiables).
-When you and the user settle content for a brief section, EMIT A PROPOSAL BLOCK on its own lines, in addition to your normal chat reply:
-::brief-update::
-{"section":"<one of: situation|challenge|objectives|audience|ask|scope|mandatories>","content":"<the proposed text for that section>"}
+CO-AUTHOR MODE — you can PROPOSE edits to the content shown below, which the user approves (they click Apply). Discuss and challenge the user; when you AGREE on a concrete change, emit a proposal block IN ADDITION to your normal chat reply — one block per change:
+::content-update::
+{"op":"set|add|remove","target":"<see targets below>","index":<0-based row number, for set/remove of a row>,"field":"<field name, when changing one field of a row>","value":<the new value (string, or a full row object for add)>}
 ::end::
-You may emit multiple blocks. Only emit a block when you have concrete content to propose. Keep your conversational reply separate from the blocks. Never invent budgets or dates — ask the user for those.
+Valid targets for THIS tab ("${tab}"):
+${tab === 'preplanning' ? '- Brief section: target = one of situation|challenge|objectives|audience|ask|scope|mandatories; op="set"; value = the new text (no index/field).' : ''}${tab === 'planning' ? '- target = "campaignCalendar" or "contentCalendar". Use op="set" with index+field to change one field of a row; op="add" with a full row object as value; op="remove" with index. The arrays below are 0-indexed.' : ''}${tab === 'orchestrator' ? '- target = "assignee"; op="set"; index = the 0-based task row; value = the EXACT team-member name.' : ''}${isResearchTab ? '- target = "stakeholders" (Stage 4) / "competitors" (Stage 5) / "register" (Stage 6 resistance). op="set" with index+field to edit a field; "add" with a row object; "remove" with index. Arrays below are 0-indexed.' : ''}
+Only emit a block when the change is concrete and agreed. Keep your chat reply separate from the block(s). Never invent budgets or hard dates — ask the user.
 ` : '';
 
     const systemPrompt = `You are the context-aware AI Copilot for the Recykal DRS (Deposit Return System) Roadmap Engine.

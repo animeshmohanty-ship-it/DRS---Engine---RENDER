@@ -1238,8 +1238,8 @@ export default function App() {
     setCopilotLoading(true);
 
     try {
-      const activeStageKey = activeTab === 'history' ? 'setup' : `stage${activeStageNum}`;
-      const tabParam = activeTab === 'preplanning' ? 'preplanning' : activeTab === 'planning' ? 'planning' : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
+      const activeStageKey = activeTab === 'history' ? 'setup' : activeTab === 'orchestrator' ? 'stage17' : `stage${activeStageNum}`;
+      const tabParam = activeTab === 'preplanning' ? 'preplanning' : activeTab === 'planning' ? 'planning' : activeTab === 'orchestrator' ? 'orchestrator' : activeTab === 'research' ? `research:${researchTab}` : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
       const res = await fetch('/api/copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1254,16 +1254,21 @@ export default function App() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
 
-      // Co-author mode: parse ::brief-update:: proposals out of the reply.
+      // Co-author mode: parse ::content-update:: (and legacy ::brief-update::) proposals.
       let display = data.text || '';
       const proposals = [];
-      const re = /::brief-update::\s*([\s\S]*?)\s*::end::/g;
+      const re = /::(?:content-update|brief-update)::\s*([\s\S]*?)\s*::end::/g;
       let m;
       while ((m = re.exec(data.text || '')) !== null) {
-        try { const p = JSON.parse(m[1].trim()); if (p.section && p.content) proposals.push(p); } catch {}
+        try {
+          const p = JSON.parse(m[1].trim());
+          // Normalize legacy brief format {section, content} → generic {target, op, value}.
+          if (p.section && p.content && !p.target) { p.target = p.section; p.op = 'set'; p.value = p.content; }
+          if (p.target) proposals.push(p);
+        } catch {}
       }
       display = display.replace(re, '').trim();
-      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: display || 'I have proposed brief updates below.', proposals: proposals.length ? proposals : undefined }]);
+      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: display || 'I have proposed changes below.', proposals: proposals.length ? proposals : undefined, tab: tabParam }]);
     } catch (err) {
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
     } finally {
@@ -1296,6 +1301,35 @@ export default function App() {
   const discussPlan = (label) => {
     setCopilotCollapsed(false);
     setCopilotQuery(`Let's refine the ${label} in the campaign plan.`);
+  };
+
+  // Generic co-author write-back: apply a Copilot proposal to the right section's data.
+  const applyContentUpdate = (tab, p) => {
+    setProjectStages((prev) => {
+      const clone = { ...prev };
+      const patch = (stageKey, arrKey) => {
+        const st = clone[stageKey];
+        if (!st?.data) return;
+        let arr = Array.isArray(st.data[arrKey]) ? [...st.data[arrKey]] : [];
+        if (p.op === 'add' && p.value) arr = [...arr, p.value];
+        else if (p.op === 'remove' && Number.isInteger(p.index)) arr = arr.filter((_, i) => i !== p.index);
+        else if (Number.isInteger(p.index)) arr = arr.map((r, i) => (i === p.index ? (p.field ? { ...r, [p.field]: p.value } : { ...r, ...(p.value || {}) }) : r));
+        clone[stageKey] = { ...st, data: { ...st.data, [arrKey]: arr } };
+      };
+      if (tab === 'preplanning' && clone.stage16?.data) {
+        clone.stage16 = { ...clone.stage16, data: { ...clone.stage16.data, brief: { ...(clone.stage16.data.brief || {}), [p.target]: p.value } } };
+      } else if (tab === 'planning' && (p.target === 'campaignCalendar' || p.target === 'contentCalendar')) {
+        patch('stage17', p.target);
+      } else if (tab === 'orchestrator' && clone.stage17?.data?.contentCalendar && Number.isInteger(p.index)) {
+        const cc = clone.stage17.data.contentCalendar.map((r, i) => (i === p.index ? { ...r, assignee: p.value } : r));
+        clone.stage17 = { ...clone.stage17, data: { ...clone.stage17.data, contentCalendar: cc } };
+      } else if (typeof tab === 'string' && tab.startsWith('research:')) {
+        patch('stage' + tab.split(':')[1], p.target);
+      }
+      projectStagesRef.current = clone;
+      return clone;
+    });
+    setTimeout(() => saveProjectToStorage(projectStagesRef.current), 0);
   };
 
   // Orchestrator: assign a team member to a planned task (index into stage17 content calendar).
@@ -4281,20 +4315,23 @@ export default function App() {
                 <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
                 {msg.proposals && msg.proposals.map((p, pi) => {
                   const applied = msg._applied && msg._applied[pi];
+                  const label = `${p.op || 'set'} · ${p.target}${Number.isInteger(p.index) ? ` · row ${p.index + 1}` : ''}${p.field ? ` · ${p.field}` : ''}`;
+                  const body = p.content ?? (typeof p.value === 'string' ? p.value : JSON.stringify(p.value));
                   return (
                     <div key={pi} style={{ marginTop: 8, padding: '10px', border: '1px solid var(--accent)', borderRadius: 8, background: 'var(--accent-soft, #eef6f3)' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>Proposed → {p.section}</div>
-                      <div style={{ fontSize: '13px', color: 'var(--ink)', marginBottom: 8 }}>{p.content}</div>
-                      {applied ? (
-                        <span style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 600 }}>✓ Applied to brief</span>
+                      <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>Proposed → {label}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--ink)', marginBottom: 8, whiteSpace: 'pre-wrap' }}>{body}</div>
+                      {applied === true ? (
+                        <span style={{ fontSize: '12px', color: 'var(--green)', fontWeight: 600 }}>✓ Applied</span>
+                      ) : applied === 'rejected' ? (
+                        <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Dismissed</span>
                       ) : (
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             className="btn"
                             style={{ padding: '4px 12px', fontSize: '12px' }}
                             onClick={() => {
-                              updateBriefField(p.section, p.content);
-                              setTimeout(saveBrief, 0);
+                              applyContentUpdate(msg.tab, p);
                               setCopilotMessages(prev => prev.map((mm, mi) => mi === i ? { ...mm, _applied: { ...(mm._applied || {}), [pi]: true } } : mm));
                             }}
                           >Apply</button>
