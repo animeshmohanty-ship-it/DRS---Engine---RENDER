@@ -54,6 +54,12 @@ CO-AUTHOR MODE — you can PROPOSE edits to the content shown below, which the u
 Valid targets for THIS tab ("${tab}"):
 ${tab === 'preplanning' ? '- Brief section: target = one of situation|challenge|objectives|audience|ask|scope|mandatories; op="set"; value = the new text (no index/field).' : ''}${tab === 'planning' ? '- target = "campaignCalendar" or "contentCalendar". Use op="set" with index+field to change one field of a row; op="add" with a full row object as value; op="remove" with index. The arrays below are 0-indexed.' : ''}${tab === 'orchestrator' ? '- target = "assignee"; op="set"; index = the 0-based task row; value = the EXACT team-member name.' : ''}${isResearchTab ? '- target = "stakeholders" (Stage 4) / "competitors" (Stage 5) / "register" (Stage 6 resistance). op="set" with index+field to edit a field; "add" with a row object; "remove" with index. Arrays below are 0-indexed.' : ''}
 Only emit a block when the change is concrete and agreed. Keep your chat reply separate from the block(s). Never invent budgets or hard dates — ask the user.
+
+STRICT FORMAT (critical — or the Apply button will not appear):
+- The block MUST be valid JSON: DOUBLE quotes only (no single quotes), no trailing commas, no comments.
+- Keep "value" a SHORT single-line string (for a full row use a compact flat object). No line breaks inside the JSON.
+- ALWAYS close every block with ::end:: on its own line.
+- Put the proposal block(s) at the very END of your reply, after your chat text.
 ` : '';
 
     const systemPrompt = `You are the context-aware AI Copilot for the Recykal DRS (Deposit Return System) Roadmap Engine.

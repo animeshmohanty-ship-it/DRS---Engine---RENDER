@@ -1254,20 +1254,45 @@ export default function App() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
 
-      // Co-author mode: parse ::content-update:: (and legacy ::brief-update::) proposals.
+      // Co-author mode: robustly extract ::content-update:: (or legacy ::brief-update::)
+      // proposals — brace-matched, tolerant of a missing ::end:: or trailing commas — and
+      // strip the raw block from the reply even if the JSON can't be parsed.
       let display = data.text || '';
       const proposals = [];
-      const re = /::(?:content-update|brief-update)::\s*([\s\S]*?)\s*::end::/g;
-      let m;
-      while ((m = re.exec(data.text || '')) !== null) {
-        try {
-          const p = JSON.parse(m[1].trim());
-          // Normalize legacy brief format {section, content} → generic {target, op, value}.
+      const tryParse = (s) => {
+        for (const c of [s, s.replace(/,\s*([}\]])/g, '$1')]) { try { return JSON.parse(c); } catch {} }
+        return null;
+      };
+      const cuts = [];
+      const markerRe = /::(?:content-update|brief-update)::/g;
+      let mk;
+      while ((mk = markerRe.exec(display)) !== null) {
+        const start = mk.index;
+        const braceStart = display.indexOf('{', markerRe.lastIndex);
+        let cutEnd, jsonStr = '';
+        if (braceStart === -1) {
+          cutEnd = display.length;
+        } else {
+          let depth = 0, end = -1;
+          for (let k = braceStart; k < display.length; k++) {
+            if (display[k] === '{') depth++;
+            else if (display[k] === '}') { depth--; if (depth === 0) { end = k; break; } }
+          }
+          jsonStr = display.slice(braceStart, end === -1 ? display.length : end + 1);
+          cutEnd = end === -1 ? display.length : end + 1;
+          const em = display.indexOf('::end::', cutEnd);
+          if (em !== -1 && em - cutEnd < 8) cutEnd = em + 7;
+        }
+        cuts.push([start, cutEnd]);
+        markerRe.lastIndex = cutEnd;
+        const p = tryParse(jsonStr);
+        if (p) {
           if (p.section && p.content && !p.target) { p.target = p.section; p.op = 'set'; p.value = p.content; }
           if (p.target) proposals.push(p);
-        } catch {}
+        }
       }
-      display = display.replace(re, '').trim();
+      for (const [s, e] of cuts.reverse()) display = display.slice(0, s) + display.slice(e);
+      display = display.replace(/::end::/g, '').trim();
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: display || 'I have proposed changes below.', proposals: proposals.length ? proposals : undefined, tab: tabParam }]);
     } catch (err) {
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
