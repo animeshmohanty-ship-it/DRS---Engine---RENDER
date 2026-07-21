@@ -109,6 +109,8 @@ An **AI marketing team** for **Recykal + Retearn** — not a generic tool.
 
 ## 6. CHANGELOG (append every change here)
 
+- **2026-07-18** — **Export to Sheets (formatted XLSX).** New `app/api/export/route.js` (ExcelJS) builds a styled multi-tab workbook — Task Calendar (grouped by campaign, frozen bold header, funnel-colored cells, assignees), Campaigns, Moments — returned as a download. "⬇ Export to Sheets" button in the Orchestrator section. Opens in Google Sheets/Excel; free, no cloud/API. Added `exceljs` dep. Deploy `bc1619a`. Route syntax-checked; browser compile-verify was unavailable (classifier down) — verify on Render.
+
 _Format: date — what changed — files touched — why — verified?_
 
 - **2026-07-15** — Created `OUR_PROGRESS.md` with vision + full baseline audit. — `OUR_PROGRESS.md` — establish single source of truth for the build. — n/a.
