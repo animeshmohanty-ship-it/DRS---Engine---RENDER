@@ -1432,6 +1432,37 @@ export default function App() {
     setTimeout(() => saveProjectToStorage(projectStagesRef.current), 0);
   };
 
+  // Export the plan to a formatted .xlsx (opens in Google Sheets / Excel).
+  const [exporting, setExporting] = useState(false);
+  const exportToSheets = async () => {
+    const d = projectStagesRef.current.stage17?.data || {};
+    const geo = state || country || 'project';
+    const meta = {
+      project: `${geo} — DRS Campaign Plan`,
+      geography: geo,
+      date: new Date().toLocaleDateString(),
+      filename: `DRS-Plan-${String(geo).replace(/[^a-zA-Z0-9]+/g, '-')}`,
+    };
+    setExporting(true);
+    try {
+      const res = await fetch('/api/export', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ meta, contentCalendar: d.contentCalendar || [], campaignCalendar: d.campaignCalendar || [], moments: d.moments || [] }),
+      });
+      if (!res.ok) throw new Error('server ' + res.status);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = meta.filename + '.xlsx';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError('Export failed: ' + e.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
     const toRun = [2, 3, 4, 5, 6].filter((n) => selectedStages.includes(n));
@@ -2774,7 +2805,12 @@ export default function App() {
                       <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>Task Assignment</span>
                       <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>Every planned task, matched to the right person by skill. Defaults are auto-suggested from each member's skill set — change anyone via the dropdown. ({assignedCount}/{tasks.length} locked)</p>
                     </div>
-                    <button className="btn" onClick={autoAssignAll}>✨ Auto-assign by skill</button>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button className="btn" onClick={autoAssignAll}>✨ Auto-assign by skill</button>
+                      <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={exportToSheets} disabled={exporting}>
+                        {exporting ? '⏳ Exporting…' : '⬇ Export to Sheets'}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

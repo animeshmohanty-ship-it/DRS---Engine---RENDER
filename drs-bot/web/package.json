@@ -13,6 +13,7 @@
     "@google-cloud/vertexai": "^1.12.0",
     "@google/genai": "^2.10.0",
     "@supabase/supabase-js": "^2.110.0",
+    "exceljs": "^4.4.0",
     "next": "^16.2.9",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
