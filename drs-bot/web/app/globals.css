@@ -182,6 +182,29 @@ html, body {
   border-left: none;
 }
 
+.copilot-panel.fullpage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2000;
+  border-left: none;
+  box-shadow: 0 0 60px rgba(0,0,0,0.15);
+}
+
+/* Center the conversation for readability when full-page */
+.copilot-panel.fullpage .copilot-chat,
+.copilot-panel.fullpage .copilot-input {
+  max-width: 900px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.copilot-panel.fullpage .chat-message {
+  max-width: 720px;
+}
+
 .copilot-header {
   padding: 18px 20px;
   border-bottom: 1px solid var(--line);

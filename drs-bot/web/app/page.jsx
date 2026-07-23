@@ -468,6 +468,7 @@ export default function App() {
   }, []);
 
   const [copilotCollapsed, setCopilotCollapsed] = useState(false);
+  const [copilotFullpage, setCopilotFullpage] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
@@ -4286,10 +4287,17 @@ export default function App() {
       </button>
 
       {/* 3. Collapsible Right AI Copilot drawer */}
-      <div className={`copilot-panel ${copilotCollapsed ? 'collapsed' : ''}`}>
+      <div className={`copilot-panel ${copilotFullpage ? 'fullpage' : copilotCollapsed ? 'collapsed' : ''}`}>
         <div className="copilot-header">
           <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className="copilot-toggle-btn"
+              title={copilotFullpage ? 'Dock Binny back to the side' : 'Expand Binny to full page'}
+              onClick={() => setCopilotFullpage(v => !v)}
+            >
+              {copilotFullpage ? '⤡ Dock' : '⤢ Full page'}
+            </button>
             <button
               className="copilot-toggle-btn"
               title={voiceMode ? 'Voice replies ON — Binny speaks' : 'Voice replies OFF'}
