@@ -378,9 +378,13 @@ export default function App() {
   const chatDropdownRef = useRef(null);
 
   // Chat Persistence Logic
+  // Chats are scoped to a project; when no project is open we fall back to a
+  // persistent "General" chat (GLOBAL) so brainstorming in Setup/History is
+  // never lost.
+  const getChatScope = (pid) => (pid && pid !== 'NEW_PROJECT_PLACEHOLDER') ? pid : 'GLOBAL';
   const loadChatThreads = (pid) => {
-    if (!pid || pid === 'NEW_PROJECT_PLACEHOLDER') return;
-    const stored = localStorage.getItem('drs_chats_' + pid);
+    const scope = getChatScope(pid);
+    const stored = localStorage.getItem('drs_chats_' + scope);
     if (stored) {
       try {
         const threads = JSON.parse(stored);
@@ -400,17 +404,16 @@ export default function App() {
     setChatThreads([defaultThread]);
     setActiveThreadId(defaultThread.id);
     setCopilotMessages(defaultThread.messages);
-    localStorage.setItem('drs_chats_' + pid, JSON.stringify([defaultThread]));
+    localStorage.setItem('drs_chats_' + scope, JSON.stringify([defaultThread]));
   };
 
   useEffect(() => {
-    if (projectId) {
-      loadChatThreads(projectId);
-    }
+    loadChatThreads(projectId);
   }, [projectId]);
 
   useEffect(() => {
-    if (!projectId || !activeThreadId) return;
+    if (!activeThreadId) return;
+    const scope = getChatScope(projectId);
     // Debounce or directly save on message change
     setChatThreads(prev => {
       // Find current thread to see if messages are actually different
@@ -433,7 +436,7 @@ export default function App() {
         }
         return t;
       });
-      localStorage.setItem('drs_chats_' + projectId, JSON.stringify(updated));
+      localStorage.setItem('drs_chats_' + scope, JSON.stringify(updated));
       return updated;
     });
   }, [copilotMessages, projectId, activeThreadId]);
@@ -446,7 +449,7 @@ export default function App() {
     };
     setChatThreads(prev => {
       const updated = [newThread, ...prev];
-      localStorage.setItem('drs_chats_' + projectId, JSON.stringify(updated));
+      localStorage.setItem('drs_chats_' + getChatScope(projectId), JSON.stringify(updated));
       return updated;
     });
     setActiveThreadId(newThread.id);
@@ -476,7 +479,7 @@ export default function App() {
       finalUpdated = [defaultThread];
     }
     setChatThreads(finalUpdated);
-    localStorage.setItem('drs_chats_' + projectId, JSON.stringify(finalUpdated));
+    localStorage.setItem('drs_chats_' + getChatScope(projectId), JSON.stringify(finalUpdated));
     if (activeThreadId === id) {
       setActiveThreadId(finalUpdated[0].id);
       setCopilotMessages(finalUpdated[0].messages);
@@ -4381,7 +4384,7 @@ export default function App() {
       {/* 3. Collapsible Right AI Copilot drawer */}
       <div className={`copilot-panel ${copilotFullpage ? 'fullpage' : copilotCollapsed ? 'collapsed' : ''}`}>
         <div className="copilot-header">
-          <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')})</h3>
+          <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')}){!projectId && <span style={{ marginLeft: 6, fontSize: '10px', fontWeight: 600, color: 'var(--accent)', background: 'var(--grey-soft)', padding: '2px 6px', borderRadius: 10, verticalAlign: 'middle' }}>GENERAL</span>}</h3>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               className="copilot-toggle-btn"
