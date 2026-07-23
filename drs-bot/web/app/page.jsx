@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { AuthScreens } from './authScreens.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
@@ -11,6 +12,11 @@ import {
 } from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
+
+// Auth is gated behind an env flag so the app is never locked out mid-setup.
+// Set NEXT_PUBLIC_AUTH_ENABLED=true on Render to turn on the login gate.
+const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED === 'true';
+const ALLOWED_DOMAINS = ['recykal.com', 'retearn.in'];
 
 const STAGES = [
   { num: 1, name: 'Setup', desc: 'Project context and setup' },
@@ -505,6 +511,50 @@ export default function App() {
   const [copilotFullpage, setCopilotFullpage] = useState(false);
   const [knowledgeUploading, setKnowledgeUploading] = useState(false);
   const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
+
+  // ---- Auth (Phase 1: Google login + Recykal domain + approval gate) ----
+  const [authMode, setAuthMode] = useState(AUTH_ENABLED ? 'loading' : 'active'); // loading|login|pending|blocked|active
+  const [authUser, setAuthUser] = useState(null);      // supabase auth user
+  const [authProfile, setAuthProfile] = useState(null); // row from profiles
+
+  const resolveAuth = async (session) => {
+    const user = session?.user || null;
+    setAuthUser(user);
+    if (!user) { setAuthProfile(null); setAuthMode('login'); return; }
+    const email = (user.email || '').toLowerCase();
+    const domain = email.split('@')[1] || '';
+    if (!ALLOWED_DOMAINS.includes(domain)) { setAuthMode('blocked'); return; }
+    // Fetch profile (created by DB trigger on first sign-in)
+    let profile = null;
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      profile = data || null;
+    } catch (e) { /* row may not exist yet */ }
+    setAuthProfile(profile);
+    const status = profile?.status || 'pending';
+    if (status === 'active') setAuthMode('active');
+    else if (status === 'revoked') setAuthMode('blocked');
+    else setAuthMode('pending');
+  };
+
+  useEffect(() => {
+    if (!AUTH_ENABLED) return;
+    let sub = null;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      await resolveAuth(data?.session);
+      sub = supabase.auth.onAuthStateChange((_e, session) => { resolveAuth(session); }).data?.subscription;
+    })();
+    return () => { if (sub) sub.unsubscribe(); };
+  }, []);
+
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
+    });
+  };
+  const signOutUser = async () => { await supabase.auth.signOut(); setAuthMode('login'); setAuthUser(null); setAuthProfile(null); };
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
@@ -1584,10 +1634,21 @@ export default function App() {
     }
   };
 
+  if (AUTH_ENABLED && authMode !== 'active') {
+    return (
+      <AuthScreens
+        mode={authMode}
+        email={authUser?.email}
+        onSignIn={signInWithGoogle}
+        onSignOut={signOutUser}
+      />
+    );
+  }
+
   return (
     <>
       <div className="dashboard">
-      
+
       {/* Mobile Header (Only visible on small screens) */}
       <div className="mobile-header">
         <button className="mobile-hamburger" onClick={() => setIsMobileMenuOpen(true)}>☰</button>
