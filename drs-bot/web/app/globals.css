@@ -254,6 +254,53 @@ html, body {
   border: 1px solid var(--line);
 }
 
+/* ---- Rich markdown rendering in Binny's replies (Claude-style) ---- */
+.md-body { font-size: 14px; }
+.md-body > *:first-child { margin-top: 0; }
+.md-body > *:last-child { margin-bottom: 0; }
+.md-body p { margin: 0 0 10px; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 {
+  margin: 14px 0 8px; font-weight: 650; line-height: 1.3; letter-spacing: -0.01em;
+}
+.md-body h1 { font-size: 18px; }
+.md-body h2 { font-size: 16px; }
+.md-body h3 { font-size: 14.5px; }
+.md-body h4 { font-size: 13.5px; }
+.md-body ul, .md-body ol { margin: 0 0 10px; padding-left: 22px; }
+.md-body li { margin: 3px 0; }
+.md-body li > ul, .md-body li > ol { margin: 3px 0; }
+.md-body a { color: var(--accent); text-decoration: underline; }
+.md-body strong { font-weight: 650; }
+.md-body hr { border: none; border-top: 1px solid var(--line); margin: 14px 0; }
+.md-body blockquote {
+  margin: 10px 0; padding: 4px 14px; border-left: 3px solid var(--line);
+  color: var(--ink-soft); background: var(--grey-soft); border-radius: 0 6px 6px 0;
+}
+.md-body code {
+  background: var(--grey-soft); padding: 1px 5px; border-radius: 4px;
+  font-size: 12px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+.md-body pre {
+  background: #0f172a; color: #e2e8f0; padding: 12px 14px; border-radius: 8px;
+  overflow-x: auto; margin: 0 0 10px; font-size: 12.5px; line-height: 1.5;
+}
+.md-body pre code { background: transparent; padding: 0; color: inherit; font-size: 12.5px; }
+/* Tables — bordered, zebra rows, horizontal scroll in the narrow sidebar */
+.md-body table {
+  border-collapse: collapse; width: 100%; margin: 4px 0 12px;
+  font-size: 13px; display: block; overflow-x: auto; white-space: nowrap;
+}
+.md-body thead th {
+  background: var(--accent); color: #fff; font-weight: 600; text-align: left;
+  padding: 8px 12px; border: 1px solid var(--accent); white-space: nowrap;
+}
+.md-body tbody td {
+  padding: 7px 12px; border: 1px solid var(--line); vertical-align: top;
+}
+.md-body tbody tr:nth-child(even) td { background: var(--grey-soft); }
+/* In full-page mode let tables breathe (wrap text) */
+.copilot-panel.fullpage .md-body table { white-space: normal; }
+
 .copilot-input {
   padding: 16px;
   border-top: 1px solid var(--line);

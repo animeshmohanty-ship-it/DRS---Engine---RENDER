@@ -89,7 +89,11 @@ RULES:
 - When drafting documents, use the project context values or search-grounded inputs.
 - Always use Google Search grounding (which is active) to check actual local regulations, counts, government entities, or waste rules if needed.
 
-Provide your response in clean markdown format.`;
+FORMATTING (important — your replies render as rich markdown):
+- Present ANY comparison, breakdown, list of figures, stakeholders, options, or multi-attribute data as a GitHub-flavored MARKDOWN TABLE with clear column headers. Do not describe tabular data in prose.
+- Use ## / ### headings to structure longer answers, bullet or numbered lists for steps, **bold** for key terms, and \`code\` for exact values/IDs.
+- Keep it clean and scannable — lead with the answer, then the supporting detail. No walls of text.
+Provide your response in clean, well-structured markdown.`;
 
     const { text, sources } = await activeLlm.generateGrounded(
       systemPrompt,

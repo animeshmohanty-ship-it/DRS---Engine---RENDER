@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase.js';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+
+marked.setOptions({ gfm: true, breaks: true });
 
 const STAGES = [
   { num: 1, name: 'Setup', desc: 'Project context and setup' },
@@ -71,16 +75,38 @@ const stripMarkdown = (s) => String(s || '')
   .trim();
 
 // Lightweight, CSP-safe markdown → HTML for the chat bubble (escape first, then whitelist tags).
+// Full GitHub-flavored markdown → sanitized HTML (tables, lists, headings,
+// code blocks, blockquotes). marked does the parsing; DOMPurify keeps it safe.
 const renderMarkdown = (s) => {
-  let h = String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  h = h.replace(/`([^`]+)`/g, '<code style="background:var(--grey-soft);padding:1px 4px;border-radius:4px;font-size:12px">$1</code>');
-  h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  h = h.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-  h = h.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-  h = h.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
-  h = h.replace(/^#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
-  h = h.replace(/\n/g, '<br/>');
-  return h;
+  const src = String(s || '');
+  let html;
+  try { html = marked.parse(src); } catch { return src; }
+  // DOMPurify needs a DOM — only available in the browser. On the server just
+  // return marked's output (only our own static greeting renders at SSR time).
+  if (typeof window === 'undefined') return html;
+  return DOMPurify.sanitize(html, { ADD_ATTR: ['target', 'rel'] });
+};
+
+// Copy a message keeping its formatting: rich HTML (for Docs/Sheets/email) AND
+// the markdown source (for editors). Falls back to plain text on older browsers.
+const copyMessageFormatted = async (markdownText) => {
+  const md = String(markdownText || '');
+  try {
+    const html = `<meta charset="utf-8">${renderMarkdown(md)}`;
+    if (navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([md], { type: 'text/plain' }),
+        }),
+      ]);
+      return true;
+    }
+    await navigator.clipboard.writeText(md);
+    return true;
+  } catch {
+    try { await navigator.clipboard.writeText(md); return true; } catch { return false; }
+  }
 };
 
 const PREDEFINED_STATES = {
@@ -470,6 +496,7 @@ export default function App() {
   const [copilotCollapsed, setCopilotCollapsed] = useState(false);
   const [copilotFullpage, setCopilotFullpage] = useState(false);
   const [knowledgeUploading, setKnowledgeUploading] = useState(false);
+  const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
@@ -4504,7 +4531,18 @@ export default function App() {
             }
             return (
               <div key={i} className={`chat-message ${msg.sender === 'user' ? 'user' : 'assistant'}`}>
-                <div style={{ lineHeight: 1.5, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
+                <div className="md-body" style={{ lineHeight: 1.5, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
+                {msg.sender === 'assistant' && msg.text && (
+                  <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      title="Copy — keeps tables and formatting"
+                      onClick={async () => { const ok = await copyMessageFormatted(msg.text); if (ok) { setCopiedMsgIdx(i); setTimeout(() => setCopiedMsgIdx(c => c === i ? null : c), 1500); } }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 8px', fontSize: '11px', color: 'var(--ink-soft)', cursor: 'pointer' }}
+                    >
+                      {copiedMsgIdx === i ? '✓ Copied' : '⧉ Copy'}
+                    </button>
+                  </div>
+                )}
                 {msg.proposals && msg.proposals.map((p, pi) => {
                   const applied = msg._applied && msg._applied[pi];
                   const label = `${p.op || 'set'} · ${p.target}${Number.isInteger(p.index) ? ` · row ${p.index + 1}` : ''}${p.field ? ` · ${p.field}` : ''}`;
