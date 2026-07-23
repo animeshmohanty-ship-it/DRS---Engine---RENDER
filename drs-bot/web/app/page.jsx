@@ -8,7 +8,7 @@ import { AuthScreens } from './authScreens.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
-  MessageSquare, Download
+  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users
 } from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
@@ -555,6 +555,33 @@ export default function App() {
     });
   };
   const signOutUser = async () => { await supabase.auth.signOut(); setAuthMode('login'); setAuthUser(null); setAuthProfile(null); };
+
+  const isAdmin = AUTH_ENABLED && authProfile?.role === 'admin';
+
+  // ---- Admin dashboard (Phase 3) ----
+  const [adminProfiles, setAdminProfiles] = useState([]);
+  const [adminProjects, setAdminProjects] = useState([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  const loadAdmin = async () => {
+    setAdminLoading(true);
+    try {
+      const { data: profs } = await supabase.from('profiles').select('*').order('created_at', { ascending: true });
+      const { data: projs } = await supabase.from('projects').select('id, country, state, created_by, updated_at');
+      setAdminProfiles(profs || []);
+      setAdminProjects(projs || []);
+    } catch (e) { setError('Admin load failed: ' + e.message); }
+    finally { setAdminLoading(false); }
+  };
+  const updateUserStatus = async (id, status) => {
+    try { await supabase.from('profiles').update({ status }).eq('id', id); await loadAdmin(); }
+    catch (e) { setError('Update failed: ' + e.message); }
+  };
+  const updateUserRole = async (id, role) => {
+    try { await supabase.from('profiles').update({ role }).eq('id', id); await loadAdmin(); }
+    catch (e) { setError('Update failed: ' + e.message); }
+  };
+  useEffect(() => { if (activeTab === 'admin' && isAdmin) loadAdmin(); /* eslint-disable-next-line */ }, [activeTab, isAdmin]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
@@ -781,7 +808,8 @@ export default function App() {
 
   const saveProjectToStorage = async (updatedStages) => {
     let activeId = projectId;
-    if (!activeId || activeId === 'NEW_PROJECT_PLACEHOLDER') {
+    const isNewProject = !activeId || activeId === 'NEW_PROJECT_PLACEHOLDER';
+    if (isNewProject) {
       const statePrefix = (state || 'GEN').substring(0, 3).trim().toUpperCase();
       activeId = `DRS-${statePrefix}-${Math.floor(100 + Math.random() * 900)}`;
       setProjectId(activeId);
@@ -816,6 +844,8 @@ export default function App() {
       stages: stagesWithParent,
       updated_at: new Date().toISOString()
     };
+    // Stamp the creator on new projects only (preserve original owner on edits).
+    if (isNewProject && authUser?.id) projectData.created_by = authUser.id;
 
     try {
       const { error } = await supabase
@@ -1680,6 +1710,15 @@ export default function App() {
             <span>Project History</span>
           </div>
 
+          {isAdmin && (
+            <div className={`menu-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+              <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ShieldCheck size={16} />
+              </div>
+              <span>Admin</span>
+            </div>
+          )}
+
           <div style={{ padding: '8px 14px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-soft)' }}>ROADMAP FLOW</div>
 
           {(() => {
@@ -1771,6 +1810,20 @@ export default function App() {
           <img src="/logo.png" alt="Logo" style={{ width: '18px', height: '18px', objectFit: 'contain', opacity: 0.8 }} />
           <span className="muted" style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.02em', color: 'var(--ink-soft)' }}>Powered by Recykal</span>
         </div>
+        {AUTH_ENABLED && authUser && (
+          <div style={{ padding: '10px 18px', borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
+              {(authUser.email || '?').charAt(0).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{authProfile?.name || authUser.email}</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-soft)' }}>{isAdmin ? 'Admin' : 'Member'}</div>
+            </div>
+            <button onClick={signOutUser} title="Sign out" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 8, border: '1px solid var(--line)', background: 'transparent', cursor: 'pointer', color: 'var(--ink-soft)', flexShrink: 0 }}>
+              <LogOut size={15} />
+            </button>
+          </div>
+        )}
       </div>
       
       {/* Mobile Sidebar Overlay */}
@@ -1783,7 +1836,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1898,6 +1951,95 @@ export default function App() {
           )}
 
           {/* HISTORY TAB */}
+          {activeTab === 'admin' && isAdmin && (() => {
+            const projCount = (id) => adminProjects.filter(p => p.created_by === id).length;
+            const pending = adminProfiles.filter(p => p.status === 'pending').length;
+            const active = adminProfiles.filter(p => p.status === 'active').length;
+            const statusPill = (s) => {
+              const map = { active: ['#e6f5ee', '#0F6E56'], pending: ['#fdf0d5', '#854F0B'], revoked: ['#fbeaea', '#A32D2D'] };
+              const [bg, fg] = map[s] || ['#eee', '#555'];
+              return <span style={{ background: bg, color: fg, padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{s}</span>;
+            };
+            return (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <ShieldCheck size={20} style={{ color: 'var(--accent)' }} />
+                  <h3 style={{ margin: 0 }}>Admin Dashboard</h3>
+                  <button className="copilot-toggle-btn" style={{ marginLeft: 'auto', height: 32 }} onClick={loadAdmin}><RefreshCw size={13} className={adminLoading ? 'spin' : ''} /> Refresh</button>
+                </div>
+                <p className="sub" style={{ marginTop: 4 }}>Manage who has access, their roles, and what they've created.</p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, margin: '16px 0 22px' }}>
+                  {[['Team members', adminProfiles.length], ['Active', active], ['Pending approval', pending], ['Projects', adminProjects.length]].map(([label, val]) => (
+                    <div key={label} style={{ background: 'var(--grey-soft)', borderRadius: 10, padding: '14px 16px' }}>
+                      <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{label}</div>
+                      <div style={{ fontSize: 24, fontWeight: 700 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Users size={16} /><strong style={{ fontSize: 14 }}>Access &amp; team</strong>
+                  </div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 620 }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}>
+                          <th style={{ padding: '10px 14px' }}>Member</th><th style={{ padding: '10px 14px' }}>Role</th><th style={{ padding: '10px 14px' }}>Status</th><th style={{ padding: '10px 14px' }}>Projects</th><th style={{ padding: '10px 14px' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminProfiles.map(p => (
+                          <tr key={p.id} style={{ borderBottom: '1px solid var(--line)', background: p.status === 'pending' ? '#fffaf0' : 'transparent' }}>
+                            <td style={{ padding: '10px 14px' }}><div style={{ fontWeight: 600 }}>{p.name || '—'}</div><div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{p.email}</div></td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <select value={p.role} onChange={(e) => updateUserRole(p.id, e.target.value)} disabled={p.id === authUser?.id} style={{ fontSize: 12, padding: '3px 6px', borderRadius: 6, border: '1px solid var(--line)' }}>
+                                <option value="member">member</option><option value="admin">admin</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '10px 14px' }}>{statusPill(p.status)}</td>
+                            <td style={{ padding: '10px 14px' }}>{projCount(p.id)}</td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <div style={{ display: 'flex', gap: 6 }}>
+                                {p.status !== 'active' && <button className="btn" style={{ padding: '3px 12px', fontSize: 12, height: 28 }} onClick={() => updateUserStatus(p.id, 'active')}>Approve</button>}
+                                {p.status === 'active' && p.id !== authUser?.id && <button onClick={() => updateUserStatus(p.id, 'revoked')} style={{ padding: '3px 12px', fontSize: 12, height: 28, borderRadius: 6, border: '1px solid var(--line)', background: 'transparent', color: '#A32D2D', cursor: 'pointer' }}>Revoke</button>}
+                                {p.id === authUser?.id && <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>you</span>}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {adminProfiles.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: 'var(--ink-soft)' }}>{adminLoading ? 'Loading…' : 'No members yet.'}</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="card" style={{ padding: 0, overflow: 'hidden', marginTop: 18 }}>
+                  <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)' }}><strong style={{ fontSize: 14 }}>Recent projects &amp; who created them</strong></div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 480 }}>
+                      <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '10px 14px' }}>Project</th><th style={{ padding: '10px 14px' }}>Created by</th><th style={{ padding: '10px 14px' }}>Updated</th></tr></thead>
+                      <tbody>
+                        {[...adminProjects].sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || '')).slice(0, 15).map(pr => {
+                          const owner = adminProfiles.find(u => u.id === pr.created_by);
+                          return (
+                            <tr key={pr.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                              <td style={{ padding: '10px 14px' }}>{[pr.country, pr.state].filter(Boolean).join(' · ')} <span style={{ color: 'var(--ink-soft)', fontSize: 11 }}>{pr.id}</span></td>
+                              <td style={{ padding: '10px 14px' }}>{owner ? (owner.name || owner.email) : <span style={{ color: 'var(--ink-soft)' }}>—</span>}</td>
+                              <td style={{ padding: '10px 14px', color: 'var(--ink-soft)', fontSize: 12 }}>{pr.updated_at ? new Date(pr.updated_at).toLocaleDateString() : '—'}</td>
+                            </tr>
+                          );
+                        })}
+                        {adminProjects.length === 0 && <tr><td colSpan={3} style={{ padding: 20, textAlign: 'center', color: 'var(--ink-soft)' }}>No projects yet.</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           {activeTab === 'history' && (
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
