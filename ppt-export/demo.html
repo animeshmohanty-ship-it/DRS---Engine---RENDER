@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recykal PPT Export — Demo</title>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background:#0d0d0d; color:#eee;
+         display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+  .card { background:#161616; border:1px solid #2a2a2a; border-radius:16px; padding:40px 48px; max-width:560px; text-align:center; }
+  h1 { font-size:22px; margin:0 0 6px; } h1 span { color:#1DC797; }
+  p  { color:#999; font-size:13px; line-height:1.5; }
+  button { background:#005DFF; color:#fff; border:none; border-radius:10px; padding:14px 34px;
+           font-size:15px; font-weight:600; cursor:pointer; margin-top:18px; }
+  button:hover { background:#1DC797; }
+  button:disabled { background:#333; cursor:wait; }
+  #status { margin-top:14px; font-size:12px; color:#1DC797; min-height:16px; }
+  ul { text-align:left; color:#aaa; font-size:12px; columns:2; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Recykal<span>.</span> PPT Export — Demo</h1>
+  <p>Generates a sample <b>DRS Roadmap deck</b> in the browser using every layout from
+     <code>Recykal_Deck_New Template_2026</code>, then downloads the .pptx instantly.</p>
+  <ul>
+    <li>Cover</li><li>Topic intro</li><li>Separator</li><li>Data + stats</li>
+    <li>Big numbers</li><li>KPI table</li><li>Process (4-step)</li><li>Process (6-step)</li>
+    <li>Benefits</li><li>Blank canvas</li><li>Thank you</li>
+  </ul>
+  <button id="btn" onclick="exportPPT()">⬇ Export Sample PPT</button>
+  <div id="status"></div>
+</div>
+
+<!-- PptxGenJS UMD bundle (in your app: npm install pptxgenjs) -->
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<!-- Recykal brand assets (base64) + deck builder -->
+<script src="assets.js"></script>
+<script src="recykalDeck.js"></script>
+
+<script>
+async function exportPPT() {
+  const btn = document.getElementById('btn'), st = document.getElementById('status');
+  btn.disabled = true; st.textContent = 'Building deck…';
+  try {
+    const deck = new RecykalDeck(new PptxGenJS(), { assets: RECYKAL_ASSETS });
+
+    deck.cover({ title: 'DRS Roadmap', subtitle: 'Ireland — Deposit Return Scheme' });
+    deck.topic({ title: 'DRS Rollout: Ireland', subtitle: 'Deployment roadmap & KPI projections' });
+    deck.separator({ title: 'Phase 1', subtitle: 'Market Assessment' });
+
+    deck.dataStats({
+      titleBold: 'Market', titleLight: 'Assessment',
+      intro: 'Ireland generates 190,000 MT of PET & aluminium beverage packaging annually across 5.1M consumers.',
+      bullets: [
+        'DRS legislation in force since Feb 2024',
+        'Target collection rate: 90% by 2029',
+        'Current return rate: 78% via 2,900 RVMs',
+        'Recykal digital DRS reduces capex by 40%'
+      ],
+      stats: [
+        { text: '190,000 MT annual volume' }, { text: '5.1M consumers covered' },
+        { text: '2,900 collection points' },  { text: '90% target by 2029' }
+      ],
+      image: RECYKAL_ASSETS.coverArt
+    });
+
+    deck.dataNumbers({
+      titleBold: 'Projected', titleLight: 'Impact',
+      items: [
+        { value: '450 Mn',    text: 'containers recovered per year' },
+        { value: '92%',       text: 'collection rate by year 3' },
+        { value: '€38 Mn',    text: 'deposit float managed' },
+        { value: '12,400 MT', text: 'CO2 equivalent mitigated' }
+      ]
+    });
+
+    deck.dataTable({
+      titleBold: 'Rollout', titleLight: 'Timeline & KPIs',
+      headers: ['Phase', 'Timeline', 'Collection Points', 'Volume (MT)', 'Coverage'],
+      rows: [
+        ['Pilot — Dublin',     'Q1 2027', '120',   '2,400',  '8%'],
+        ['Phase 1 — Leinster', 'Q3 2027', '640',   '11,000', '31%'],
+        ['Phase 2 — Munster',  'Q1 2028', '1,180', '24,500', '58%'],
+        ['Phase 3 — National', 'Q4 2028', '2,050', '52,000', '87%'],
+        ['Steady state',       '2029+',   '2,400', '71,000', '94%']
+      ]
+    });
+
+    deck.process({
+      titleBold: 'Deployment', titleLight: 'Process',
+      steps: [
+        { title: 'Assess',   text: 'Market sizing, regulatory mapping, stakeholder alignment' },
+        { title: 'Pilot',    text: 'Deploy smart centers in priority urban zones' },
+        { title: 'Scale',    text: 'Regional rollout with RVM + digital redemption' },
+        { title: 'Optimize', text: 'AI-driven route and fill-level optimization' }
+      ]
+    });
+
+    deck.processNumbered({
+      titleBold: 'Operating', titleLight: 'Model',
+      steps: [
+        { title: 'Registration', text: 'Producers register SKUs on platform' },
+        { title: 'Deposit',      text: 'Consumer pays deposit at purchase' },
+        { title: 'Return',       text: 'Container returned at any collection point' },
+        { title: 'Refund',       text: 'Instant digital refund via UPI/wallet' },
+        { title: 'Logistics',    text: 'Optimized reverse logistics to recyclers' },
+        { title: 'Reporting',    text: 'Real-time compliance dashboards' }
+      ]
+    });
+
+    deck.benefits({
+      titleBold: 'Benefits', titleLight: 'of Digital DRS',
+      intro: 'A digitally enabled deposit return system delivers higher recovery at lower cost than RVM-only infrastructure.',
+      items: [
+        { title: '40% lower capex',  text: 'Digital redemption removes RVM dependency' },
+        { title: 'Full traceability', text: 'Every container tracked bottle-to-bale' },
+        { title: 'Fraud prevention', text: 'AI validation blocks duplicate redemptions' },
+        { title: 'Faster rollout',   text: 'Live in weeks, not years' }
+      ],
+      image: RECYKAL_ASSETS.sidePhoto
+    });
+
+    deck.thankYou({});
+
+    await deck.save('Recykal_DRS_Roadmap_Sample.pptx');
+    st.textContent = '✓ Downloaded Recykal_DRS_Roadmap_Sample.pptx';
+  } catch (e) {
+    st.style.color = '#ff6b6b';
+    st.textContent = 'Error: ' + e.message;
+    console.error(e);
+  } finally { btn.disabled = false; }
+}
+</script>
+</body>
+</html>

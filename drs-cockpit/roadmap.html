@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRS Engine — Roadmap (tabbed) · Mockup</title>
+<style>
+  :root{
+    --bg:#ffffff; --soft:#f5f5f7; --soft2:#fafafc; --line:#e3e3e8; --line2:#d2d2d7;
+    --ink:#1d1d1f; --muted:#6e6e73; --faint:#86868b;
+    --drs:#0a8f4f; --blue:#0071e3; --amber:#b25600; --red:#d70015; --purple:#7d3cc9;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 30px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--soft);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+
+  .top{height:58px;background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:16px;padding:0 24px;position:sticky;top:0;z-index:30}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.3px}
+  .brand .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--drs),#06c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+  .brand small{display:block;font-weight:500;color:var(--faint);font-size:10px}
+  .top .spacer{flex:1}
+  .pid{font-size:12px;color:var(--muted);font-weight:600;background:var(--soft);border:1px solid var(--line);padding:4px 10px;border-radius:7px}
+  .who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+  .who .av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#06c,#7d3cc9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
+  /* tab bar */
+  .tabs{display:flex;gap:2px;padding:0 16px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:58px;z-index:25}
+  .tab{white-space:nowrap;padding:13px 14px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;transition:.12s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:var(--drs);border-bottom-color:var(--drs)}
+  .tab .tn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;background:var(--soft);font-size:10.5px;margin-right:7px;color:var(--faint)}
+  .tab.active .tn{background:var(--drs);color:#fff}
+
+  .wrap{max-width:1020px;margin:0 auto;padding:28px 24px 80px}
+  .panel{display:none}.panel.on{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+  .pgh{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 4px}
+  .pgs{color:var(--muted);font-size:14.5px;margin:0 0 20px;max-width:720px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px;margin-bottom:16px}
+  .card h3{margin:0 0 14px;font-size:16px;font-weight:700}
+  .ctitle{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:700;margin:0 0 12px}
+
+  .form{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .ffull{grid-column:1 / -1}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:6px}
+  .field label .req{color:var(--red)}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font:inherit;font-size:13.5px;background:#fff;color:var(--ink)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,113,227,.12)}
+  .chip{display:inline-block;background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;margin:0 6px 6px 0}
+  .chip.locked{background:rgba(10,143,79,.1);border-color:rgba(10,143,79,.3);color:var(--drs);font-weight:600}
+  .hierbox{background:var(--soft);border:1px dashed var(--line2);border-radius:12px;padding:12px 14px;font-size:13px;margin-top:4px}
+  .hierbox b{color:var(--drs)}
+  .gennote{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--drs);background:rgba(10,143,79,.08);border:1px solid rgba(10,143,79,.25);border-radius:99px;padding:6px 13px;margin-top:16px}
+
+  .src{font-size:10px;font-weight:700;color:var(--drs);background:rgba(10,143,79,.1);border:1px solid rgba(10,143,79,.25);padding:2px 8px;border-radius:99px;white-space:nowrap}
+  .src.est{color:var(--amber);background:rgba(178,86,0,.1);border-color:rgba(178,86,0,.25)}
+  .drow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .drow:last-child{border:0}
+  .drow .dl{flex:1;color:var(--muted)} .drow .dv{font-weight:700}
+
+  .outgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .out{border:1px solid var(--line);border-radius:13px;padding:15px;background:var(--soft2)}
+  .out .ot{font-weight:700;font-size:13.5px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .out .ot .fi{width:24px;height:24px;border-radius:7px;background:rgba(0,113,227,.1);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:12px}
+  .out ul{margin:0;padding-left:16px;color:var(--muted);font-size:12.5px}
+  .out ul li{margin:2px 0}
+
+  .scorerow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px}
+  .scard{border:1px solid var(--line);border-radius:13px;padding:15px;text-align:center}
+  .scard b{font-size:26px;font-weight:800;letter-spacing:-1px;display:block}
+  .scard span{font-size:11.5px;color:var(--muted)}
+  .scard.g b{color:var(--drs)} .scard.b b{color:var(--blue)} .scard.a b{color:var(--amber)}
+
+  /* roadmap phases */
+  .road{padding-left:4px}
+  .phase{display:grid;grid-template-columns:36px 1fr;gap:14px;margin-bottom:16px}
+  .pnode{display:flex;flex-direction:column;align-items:center}
+  .pnum{width:32px;height:32px;border-radius:50%;background:var(--drs);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+  .pnum.p2{background:var(--blue)} .pnum.p3{background:var(--amber)}
+  .pline{flex:1;width:2px;background:var(--line2);margin-top:4px}
+  .pbody{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:#fff}
+  .pbody .ph{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .pbody .ph b{font-size:15px}
+  .pbody .ph .when{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--muted)}
+  .talchips .tc{display:inline-block;background:rgba(10,143,79,.08);border:1px solid rgba(10,143,79,.25);color:var(--drs);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:600;margin:0 6px 6px 0}
+  .talchips .tc.b{background:rgba(0,113,227,.08);border-color:rgba(0,113,227,.25);color:var(--blue)}
+  .talchips .tc.a{background:rgba(178,86,0,.08);border-color:rgba(178,86,0,.25);color:var(--amber)}
+  .pwhy{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:10px 0 6px}
+  .pwhy-list{margin:0;padding:0;list-style:none}
+  .pwhy-list li{display:flex;align-items:center;gap:9px;font-size:13px;padding:4px 0}
+  .pwhy-list li .d{width:6px;height:6px;border-radius:50%;background:var(--drs);flex-shrink:0}
+  .pact{background:var(--soft);border-radius:11px;padding:11px 13px;margin-top:11px;font-size:12.5px}
+  .pact b{color:var(--ink)} .pact ul{margin:6px 0 0;padding-left:16px;color:var(--muted)}
+
+  .stub .sl{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:0 0 10px}
+  .stub ul{margin:0;padding-left:18px;color:var(--ink)} .stub ul li{margin:6px 0;font-size:13.5px}
+  .stub ul li span{color:var(--muted)}
+  .footnote{font-size:12px;color:var(--faint);margin-top:8px;display:flex;align-items:center;gap:7px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand"><span class="logo">◆</span><div>DRS Engine<small>RMOS · Project MARS</small></div></div>
+  <div class="spacer"></div>
+  <span class="pid" id="pid">DRS-GOA-001 · Goa</span>
+  <div class="who"><span>Alokesh · Pod Lead</span><span class="av">AK</span></div>
+</div>
+
+<div class="tabs" id="tabbar"></div>
+
+<div class="wrap">
+
+  <!-- SETUP -->
+  <section class="panel on" id="setup">
+    <h1 class="pgh">Project setup</h1>
+    <p class="pgs">Select the geography and enter the context. The engine adapts the whole roadmap to whatever country &amp; state you choose — Goa is shown here as the example.</p>
+    <div class="card">
+      <div class="form">
+        <div class="field"><label>Vertical</label><span class="chip locked">DRS — Deposit Return System</span></div>
+        <div class="field"><label>Country <span class="req">*</span></label>
+          <select id="country" onchange="onCountry()"><option>India</option><option>United Kingdom</option><option>United States</option></select></div>
+        <div class="field"><label>State / region <span class="req">*</span></label>
+          <select id="state" onchange="onState()"></select></div>
+        <div class="field"><label>Implementation model <span class="req">*</span></label>
+          <select><option>PRO-managed deposit return</option><option>Brand-led deposit return</option><option>Government-mandated DRS</option></select></div>
+        <div class="field ffull"><label>Geography hierarchy <span style="font-weight:400;color:var(--faint)">— adapts automatically to the selected geography</span></label>
+          <div class="hierbox" id="hier"></div></div>
+        <div class="field ffull"><label>Business objective <span class="req">*</span></label>
+          <input value="Public acceptance + container return participation, starting tourism-sensitive zones"></div>
+        <div class="field"><label>D-Day / target launch <span class="req">*</span></label><input type="date" value="2026-11-01"></div>
+        <div class="field"><label>Deposit value (₹ / container)</label><input value="₹2.00"></div>
+        <div class="field ffull"><label>Languages <span style="font-weight:400;color:var(--faint)">— auto-suggested from geography</span></label>
+          <div id="langs"></div></div>
+        <div class="field ffull"><label>Priority stakeholders / special instructions (optional)</label>
+          <textarea rows="2">Prioritise State Pollution Control Board, Tourism Department, beach/retail associations. Treat as tourism-sensitive.</textarea></div>
+      </div>
+      <div class="gennote">✓ Roadmap generated from these inputs — open the tabs above to view each stage's plan.</div>
+    </div>
+  </section>
+
+  <!-- STAGE 1 -->
+  <section class="panel" id="s1">
+    <h1 class="pgh">Stage 1 · Platform Foundation</h1>
+    <p class="pgs">The engine pulled live data for Goa and generated the project foundation.</p>
+    <div class="card">
+      <p class="ctitle">Data the engine pulled — every figure traceable to its source</p>
+      <div class="drow"><span class="dl">Population (Goa)</span><span class="dv">15.4 lakh</span><span class="src">Census</span></div>
+      <div class="drow"><span class="dl">Administrative footprint</span><span class="dv">2 districts · 12 talukas</span><span class="src">Admin data</span></div>
+      <div class="drow"><span class="dl">Annual tourist footfall</span><span class="dv">~80 lakh / yr</span><span class="src">Goa Tourism Dept</span></div>
+      <div class="drow"><span class="dl">Est. beverage containers consumed</span><span class="dv">~46 Cr / yr</span><span class="src est">Consumption model · estimate</span></div>
+      <div class="drow"><span class="dl">Beverage-selling outlets mapped</span><span class="dv">~6,800</span><span class="src est">Places · validate via CRM</span></div>
+      <div class="drow"><span class="dl">Regulatory status</span><span class="dv">PWM Rules 2022 · Goa SPCB active</span><span class="src">CPCB / SPCB</span></div>
+    </div>
+    <div class="card">
+      <h3>Generated foundation</h3>
+      <div class="outgrid">
+        <div class="out"><div class="ot"><span class="fi">📄</span>Geography Brief</div><ul><li>Tourism-sensitive thesis: visible litter affects civic pride &amp; visitor experience</li><li>Strong proof-case potential</li></ul></div>
+        <div class="out"><div class="ot"><span class="fi">🎯</span>Scope &amp; Objective</div><ul><li>Public acceptance + return participation</li><li>Phased, tourism zones prioritised</li></ul></div>
+        <div class="out"><div class="ot"><span class="fi">📊</span>Success KPIs</div><ul><li>Awareness reach · comprehension</li><li>Stakeholder readiness · return rate · cost/container</li></ul></div>
+        <div class="out"><div class="ot"><span class="fi">⚠️</span>Risk Register</div><ul><li>Tourist transient participation</li><li>Retail &amp; machine readiness · comprehension</li></ul></div>
+      </div>
+      <div class="footnote">🔗 Generated from live data — Census · Tourism Dept · SPCB · Places</div>
+    </div>
+  </section>
+
+  <!-- STAGE 2 -->
+  <section class="panel" id="s2">
+    <h1 class="pgh">Stage 2 · Geography Rollout Roadmap</h1>
+    <p class="pgs">Your plan to implement. Based on real consumption, tourism and retail-density data, the recommended rollout sequence for Goa — with the reasoning behind each phase.</p>
+    <div class="card" style="padding:20px 22px">
+      <p class="ctitle" style="margin-bottom:14px">Recommended rollout — 3 phases across 12 talukas</p>
+      <div class="road">
+        <div class="phase">
+          <div class="pnode"><div class="pnum">1</div><div class="pline"></div></div>
+          <div class="pbody">
+            <div class="ph"><b>Phase 1 — Launch first (proof base)</b><span class="when">D-Day → +60</span></div>
+            <div class="talchips"><span class="tc">Tiswadi · Panaji</span><span class="tc">Salcete · Margao</span></div>
+            <div class="pwhy">Why first — from the data</div>
+            <ul class="pwhy-list">
+              <li><span class="d"></span>Highest resident beverage consumption density &nbsp;<span class="src">Consumption model</span></li>
+              <li><span class="d"></span>Administrative + commercial anchors → fastest government &amp; retail access &nbsp;<span class="src">Admin / Places</span></li>
+              <li><span class="d"></span>Largest mapped outlet base → quickest return-point coverage &nbsp;<span class="src est">Places · validate</span></li>
+              <li><span class="d"></span>Resident-led participation (less transient) → cleaner proof case</li>
+            </ul>
+            <div class="pact"><b>Implement:</b><ul>
+              <li>Open Goa SPCB + Panaji/Margao municipal engagement</li>
+              <li>Onboard top-200 outlets across the two HQ talukas</li>
+              <li>Stand up first machine cluster before any public awareness</li>
+            </ul></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="pnode"><div class="pnum p2">2</div><div class="pline"></div></div>
+          <div class="pbody">
+            <div class="ph"><b>Phase 2 — Tourism &amp; industrial belts</b><span class="when">+60 → +120</span></div>
+            <div class="talchips"><span class="tc b">Bardez · Mapusa</span><span class="tc b">Mormugao · Vasco</span></div>
+            <div class="pwhy">Why second — from the data</div>
+            <ul class="pwhy-list">
+              <li><span class="d"></span>Bardez = highest tourist footfall (Calangute–Baga) → high volume, transient participation &nbsp;<span class="src">Tourism Dept</span></li>
+              <li><span class="d"></span>Mormugao = port/industrial + transient → higher operational complexity</li>
+              <li><span class="d"></span>Tackle after Phase 1 proof so tourism messaging rides credible local results</li>
+            </ul>
+            <div class="pact"><b>Implement:</b><ul>
+              <li>Tourist-moment nudges (airport, beach shacks, hotels), short-window messaging</li>
+              <li>Onboard beach/shack &amp; hotel associations as return points</li>
+            </ul></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="pnode"><div class="pnum p3">3</div></div>
+          <div class="pbody">
+            <div class="ph"><b>Phase 3 — Interior &amp; low-density talukas</b><span class="when">+120 → +180</span></div>
+            <div class="talchips"><span class="tc a">Ponda</span><span class="tc a">Bicholim</span><span class="tc a">Pernem</span><span class="tc a">Sattari</span><span class="tc a">Quepem</span><span class="tc a">Canacona</span><span class="tc a">Sanguem</span><span class="tc a">Dharbandora</span></div>
+            <div class="pwhy">Why last — from the data</div>
+            <ul class="pwhy-list">
+              <li><span class="d"></span>Lower consumption density &amp; outlet counts → cost per container highest &nbsp;<span class="src est">Consumption model</span></li>
+              <li><span class="d"></span>Best served by reusing the proven Phase 1–2 playbook</li>
+            </ul>
+            <div class="pact"><b>Implement:</b><ul><li>Clone the Phase 1 playbook; mobile/temporary return points where outlet density is low</li></ul></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAGE 3 -->
+  <section class="panel" id="s3">
+    <h1 class="pgh">Stage 3 · Market Intelligence</h1>
+    <p class="pgs">The evidence base and the decision scores — generated from data and benchmarks.</p>
+    <div class="card">
+      <p class="ctitle">Data the engine pulled</p>
+      <div class="drow"><span class="dl">Public-space litter / leakage signal</span><span class="dv">High in tourist zones</span><span class="src">SPCB / Tourism</span></div>
+      <div class="drow"><span class="dl">International DRS return-rate benchmarks</span><span class="dv">Germany 98% · Norway 92%</span><span class="src">Benchmark KB</span></div>
+      <div class="drow"><span class="dl">Competitor / PRO landscape</span><span class="dv">2 active PROs</span><span class="src est">Market scan · validate</span></div>
+      <div class="drow"><span class="dl">ESG / policy alignment</span><span class="dv">PWM 2022 · State clean-tourism push</span><span class="src">Policy KB</span></div>
+    </div>
+    <div class="card">
+      <h3>Generated outputs &amp; decision scores</h3>
+      <div class="outgrid" style="margin-bottom:14px">
+        <div class="out"><div class="ot"><span class="fi">📄</span>Research Impact Brief</div><ul><li>Environmental + tourism + economic case for Goa DRS</li></ul></div>
+        <div class="out"><div class="ot"><span class="fi">💼</span>Business Case + Proof-Point Bank</div><ul><li>Container recovery, cleaner tourism zones, recycler traceability</li></ul></div>
+      </div>
+      <div class="scorerow">
+        <div class="scard g"><b>74</b><span>Market Readiness</span></div>
+        <div class="scard a"><b>Med-High</b><span>Implementation Complexity</span></div>
+        <div class="scard b"><b>81</b><span>Opportunity Score</span></div>
+      </div>
+      <div class="footnote">🔗 Reasoning: visible problem + tourism + policy support drive a high opportunity; complexity is medium-high due to transient tourist participation and reverse logistics.</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ---- geography model (dynamic) ----
+  const geo = {
+    "India":{
+      states:["Goa","Tamil Nadu","Maharashtra","Karnataka","Kerala"],
+      hier:{ "Goa":"Country → State → District → Taluka → Village Panchayat → Village → <b>Outlet</b>",
+             "Tamil Nadu":"Country → State → District → Corporation → Zone → Ward → <b>Outlet</b>",
+             "_def":"Country → State → District → Sub-district → Local Body → Ward → <b>Outlet</b>" },
+      langs:{ "Goa":["English","Konkani","Marathi","Hindi"], "Tamil Nadu":["Tamil","English","Hindi"], "_def":["English","Hindi","Regional language"] }
+    },
+    "United Kingdom":{ states:["England","Scotland","Wales"],
+      hier:{ "_def":"Country → Nation → County → Town → <b>Store</b>" }, langs:{ "_def":["English"] } },
+    "United States":{ states:["California","New York","Oregon"],
+      hier:{ "_def":"Country → State → County → City → <b>Store</b>" }, langs:{ "_def":["English","Spanish"] } },
+  };
+  function onCountry(){
+    const c=document.getElementById("country").value;
+    const ss=document.getElementById("state"); ss.innerHTML="";
+    geo[c].states.forEach(s=>{ const o=document.createElement("option"); o.textContent=s; ss.appendChild(o); });
+    onState();
+  }
+  function onState(){
+    const c=document.getElementById("country").value, s=document.getElementById("state").value;
+    const h=geo[c].hier[s]||geo[c].hier["_def"];
+    document.getElementById("hier").innerHTML=h;
+    const l=geo[c].langs[s]||geo[c].langs["_def"];
+    document.getElementById("langs").innerHTML=l.map(x=>`<span class="chip">${x}</span>`).join("")+`<span class="chip" style="opacity:.5">+ add</span>`;
+    const code=(s||"").substring(0,3).toUpperCase()||"XXX";
+    document.getElementById("pid").textContent=`DRS-${code}-001 · ${s}`;
+  }
+
+  // ---- tabs ----
+  const tabs=[
+    {id:"setup",label:"Setup",n:"⚙"},
+    {id:"s1",label:"Foundation",n:1},
+    {id:"s2",label:"Rollout",n:2},
+    {id:"s3",label:"Market",n:3},
+    {id:"s4",label:"Stakeholders",n:4},
+    {id:"s5",label:"Resistance",n:5},
+    {id:"s6",label:"Marketing System",n:6},
+    {id:"s7",label:"GTM",n:7},
+    {id:"s8",label:"Acquisition",n:8},
+    {id:"s9",label:"Consumer",n:9},
+    {id:"s10",label:"Comms & BTL",n:10},
+    {id:"s11",label:"Infrastructure",n:11},
+    {id:"s12",label:"Operations",n:12},
+    {id:"s13",label:"Analytics",n:13},
+    {id:"s14",label:"Metrics",n:14},
+    {id:"s15",label:"Knowledge",n:15},
+    {id:"s16",label:"AI Copilot",n:16},
+  ];
+  // stub content for stages not fully built
+  const stubs={
+    s4:{t:"Stage 4 · Stakeholder Intelligence",d:"Influence map, champions and blockers — generated from regulatory + retail + media landscape.",l:[
+      ["14 P0 stakeholders mapped","Goa SPCB, Tourism Dept, Panaji & Margao municipal bodies, beverage brands, retail chains"],
+      ["Champions & blockers scored","influence × stance × desired role"],
+      ["First-meeting briefs drafted","government track is human-led; engine prepares"]]},
+    s5:{t:"Stage 5 · Resistance Intelligence",d:"Seven fronts assessed; mitigation owners assigned.",l:[
+      ["Top resistance","tourist transient participation · retail hesitancy · deposit-mechanic confusion"],
+      ["Resistance Index baseline","with sentiment + heat map"],
+      ["Pre-emptive mitigation","recommended per front"]]},
+    s6:{t:"Stage 6 · DRS Marketing System",d:"Narrative, alignment assets and the T-minus launch plan.",l:[
+      ["Narrative house","“Return every bottle. Keep Goa clean.”"],
+      ["FAQ kit + localized message bank","English · Konkani · Marathi · Hindi"],
+      ["T-minus launch plan","T-90 → T-60 → T-30 → T-15 → Launch → T+14"]]},
+    s7:{t:"Stage 7 · Go-To-Market",d:"Segmentation, channels, calendar and phased budget.",l:[
+      ["Segments","residents · tourists · retail partners"],
+      ["Channels matched to behaviour barriers","airport, beach, retail, school, digital"],
+      ["Phased budget","aligned to the 3-phase rollout"]]},
+    s8:{t:"Stage 8 · Acquisition",d:"Partner universe and prioritized pipeline.",l:[
+      ["Universe","govt · PIBO · retail · hotels · shacks · NGOs · collectors · recyclers"],
+      ["Pipeline","Universe → Priority → … → Activation, with lead scores"],
+      ["Follow-ups","suggested per priority partner"]]},
+    s9:{t:"Stage 9 · Consumer Engagement",d:"Awareness journey and behaviour-barrier activation.",l:[
+      ["Journey","awareness → education → school/airport/beach → behaviour change"],
+      ["Behaviour barriers","each matched to a message at the return moment"],
+      ["Localized assets","ready by language"]]},
+    s10:{t:"Stage 10 · Communication & BTL",d:"Audience comms plans, BTL calendar, reputation protocol.",l:[
+      ["Communication plans","internal · government · retail · consumer · media · brand · partner"],
+      ["BTL calendar","vendors, materials, attendance, bottle-collection, ROI"],
+      ["Rapid-response protocol","with SLA for misinformation/sentiment"]]},
+    s11:{t:"Stage 11 · Infrastructure (tracked)",d:"Machine / return-point deployment plan for Phase-1 talukas.",l:[
+      ["Site → installation → commissioning plan","sequenced to priority zones"],
+      ["Tracked dependency","engine ingests readiness; ops executes"],
+      ["Feeds launch readiness","comms never run ahead of ops"]]},
+    s12:{t:"Stage 12 · Operations (tracked)",d:"Return-to-recycler flow and collection optimization plan.",l:[
+      ["Flow design","return → validation → refund → collection → recycler → PCR → brand"],
+      ["Collection optimization","friction, cost per container, repeat returns"],
+      ["Tracked dependency","engine analyzes; ops runs logistics"]]},
+    s13:{t:"Stage 13 · Analytics",d:"Eleven role dashboards, all filterable by taluka.",l:[
+      ["Dashboards","executive · marketing · stakeholder · government · operations · finance · …"],
+      ["All roll up","to the DRS Adoption Index"],
+      ["Geography filter","view any metric for one taluka"]]},
+    s14:{t:"Stage 14 · Metrics Engine",d:"Leading vs lagging metrics tree mapped to the North Star.",l:[
+      ["Leading","stakeholders briefed · comprehension · readiness score"],
+      ["Lagging","return rate · active users · cost per container · sentiment"],
+      ["Every metric","Objective · KPI · Formula · Source · Target · Owner"]]},
+    s15:{t:"Stage 15 · Knowledge Hub",d:"Captures the reusable Goa Blueprint to seed the next state.",l:[
+      ["Goa Blueprint","evidence · narrative · FAQ · stakeholder patterns · playbook"],
+      ["Lessons learned","feed the next geography"],
+      ["Cloning","next state starts ahead, not blank"]]},
+    s16:{t:"Stage 16 · AI Copilot",d:"Embedded assistance across every tab — advises, never decides.",l:[
+      ["Across all stages","summaries · drafting · retrieval · trend analysis"],
+      ["Principle","AI advises and accelerates; execution stays with the pod leader"]]},
+  };
+
+  function buildTabs(){
+    const bar=document.getElementById("tabbar");
+    tabs.forEach(t=>{
+      const d=document.createElement("div"); d.className="tab"; d.dataset.id=t.id;
+      d.innerHTML=`<span class="tn">${t.n}</span>${t.label}`;
+      d.onclick=()=>show(t.id); bar.appendChild(d);
+    });
+    // build stub panels
+    Object.keys(stubs).forEach(id=>{
+      if(document.getElementById(id)) return;
+      const s=stubs[id];
+      const sec=document.createElement("section"); sec.className="panel"; sec.id=id;
+      sec.innerHTML=`<h1 class="pgh">${s.t}</h1><p class="pgs">${s.d}</p>
+        <div class="card stub"><p class="sl">Generated roadmap — Goa</p><ul>${s.l.map(x=>`<li><b>${x[0]}</b> — <span>${x[1]}</span></li>`).join("")}</ul>
+        <div class="footnote">🔗 Generated from live data + Knowledge Base · no manual entry beyond Setup</div></div>`;
+      document.querySelector(".wrap").appendChild(sec);
+    });
+  }
+  function show(id){
+    document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("on",p.id===id));
+    document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.id===id));
+    window.scrollTo(0,0);
+  }
+  buildTabs(); onCountry(); show("setup");
+</script>
+</body>
+</html>

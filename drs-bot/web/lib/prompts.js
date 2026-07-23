@@ -1,6 +1,27 @@
 // Prompts for Stages 2 to 10 of the DRS Roadmap Engine (per DRS-SKILL.md).
 // Generates prompts asking for strict JSON structures representing the roadmap stages.
 
+// Injects uploaded project documents ("brain") into any stage prompt. Capped
+// so a large knowledge base never blows the token budget.
+export function buildKnowledgeBlock(projectData = {}) {
+  const docs = Array.isArray(projectData?.knowledge) ? projectData.knowledge.filter(d => d && d.text) : [];
+  if (!docs.length) return '';
+  const PER_DOC = 8000;
+  const TOTAL = 24000;
+  let used = 0;
+  const parts = [];
+  for (const d of docs) {
+    if (used >= TOTAL) break;
+    const slice = String(d.text).slice(0, Math.min(PER_DOC, TOTAL - used));
+    used += slice.length;
+    parts.push(`--- Document: ${d.filename || 'uploaded.pdf'}${d.summarized ? ' (condensed)' : ''} ---\n${slice}`);
+  }
+  return `
+
+PROJECT KNOWLEDGE (documents uploaded by the user — treat as authoritative reference context; use these facts, figures, and requirements wherever relevant, and prefer them over generic assumptions):
+${parts.join('\n\n')}`;
+}
+
 export function buildStagePrompt(stageNum, input, projectData = {}, action = null) {
   const {
     country = 'India',
@@ -57,7 +78,7 @@ BRIEF ADHERENCE MANDATE (non-negotiable — output that ignores the brief is a f
 - MATERIALS: Reason ONLY about the selected materials (${materials.join(', ')}). Do not introduce, cost, or plan for any material outside this list.
 - IMPLEMENTATION MODEL: Every recommendation must be executable within the "${implementationModel}" model. Do not propose activities that model does not support (e.g. no truck logistics for "Tech Solutions"; no pure-software plays for "RVM-only").
 - CONSTRAINTS: You MUST explicitly account for the stated local constraints${customConstraints ? `: "${customConstraints}"` : ' where relevant'}.
-- TAILORING: Generic, location-agnostic output is unacceptable. Every section must tie concretely to ${targetLocation} and the brief above.`;
+- TAILORING: Generic, location-agnostic output is unacceptable. Every section must tie concretely to ${targetLocation} and the brief above.${buildKnowledgeBlock(projectData)}`;
 
   switch (Number(stageNum)) {
     case 3:

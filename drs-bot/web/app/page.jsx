@@ -469,6 +469,7 @@ export default function App() {
 
   const [copilotCollapsed, setCopilotCollapsed] = useState(false);
   const [copilotFullpage, setCopilotFullpage] = useState(false);
+  const [knowledgeUploading, setKnowledgeUploading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
@@ -1279,6 +1280,65 @@ export default function App() {
     }
   };
 
+  // ---- Project Knowledge (uploaded PDFs → the bot's "brain") ----
+  const uploadKnowledge = async (file) => {
+    if (!file) return;
+    if (!/\.pdf$/i.test(file.name || '')) { setError('Only PDF files are supported for now.'); return; }
+    setKnowledgeUploading(true);
+    setError('');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Upload failed');
+      const doc = { id: `doc-${Date.now()}`, addedAt: new Date().toISOString(), ...data.doc };
+      const base = projectStagesRef.current || {};
+      const next = { ...base, knowledge: [ ...(base.knowledge || []), doc ] };
+      projectStagesRef.current = next;
+      setProjectStages(next);
+      await saveProjectToStorage(next);
+    } catch (e) {
+      setError(`Document upload failed: ${e.message}`);
+    } finally {
+      setKnowledgeUploading(false);
+    }
+  };
+
+  const removeKnowledge = async (id) => {
+    const base = projectStagesRef.current || {};
+    const next = { ...base, knowledge: (base.knowledge || []).filter(d => d.id !== id) };
+    projectStagesRef.current = next;
+    setProjectStages(next);
+    await saveProjectToStorage(next);
+  };
+
+  const renderKnowledgePanel = (compact = false) => {
+    const docs = (projectStages.knowledge) || [];
+    return (
+      <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: compact ? '10px 12px' : '14px 16px', background: compact ? 'var(--panel)' : '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ fontWeight: 600, fontSize: compact ? '12px' : '14px' }}>📚 Project Knowledge{docs.length ? ` (${docs.length})` : ''}</div>
+          <label className="copilot-toggle-btn" style={{ cursor: knowledgeUploading ? 'wait' : 'pointer', opacity: knowledgeUploading ? 0.6 : 1 }}>
+            {knowledgeUploading ? 'Reading…' : '+ Add PDF'}
+            <input type="file" accept="application/pdf,.pdf" style={{ display: 'none' }} disabled={knowledgeUploading}
+              onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) uploadKnowledge(f); e.target.value = ''; }} />
+          </label>
+        </div>
+        {!compact && <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: '6px 0 0' }}>Upload tenders, regulations, past reports — Binny reads them and uses them as context in every stage it generates.</p>}
+        <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {docs.length === 0 && <div style={{ fontSize: '12px', color: 'var(--ink-soft)', fontStyle: 'italic' }}>No documents added yet.</div>}
+          {docs.map(d => (
+            <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 10px', background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 6 }}>
+              <span style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={d.filename}>📄 {d.filename}{d.summarized ? ' · condensed' : ''}</span>
+              <span onClick={() => removeKnowledge(d.id)} title="Remove document" style={{ cursor: 'pointer', opacity: 0.5, fontSize: '13px', flexShrink: 0 }}>❌</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const handleCopilotSend = async () => {
     if (!copilotQuery.trim()) return;
     const userMsg = { sender: 'user', text: copilotQuery };
@@ -1297,7 +1357,8 @@ export default function App() {
           stateData: projectStages[activeStageKey] || { country, state, model, selectedMaterials, objective },
           query: userMsg.text,
           history: copilotMessages.slice(-6),
-          model: selectedModel
+          model: selectedModel,
+          knowledge: projectStages.knowledge || []
         })
       });
       const data = await res.json();
@@ -2438,6 +2499,10 @@ export default function App() {
               <div style={{ marginTop: 16 }}>
                 <label>Business Objective</label>
                 <textarea value={objective} onChange={(e) => setObjective(e.target.value)} />
+              </div>
+
+              <div style={{ marginTop: 20 }}>
+                {renderKnowledgePanel(false)}
               </div>
 
               <div style={{ marginTop: 24 }}>
@@ -4480,6 +4545,10 @@ export default function App() {
             </div>
           )}
           <div ref={chatEndRef} />
+        </div>
+
+        <div style={{ padding: '10px 16px 0' }}>
+          {renderKnowledgePanel(true)}
         </div>
 
         <div className="copilot-input" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

@@ -4,12 +4,13 @@ import * as groq from '../../../lib/llm/groq.js';
 import * as vertex from '../../../lib/llm/vertex.js';
 import * as claude from '../../../lib/llm/claude.js';
 import { getProvider } from '../../../lib/llm/provider.js';
+import { buildKnowledgeBlock } from '../../../lib/prompts.js';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    const { tab, stateData, query, history = [], model: selectedModel } = await req.json();
+    const { tab, stateData, query, history = [], model: selectedModel, knowledge = [] } = await req.json();
 
     if (!query) {
       return NextResponse.json({ ok: false, error: 'Query is required' }, { status: 400 });
@@ -68,6 +69,7 @@ ${coAuthorBlock}
 
 PROJECT CONTEXT & CURRENT TAB DATA:
 ${JSON.stringify(stateData, null, 2)}
+${buildKnowledgeBlock({ knowledge })}
 
 CHAT HISTORY:
 ${historyText || 'No prior conversation.'}

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRS Engine — Cockpit (Goa) · Mockup</title>
+<style>
+  :root{
+    --bg:#ffffff; --soft:#f5f5f7; --soft2:#fafafc; --line:#e3e3e8; --line2:#d2d2d7;
+    --ink:#1d1d1f; --muted:#6e6e73; --faint:#86868b;
+    --drs:#0a8f4f; --blue:#0071e3; --amber:#b25600; --red:#d70015; --purple:#7d3cc9;
+    --shadow:0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--soft);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px}
+  .app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+  /* sidebar */
+  .side{background:#fff;border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;align-items:center;gap:9px;padding:6px 8px 14px;font-weight:800;letter-spacing:-.3px}
+  .brand .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--drs),#06c);display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px}
+  .brand small{display:block;font-weight:500;color:var(--faint);font-size:10.5px;letter-spacing:0}
+  .nav{display:flex;flex-direction:column;gap:1px;margin-top:4px}
+  .nav a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:13px;cursor:pointer;transition:.12s}
+  .nav a .ic{width:16px;height:16px;color:var(--muted);flex-shrink:0}
+  .nav a:hover{background:var(--soft)}
+  .nav a.active{background:rgba(10,143,79,.1);color:var(--drs);font-weight:600}
+  .nav a.active .ic{color:var(--drs)}
+  .nav .badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:1px 6px}
+  .navsec{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);padding:14px 10px 5px;font-weight:700}
+
+  /* topbar */
+  .main{display:flex;flex-direction:column;min-width:0}
+  .top{height:56px;background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;padding:0 24px;position:sticky;top:0;z-index:20}
+  .proj{display:flex;align-items:center;gap:8px;font-weight:700}
+  .proj .pid{font-size:12px;color:var(--muted);font-weight:500;background:var(--soft);border:1px solid var(--line);padding:3px 9px;border-radius:7px}
+  .phasepill{font-size:12px;color:var(--drs);background:rgba(10,143,79,.1);border:1px solid rgba(10,143,79,.3);padding:4px 11px;border-radius:99px;font-weight:600}
+  .top .spacer{flex:1}
+  .who{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+  .who .av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#06c,#7d3cc9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
+  .wrap{padding:24px;max-width:1240px}
+  .pgh{font-size:22px;font-weight:800;letter-spacing:-.4px;margin:0 0 2px}
+  .pgs{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+
+  .view{display:none}
+  .view.on{display:block;animation:fade .2s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:16px}
+  .ctitle{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);font-weight:700;margin:0 0 12px}
+
+  /* command center layout */
+  .cc{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .cc .span2{grid-column:1 / -1}
+
+  /* gauge */
+  .gauge-wrap{display:flex;align-items:center;gap:20px;padding:20px}
+  .gauge{position:relative;width:150px;height:88px;flex-shrink:0}
+  .gauge .val{position:absolute;bottom:0;left:0;right:0;text-align:center}
+  .gauge .val b{font-size:30px;font-weight:800;letter-spacing:-1px}
+  .gauge .val span{display:block;font-size:10.5px;color:var(--muted)}
+  .nsfacts{display:flex;flex-direction:column;gap:8px}
+  .nsfact{font-size:12.5px;color:var(--muted)}
+  .nsfact b{color:var(--ink)}
+  .up{color:var(--drs);font-weight:700}
+
+  /* journey stepper */
+  .stepper{display:flex;flex-wrap:wrap;gap:6px;padding:18px 20px}
+  .step{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--line2);background:#fff;color:var(--muted);position:relative;transition:.12s}
+  .step:hover{transform:translateY(-2px)}
+  .step.done{background:var(--drs);border-color:var(--drs);color:#fff}
+  .step.active{background:#fff;border:2px solid var(--blue);color:var(--blue)}
+  .step.locked{opacity:.5}
+  .step .gate{position:absolute;top:-5px;right:-5px;width:13px;height:13px;border-radius:50%;background:var(--red);border:2px solid #fff}
+  .step .gate.ok{background:var(--drs)}
+  .legend{display:flex;gap:14px;padding:0 20px 16px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .ldot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* pending gate cta */
+  .cta{display:flex;align-items:center;gap:16px;padding:18px 20px;background:linear-gradient(90deg,rgba(215,0,21,.06),transparent);border:1px solid rgba(215,0,21,.3)}
+  .cta .gi{width:42px;height:42px;border-radius:11px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .cta h4{margin:0 0 2px;font-size:15px}
+  .cta p{margin:0;color:var(--muted);font-size:12.5px}
+  .cta .btn{margin-left:auto}
+  .btn{background:var(--blue);color:#fff;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:#0062c4}
+  .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line2)}
+  .btn.green{background:var(--drs)} .btn.green:hover{background:#077a43}
+
+  /* list rows */
+  .rows{padding:6px 8px 12px}
+  .row{display:flex;align-items:flex-start;gap:11px;padding:9px 12px;border-radius:9px}
+  .row:hover{background:var(--soft)}
+  .row .dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+  .row .tx{flex:1}
+  .row .tx b{font-size:13px;font-weight:600;display:block}
+  .row .tx span{font-size:12px;color:var(--muted)}
+  .row .tag{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;margin-top:2px}
+  .tag.red{background:rgba(215,0,21,.1);color:var(--red)} .tag.amber{background:rgba(178,86,0,.12);color:var(--amber)}
+  .tag.blue{background:rgba(0,113,227,.1);color:var(--blue)} .tag.green{background:rgba(10,143,79,.12);color:var(--drs)}
+  .tag.gray{background:var(--soft);color:var(--muted)}
+
+  /* taluka tiles (mini map) */
+  .talgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:16px 20px}
+  .tile{border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:.14s;background:#fff;position:relative;overflow:hidden}
+  .tile:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--line2)}
+  .tile .tn{font-weight:700;font-size:13.5px}
+  .tile .hq{font-size:11px;color:var(--faint);margin-bottom:8px}
+  .tile .st{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;display:inline-block;position:absolute;top:11px;right:11px}
+  .bar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden;margin:6px 0 5px}
+  .bar i{display:block;height:100%;border-radius:99px}
+  .tile .mt{font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+  .st.Live{background:rgba(10,143,79,.13);color:var(--drs)}
+  .st.Scaling{background:rgba(0,113,227,.12);color:var(--blue)}
+  .st.Onboarding{background:rgba(178,86,0,.13);color:var(--amber)}
+  .st.Planned{background:var(--soft);color:var(--faint)}
+
+  /* geography explorer */
+  .geo{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+  .tree{padding:10px}
+  .tnode{padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px}
+  .tnode:hover{background:var(--soft)}
+  .tnode.dist{font-weight:700;color:var(--ink);margin-top:6px}
+  .tnode.tal{margin-left:14px;color:var(--ink)}
+  .tnode.tal.sel{background:rgba(10,143,79,.1);color:var(--drs);font-weight:600}
+  .tnode .cdot{width:7px;height:7px;border-radius:50%}
+  .tnode .ct{margin-left:auto;font-size:11px;color:var(--faint)}
+
+  .detail{padding:20px}
+  .detail .dh{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+  .detail .dh h3{margin:0;font-size:19px;font-weight:800;letter-spacing:-.3px}
+  .detail .dsub{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+  .stat{background:var(--soft);border-radius:12px;padding:12px 14px}
+  .stat b{font-size:22px;font-weight:800;letter-spacing:-.5px;display:block}
+  .stat span{font-size:11px;color:var(--muted)}
+  .stat.g b{color:var(--drs)} .stat.b b{color:var(--blue)} .stat.a b{color:var(--amber)} .stat.r b{color:var(--red)}
+  .subh{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);font-weight:700;margin:16px 0 8px}
+  .panch{display:flex;flex-direction:column;gap:1px}
+  .pr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px}
+  .pr:hover{background:var(--soft)}
+  .pr .pn{flex:1}
+  .pr .po{font-size:11.5px;color:var(--muted)}
+
+  /* stage workspace */
+  .ws{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+  .blk{padding:18px 20px}
+  .blk h4{margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);font-weight:700}
+  .outitem{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer}
+  .outitem:hover{background:var(--soft)}
+  .outitem .fi{width:30px;height:30px;border-radius:8px;background:rgba(0,113,227,.1);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .outitem .ot{flex:1} .outitem .ot b{font-size:13px;display:block} .outitem .ot span{font-size:11.5px;color:var(--muted)}
+  .srcbadge{font-size:10px;font-weight:700;color:var(--drs);background:rgba(10,143,79,.1);border:1px solid rgba(10,143,79,.25);padding:2px 7px;border-radius:99px}
+  .datarow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .datarow:last-child{border:0}
+  .datarow .dl{flex:1;color:var(--muted)} .datarow .dv{font-weight:600}
+  .audit{padding:16px 18px}
+  .score{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+  .ring{width:54px;height:54px;border-radius:50%;background:conic-gradient(var(--drs) 84%, var(--soft) 0);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ring i{width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;font-style:normal}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:5px 0;color:var(--ink)}
+  .chk .c{color:var(--drs);font-weight:800}
+  .chk.warn .c{color:var(--amber)}
+  .gatebox{padding:16px 18px;background:linear-gradient(180deg,rgba(0,113,227,.05),transparent);border:1px solid rgba(0,113,227,.3);border-radius:14px}
+  .gatebox h4{margin:0 0 4px;font-size:14px;color:var(--blue)}
+  .gatebox p{margin:0 0 12px;font-size:12.5px;color:var(--muted)}
+  .gactions{display:flex;gap:8px;flex-wrap:wrap}
+
+  .placeholder{padding:48px 20px;text-align:center;color:var(--muted)}
+  .placeholder .pi{font-size:30px;margin-bottom:10px}
+  .placeholder h3{color:var(--ink);margin:0 0 6px}
+  @media(max-width:1080px){.cc,.geo,.ws{grid-template-columns:1fr}.app{grid-template-columns:1fr}.side{position:static;height:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand"><span class="logo">◆</span><div>DRS Engine<small>RMOS · Project MARS</small></div></div>
+    <div class="navsec">Drive</div>
+    <div class="nav">
+      <a data-v="home" class="active" onclick="go('home',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Command Center</a>
+      <a data-v="journey" onclick="go('journey',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>The Journey <span class="badge">Gate</span></a>
+      <a data-v="geo" onclick="go('geo',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Geography Explorer</a>
+    </div>
+    <div class="navsec">Intelligence</div>
+    <div class="nav">
+      <a data-v="stakeholders" onclick="go('stakeholders',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M16 6a3 3 0 010 6"/></svg>Stakeholders</a>
+      <a data-v="resistance" onclick="go('resistance',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 16H3z"/><path d="M12 9v5M12 17v.5"/></svg>Resistance</a>
+      <a data-v="narrative" onclick="go('narrative',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H8l-4 3z"/></svg>Narrative &amp; Content</a>
+      <a data-v="acquisition" onclick="go('acquisition',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-5 4 4 8-8M16 4h5v5"/></svg>Acquisition</a>
+    </div>
+    <div class="navsec">Execute</div>
+    <div class="nav">
+      <a data-v="launch" onclick="go('launch',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7M12 3v4"/></svg>Launch Control</a>
+      <a data-v="analytics" onclick="go('analytics',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Analytics</a>
+      <a data-v="knowledge" onclick="go('knowledge',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 012-2h12v18H6a2 2 0 01-2-2z"/></svg>Knowledge</a>
+      <a data-v="approvals" onclick="go('approvals',this)"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Approvals <span class="badge">1</span></a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="top">
+      <div class="proj"><span class="pid">DRS-GOA-001</span> Goa</div>
+      <span class="phasepill">Stage 12 · Operations &amp; Optimization</span>
+      <div class="spacer"></div>
+      <div class="who"><span>Alokesh · DMS Pod Lead</span><span class="av">AK</span></div>
+    </div>
+
+    <div class="wrap">
+
+      <!-- ============ COMMAND CENTER ============ -->
+      <section class="view on" id="home">
+        <h1 class="pgh">Command Center</h1>
+        <p class="pgs">Goa launch · where we are, what needs you today.</p>
+
+        <div class="card span2" style="margin-bottom:16px">
+          <div class="cta">
+            <div class="gi">🚦</div>
+            <div><h4>Gate 6 · Post-Launch Optimization is awaiting your decision</h4>
+              <p>The bot has analysed 4 live talukas. Mormugao return rate (28%) is below target — recommended fix: retail messaging refresh.</p></div>
+            <button class="btn" onclick="go('journey',document.querySelector('[data-v=journey]'));openStage(12)">Review &amp; decide →</button>
+          </div>
+        </div>
+
+        <div class="cc">
+          <div class="card">
+            <div class="gauge-wrap">
+              <div class="gauge">
+                <svg viewBox="0 0 150 88" width="150" height="88">
+                  <path d="M10 85 A65 65 0 0 1 140 85" fill="none" stroke="#ececed" stroke-width="14" stroke-linecap="round"/>
+                  <path d="M10 85 A65 65 0 0 1 140 85" fill="none" stroke="#0a8f4f" stroke-width="14" stroke-linecap="round" stroke-dasharray="204" stroke-dashoffset="78"/>
+                </svg>
+                <div class="val"><b>62</b><span>DRS Adoption Index</span></div>
+              </div>
+              <div class="nsfacts">
+                <div class="nsfact"><span class="up">▲ +7</span> vs last month</div>
+                <div class="nsfact"><b>Awareness</b> 71% · <b>Alignment</b> 0.74</div>
+                <div class="nsfact"><b>Return participation</b> 38% avg</div>
+                <div class="nsfact"><b>Trust/friction</b> dropping</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="padding:18px 20px 0"><p class="ctitle">Today · weekly cadence</p></div>
+            <div class="rows">
+              <div class="row"><span class="dot" style="background:var(--red)"></span><div class="tx"><b>Decide Gate 6</b><span>Post-launch optimization focus</span></div><span class="tag red">Now</span></div>
+              <div class="row"><span class="dot" style="background:var(--amber)"></span><div class="tx"><b>Attend: GSPCB review meeting</b><span>Brief &amp; talking points ready</span></div><span class="tag amber">Your action</span></div>
+              <div class="row"><span class="dot" style="background:var(--blue)"></span><div class="tx"><b>Weekly standup dashboard</b><span>Auto-generated · 11:00</span></div><span class="tag blue">Ready</span></div>
+            </div>
+          </div>
+
+          <div class="card span2">
+            <div style="padding:18px 20px 0"><p class="ctitle">The Journey · 16 stages</p></div>
+            <div class="stepper" id="stepper"></div>
+            <div class="legend">
+              <span><i class="ldot" style="background:var(--drs)"></i> Done</span>
+              <span><i class="ldot" style="background:#fff;border:2px solid var(--blue)"></i> Active</span>
+              <span><i class="ldot" style="background:var(--red)"></i> Gate pending</span>
+              <span><i class="ldot" style="background:#eee"></i> Upcoming</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="padding:18px 20px 0"><p class="ctitle">Top risks (Resistance)</p></div>
+            <div class="rows">
+              <div class="row"><span class="dot" style="background:var(--red)"></span><div class="tx"><b>Mormugao retail hesitancy</b><span>Operational · high severity</span></div><span class="tag red">P0</span></div>
+              <div class="row"><span class="dot" style="background:var(--amber)"></span><div class="tx"><b>Tourist transient participation</b><span>Consumer · Canacona/Salcete</span></div><span class="tag amber">P1</span></div>
+              <div class="row"><span class="dot" style="background:var(--amber)"></span><div class="tx"><b>Deposit-mechanic confusion</b><span>Consumer · low comprehension pockets</span></div><span class="tag amber">P1</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="padding:18px 20px 0;display:flex;justify-content:space-between;align-items:center"><p class="ctitle" style="margin:0">Goa · taluka readiness</p><a onclick="go('geo',document.querySelector('[data-v=geo]'))" style="font-size:12px;color:var(--blue);cursor:pointer">Open Explorer →</a></div>
+            <div class="talgrid" id="miniMap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ GEOGRAPHY EXPLORER ============ -->
+      <section class="view" id="geo">
+        <h1 class="pgh">Geography Explorer</h1>
+        <p class="pgs">Drill from all of Goa down to a single outlet. Everything — stakeholders, resistance, analytics — can be filtered to a taluka.</p>
+        <div class="geo">
+          <div class="card tree" id="tree"></div>
+          <div class="card detail" id="talDetail"></div>
+        </div>
+      </section>
+
+      <!-- ============ JOURNEY / STAGE WORKSPACE ============ -->
+      <section class="view" id="journey">
+        <h1 class="pgh" id="wsTitle">Stage Workspace</h1>
+        <p class="pgs" id="wsSub">The bot does the work; you review the outputs, the audit, and decide at the gate.</p>
+        <div class="ws">
+          <div>
+            <div class="card blk" style="margin-bottom:16px">
+              <h4>Data the bot pulled <span style="font-weight:400;text-transform:none;color:var(--faint)">— every figure is traceable to its connector</span></h4>
+              <div class="datarow"><span class="dl">Containers returned (4 live talukas)</span><span class="dv">1.42M</span><span class="srcbadge">Ops API</span></div>
+              <div class="datarow"><span class="dl">Avg return rate</span><span class="dv">38%</span><span class="srcbadge">RVM telemetry</span></div>
+              <div class="datarow"><span class="dl">Cost per container</span><span class="dv">₹3.10</span><span class="srcbadge">Finance system</span></div>
+              <div class="datarow"><span class="dl">Mormugao return rate</span><span class="dv">28% ▼</span><span class="srcbadge">RVM telemetry</span></div>
+              <div class="datarow"><span class="dl">Sentiment trend</span><span class="dv">+ positive</span><span class="srcbadge">Social listening</span></div>
+            </div>
+            <div class="card blk">
+              <h4>Bot-generated outputs</h4>
+              <div class="outitem"><span class="fi">📊</span><div class="ot"><b>Collection Optimization Report</b><span>Location friction + behaviour gaps, per taluka</span></div><span class="srcbadge">Ready</span></div>
+              <div class="outitem"><span class="fi">📍</span><div class="ot"><b>Mormugao Friction Diagnosis</b><span>Retail hesitancy → messaging refresh plan</span></div><span class="srcbadge">Ready</span></div>
+              <div class="outitem"><span class="fi">✉️</span><div class="ot"><b>Updated retail awareness assets</b><span>Konkani + English, return-point signage</span></div><span class="srcbadge">Ready</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="card audit" style="margin-bottom:16px">
+              <h4 style="margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint)">AI Auditor</h4>
+              <div class="score"><div class="ring"><i>84</i></div><div><b style="font-size:14px">Confidence 84/100</b><div style="font-size:11.5px;color:var(--muted)">No blockers</div></div></div>
+              <div class="chk"><span class="c">✓</span> Data sourced &amp; traceable</div>
+              <div class="chk"><span class="c">✓</span> Recommendations within guardrails</div>
+              <div class="chk warn"><span class="c">!</span> Canacona data sparse (tourist season)</div>
+              <div class="chk"><span class="c">✓</span> Cardinal rule: comms ≤ ops readiness</div>
+            </div>
+            <div class="gatebox">
+              <h4>🚦 Gate 6 · Post-Launch Optimization</h4>
+              <p>What must improve first? Bot recommends: <b>Mormugao retail messaging refresh.</b></p>
+              <div class="gactions">
+                <button class="btn green">Approve focus</button>
+                <button class="btn ghost">Pick another</button>
+                <button class="btn ghost">Investigate</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STUBS ============ -->
+      <section class="view" id="stakeholders"><div class="card placeholder"><div class="pi">👥</div><h3>Stakeholders</h3><p>Influence matrix · champions · blockers · per-stakeholder records — filterable by taluka.</p></div></section>
+      <section class="view" id="resistance"><div class="card placeholder"><div class="pi">⚠️</div><h3>Resistance</h3><p>Register + heat map across 7 fronts, by taluka. Resistance Index feeds the Command Center.</p></div></section>
+      <section class="view" id="narrative"><div class="card placeholder"><div class="pi">💬</div><h3>Narrative &amp; Content</h3><p>Narrative house · FAQ kit · localized asset library (English · Konkani · Marathi · Hindi).</p></div></section>
+      <section class="view" id="acquisition"><div class="card placeholder"><div class="pi">🤝</div><h3>Acquisition</h3><p>Partner universe &amp; pipeline (Universe → … → Activation), by taluka.</p></div></section>
+      <section class="view" id="launch"><div class="card placeholder"><div class="pi">🚀</div><h3>Launch Control (T-minus)</h3><p>T-90 → T+14 countdown board, readiness per milestone per taluka, go/no-go confidence.</p></div></section>
+      <section class="view" id="analytics"><div class="card placeholder"><div class="pi">📈</div><h3>Analytics</h3><p>11 role dashboards, all filterable by taluka + implementation model, all rolling up to the Adoption Index.</p></div></section>
+      <section class="view" id="knowledge"><div class="card placeholder"><div class="pi">📚</div><h3>Knowledge / Blueprint</h3><p>Captured assets, lessons learned, and the reusable Goa Blueprint that seeds the next geography.</p></div></section>
+      <section class="view" id="approvals"><div class="card placeholder"><div class="pi">✅</div><h3>Approvals (Gate inbox)</h3><p>All gates — pending and past — each with its attached AI Auditor report.</p></div></section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- data ----------
+const stageNames = ["Platform Foundation","Geography Engine","Market Intelligence","Stakeholder Intelligence","Resistance Intelligence","DRS Marketing System","Go-To-Market","Acquisition","Consumer Engagement","Communication & BTL","Infrastructure","Operations","Analytics","Metrics Engine","Knowledge Hub","AI Copilot"];
+const gateAt = {1:"ok",3:"ok",5:"ok",6:"ok",8:"ok",10:"ok",12:"pending"}; // stage->gate status
+const stageStatus = (n)=> n<12?"done":(n===12?"active":"locked");
+
+const talukas = [
+ {k:"tiswadi",d:"North Goa",n:"Tiswadi",hq:"Panaji",st:"Live",ready:82,outlets:420,mL:14,mT:18,aware:"Live",ret:44,stk:16,risk:1,pan:18,pop:"1.8L",
+   panch:[["Corporation of City of Panaji",96],["Taleigao",58],["St. Cruz",44],["Chimbel",31],["Goa Velha",22]]},
+ {k:"bardez",d:"North Goa",n:"Bardez",hq:"Mapusa",st:"Live",ready:71,outlets:540,mL:11,mT:16,aware:"Live",ret:36,stk:14,risk:2,pan:26,pop:"2.4L",
+   panch:[["Mapusa Municipal Council",84],["Calangute",72],["Candolim",55],["Anjuna",41],["Siolim",33]]},
+ {k:"ponda",d:"North Goa",n:"Ponda",hq:"Ponda",st:"Onboarding",ready:38,outlets:310,mL:0,mT:8,aware:"Planned",ret:0,stk:6,risk:1,pan:19,pop:"1.6L",
+   panch:[["Ponda Municipal Council",60],["Bandora",28],["Kavlem",19]]},
+ {k:"bicholim",d:"North Goa",n:"Bicholim",hq:"Bicholim",st:"Planned",ready:12,outlets:180,mL:0,mT:0,aware:"Planned",ret:0,stk:2,risk:0,pan:17,pop:"1.0L",panch:[["Bicholim",40],["Mayem",14]]},
+ {k:"pernem",d:"North Goa",n:"Pernem",hq:"Pernem",st:"Planned",ready:8,outlets:140,mL:0,mT:0,aware:"Planned",ret:0,stk:1,risk:0,pan:20,pop:"0.8L",panch:[["Pernem",30],["Mandrem",16]]},
+ {k:"sattari",d:"North Goa",n:"Sattari",hq:"Valpoi",st:"Planned",ready:5,outlets:90,mL:0,mT:0,aware:"Planned",ret:0,stk:1,risk:0,pan:21,pop:"0.7L",panch:[["Valpoi",18]]},
+ {k:"salcete",d:"South Goa",n:"Salcete",hq:"Margao",st:"Live",ready:76,outlets:610,mL:12,mT:16,aware:"Live",ret:40,stk:15,risk:2,pan:30,pop:"3.0L",
+   panch:[["Margao Municipal Council",110],["Colva",64],["Benaulim",48],["Varca",35],["Navelim",40]]},
+ {k:"mormugao",d:"South Goa",n:"Mormugao",hq:"Vasco",st:"Scaling",ready:61,outlets:360,mL:7,mT:12,aware:"Scaling",ret:28,stk:11,risk:3,pan:9,pop:"1.5L",
+   panch:[["Mormugao Municipal Council",88],["Chicalim",36],["Sancoale",27]]},
+ {k:"quepem",d:"South Goa",n:"Quepem",hq:"Quepem",st:"Planned",ready:10,outlets:150,mL:0,mT:0,aware:"Planned",ret:0,stk:2,risk:0,pan:18,pop:"0.8L",panch:[["Quepem",26]]},
+ {k:"canacona",d:"South Goa",n:"Canacona",hq:"Chaudi",st:"Planned",ready:14,outlets:170,mL:0,mT:0,aware:"Planned",ret:0,stk:3,risk:1,pan:9,pop:"0.5L",panch:[["Canacona",30],["Palolem (tourism)",22]]},
+ {k:"sanguem",d:"South Goa",n:"Sanguem",hq:"Sanguem",st:"Planned",ready:4,outlets:70,mL:0,mT:0,aware:"Planned",ret:0,stk:1,risk:0,pan:14,pop:"0.6L",panch:[["Sanguem",14]]},
+ {k:"dharbandora",d:"South Goa",n:"Dharbandora",hq:"Dharbandora",st:"Planned",ready:3,outlets:50,mL:0,mT:0,aware:"Planned",ret:0,stk:1,risk:0,pan:11,pop:"0.4L",panch:[["Dharbandora",10]]},
+];
+const barColor = (r)=> r>=70?"#0a8f4f":r>=45?"#0071e3":r>=25?"#b25600":"#c9ccd2";
+
+// ---------- render: stepper ----------
+function renderStepper(){
+  const el=document.getElementById("stepper"); el.innerHTML="";
+  for(let i=1;i<=16;i++){
+    const s=stageStatus(i);
+    const g=gateAt[i];
+    const d=document.createElement("div");
+    d.className="step "+s;
+    d.textContent=i;
+    d.title="Stage "+i+" — "+stageNames[i-1];
+    if(g) d.innerHTML+='<span class="gate '+(g==="ok"?"ok":"")+'"></span>';
+    d.onclick=()=>{ go('journey',document.querySelector('[data-v=journey]')); openStage(i); };
+    el.appendChild(d);
+  }
+}
+
+// ---------- render: mini map ----------
+function tileHTML(t){
+  return `<div class="tile" onclick="go('geo',document.querySelector('[data-v=geo]'));selTal('${t.k}')">
+    <span class="st ${t.st}">${t.st}</span>
+    <div class="tn">${t.n}</div><div class="hq">${t.hq}</div>
+    <div class="bar"><i style="width:${t.ready}%;background:${barColor(t.ready)}"></i></div>
+    <div class="mt"><span>${t.ready}% ready</span><span>${t.outlets} outlets</span></div>
+  </div>`;
+}
+function renderMini(){
+  document.getElementById("miniMap").innerHTML = talukas.filter(t=>["Live","Scaling","Onboarding"].includes(t.st)).map(tileHTML).join("")
+    + talukas.filter(t=>t.st==="Planned").slice(0,2).map(tileHTML).join("");
+}
+
+// ---------- render: geography tree + detail ----------
+function renderTree(){
+  const el=document.getElementById("tree"); el.innerHTML="";
+  ["North Goa","South Goa"].forEach(dist=>{
+    const dh=document.createElement("div"); dh.className="tnode dist"; dh.textContent=dist; el.appendChild(dh);
+    talukas.filter(t=>t.d===dist).forEach(t=>{
+      const n=document.createElement("div"); n.className="tnode tal"; n.dataset.k=t.k;
+      n.innerHTML=`<span class="cdot" style="background:${barColor(t.ready)}"></span>${t.n} <span class="ct">${t.ready}%</span>`;
+      n.onclick=()=>selTal(t.k); el.appendChild(n);
+    });
+  });
+}
+function selTal(k){
+  const t=talukas.find(x=>x.k===k);
+  document.querySelectorAll(".tnode.tal").forEach(n=>n.classList.toggle("sel",n.dataset.k===k));
+  const d=document.getElementById("talDetail");
+  d.innerHTML=`
+    <div class="dh"><h3>${t.n}</h3><span class="st ${t.st}">${t.st}</span></div>
+    <div class="dsub">${t.d} · HQ ${t.hq} · Population ${t.pop} · ${t.pan} village panchayats · Languages: Konkani, English</div>
+    <div class="stats">
+      <div class="stat g"><b>${t.ready}%</b><span>Rollout readiness</span></div>
+      <div class="stat b"><b>${t.outlets}</b><span>Outlets mapped</span></div>
+      <div class="stat ${t.mL?'g':''}"><b>${t.mL}/${t.mT||'—'}</b><span>Machines live</span></div>
+      <div class="stat ${t.ret?'g':''}"><b>${t.ret?t.ret+'%':'—'}</b><span>Return rate</span></div>
+      <div class="stat"><b>${t.stk}</b><span>Stakeholders</span></div>
+      <div class="stat ${t.risk?'r':''}"><b>${t.risk}</b><span>Open risks</span></div>
+    </div>
+    <div class="subh">Awareness status</div>
+    <div><span class="tag ${t.aware==='Live'?'green':t.aware==='Scaling'?'blue':'gray'}" style="font-size:11px;padding:4px 11px">${t.aware}</span>
+      <span style="font-size:12px;color:var(--muted);margin-left:8px">${t.ret?'Public communication live in this taluka':'Awareness not yet scaled (cardinal rule: ops readiness pending)'}</span></div>
+    <div class="subh">Drill down · village panchayats → outlets</div>
+    <div class="panch">${t.panch.map(p=>`<div class="pr"><span class="pn">${p[0]}</span><span class="po">${p[1]} outlets</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c0c0c6" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></div>`).join("")}</div>
+  `;
+}
+
+// ---------- stage workspace ----------
+function openStage(n){
+  document.getElementById("wsTitle").textContent = `Stage ${n} · ${stageNames[n-1]}`;
+  document.getElementById("wsSub").textContent = n===12
+    ? "Operations & Collection Optimization — the bot pulled live return data and diagnosed friction. Review and decide Gate 6."
+    : "The bot does the work; you review the outputs, the audit, and decide at the gate. (Showing the Stage 12 example data.)";
+}
+
+// ---------- nav ----------
+function go(v,elm){
+  document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id===v));
+  document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));
+  if(elm) elm.classList.add("active"); else { const a=document.querySelector('[data-v='+v+']'); if(a)a.classList.add("active"); }
+  window.scrollTo(0,0);
+}
+
+// init
+renderStepper(); renderMini(); renderTree(); selTal("mormugao"); openStage(12);
+</script>
+</body>
+</html>
