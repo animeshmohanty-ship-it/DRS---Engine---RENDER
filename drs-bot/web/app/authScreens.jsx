@@ -14,7 +14,9 @@ export function AuthScreens({ mode, email, onSignIn, onSignOut }) {
     borderRadius: 16, padding: '36px 32px', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.06)',
   };
   const logo = (
-    <div style={{ width: 52, height: 52, margin: '0 auto 18px', borderRadius: 14, background: 'var(--accent, #0E7C66)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 22 }}>D</div>
+    <div style={{ width: 64, height: 64, margin: '0 auto 18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <img src="/logo.png" alt="Recykal" style={{ width: 56, height: 56, objectFit: 'contain' }} />
+    </div>
   );
 
   if (mode === 'loading') {
