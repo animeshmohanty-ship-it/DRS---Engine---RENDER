@@ -4,6 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase.js';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import {
+  Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
+  BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
+  MessageSquare, Download
+} from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
 
@@ -1348,9 +1353,12 @@ export default function App() {
     return (
       <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: compact ? '10px 12px' : '14px 16px', background: compact ? 'var(--panel)' : '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ fontWeight: 600, fontSize: compact ? '12px' : '14px' }}>📚 Project Knowledge{docs.length ? ` (${docs.length})` : ''}</div>
-          <label className="copilot-toggle-btn" style={{ cursor: knowledgeUploading ? 'wait' : 'pointer', opacity: knowledgeUploading ? 0.6 : 1 }}>
-            {knowledgeUploading ? 'Reading…' : '+ Add PDF'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontWeight: 600, fontSize: compact ? '12px' : '14px' }}>
+            <BookOpen size={compact ? 15 : 17} style={{ color: 'var(--accent)' }} />
+            Project Knowledge{docs.length ? ` (${docs.length})` : ''}
+          </div>
+          <label className="copilot-toggle-btn" style={{ cursor: knowledgeUploading ? 'wait' : 'pointer', opacity: knowledgeUploading ? 0.6 : 1, height: 30, padding: '0 12px' }}>
+            {knowledgeUploading ? <><RefreshCw size={13} className="spin" /> Reading…</> : <><Plus size={14} /> Add PDF</>}
             <input type="file" accept="application/pdf,.pdf" style={{ display: 'none' }} disabled={knowledgeUploading}
               onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) uploadKnowledge(f); e.target.value = ''; }} />
           </label>
@@ -1360,8 +1368,13 @@ export default function App() {
           {docs.length === 0 && <div style={{ fontSize: '12px', color: 'var(--ink-soft)', fontStyle: 'italic' }}>No documents added yet.</div>}
           {docs.map(d => (
             <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 10px', background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 6 }}>
-              <span style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={d.filename}>📄 {d.filename}{d.summarized ? ' · condensed' : ''}</span>
-              <span onClick={() => removeKnowledge(d.id)} title="Remove document" style={{ cursor: 'pointer', opacity: 0.5, fontSize: '13px', flexShrink: 0 }}>❌</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '12px', overflow: 'hidden', minWidth: 0 }} title={d.filename}>
+                <FileText size={14} style={{ flexShrink: 0, color: 'var(--ink-soft)' }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.filename}{d.summarized ? ' · condensed' : ''}</span>
+              </span>
+              <span onClick={() => removeKnowledge(d.id)} title="Remove document" style={{ cursor: 'pointer', opacity: 0.5, display: 'inline-flex', flexShrink: 0 }} onMouseEnter={(e) => e.currentTarget.style.opacity = 1} onMouseLeave={(e) => e.currentTarget.style.opacity = 0.5}>
+                <X size={14} />
+              </span>
             </div>
           ))}
         </div>
@@ -1754,7 +1767,7 @@ export default function App() {
               >
                 {(() => {
                   const active = MODEL_OPTIONS.find(m => m.value === selectedModel) || MODEL_OPTIONS[0];
-                  return <>{renderModelIcon(active.icon)}{active.label} <span style={{marginLeft: '8px', fontSize: '10px'}}>?</span></>;
+                  return <>{renderModelIcon(active.icon)}{active.label}<ChevronDown size={14} style={{ marginLeft: 8, opacity: 0.6 }} /></>;
                 })()}
               </div>
               
@@ -1805,7 +1818,7 @@ export default function App() {
                 style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
                 onClick={() => loading[activeStageNum] ? cancelGeneration(activeStageNum) : generateStage(activeStageNum)}
               >
-                {loading[activeStageNum] ? <>🛑 Stop Generating</> : '🔄 Regenerate Stage'}
+                {loading[activeStageNum] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Square size={14} /> Stop Generating</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><RefreshCw size={14} /> Regenerate Stage</span>}
               </button>
             )}
             <button className="copilot-toggle-btn" onClick={() => setCopilotCollapsed(!copilotCollapsed)}>
@@ -1882,6 +1895,9 @@ export default function App() {
                                   <div
                                     className="dropdown-item"
                                     style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 7,
                                       padding: '8px 12px',
                                       fontSize: '13px',
                                       cursor: 'pointer',
@@ -1895,7 +1911,7 @@ export default function App() {
                                       printProjectReport(p);
                                     }}
                                   >
-                                    📄 Export PDF Report
+                                    <FileText size={14} /> Export PDF Report
                                   </div>
                                   <div
                                     className="dropdown-item"
@@ -2571,7 +2587,7 @@ export default function App() {
                   })}
                 </div>
                 <button className={`btn ${researchGenerating ? 'danger' : ''}`} style={researchGenerating ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => researchGenerating ? cancelGeneration(researchTab) : generateAllResearch()}>
-                  {researchGenerating ? <>🛑 Stop Generating</> : '⚡ Generate All Research'}
+                  {researchGenerating ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Square size={14} /> Stop Generating</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Zap size={14} /> Generate All Research</span>}
                 </button>
               </div>
               {researchGenerating && <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>{researchProgress}</div>}
@@ -2584,7 +2600,7 @@ export default function App() {
               <h2>{activeTab === 'preplanning' ? 'Campaign Brief' : activeTab === 'planning' ? 'Campaign Plan' : STAGES.find((s) => s.num === activeStageNum)?.name || `Stage ${activeStageNum}`} is not yet generated</h2>
               <p className="sub">{activeTab === 'preplanning' ? 'The AI Director will synthesize your research into a SWOT and a first draft of the 7-section brief. You then edit and lock it.' : activeTab === 'planning' ? 'The AI will turn your locked brief into a 360° plan: moments, a campaign calendar, and a weekly content calendar (each row a task). Refine via the Copilot.' : 'The engine will pull real datasets and formulate the roadmap for this stage.'}</p>
               <button className={`btn ${loading[activeStageNum] ? 'danger' : ''}`} style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => loading[activeStageNum] ? cancelGeneration(activeStageNum) : generateStage(activeStageNum)}>
-                {loading[activeStageNum] ? <>🛑 Stop Generating</> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : activeTab === 'planning' ? 'Generate the Campaign Plan' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
+                {loading[activeStageNum] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Square size={14} /> Stop Generating</span> : (activeTab === 'preplanning' ? 'Draft the Campaign Brief' : activeTab === 'planning' ? 'Generate the Campaign Plan' : `Generate ${STAGES.find((s) => s.num === activeStageNum)?.name || 'Stage ' + activeStageNum}`)}
               </button>
               {loading[activeStageNum] && (
                 <div className="muted" style={{ marginTop: 12 }}>
@@ -2645,8 +2661,8 @@ export default function App() {
                           <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', color: 'var(--accent)' }}>{idx + 1}. {label}</span>
                           <button
                             onClick={() => discussBriefSection(label)}
-                            style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
-                          >💬 Discuss</button>
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
+                          ><MessageSquare size={13} /> Discuss</button>
                         </div>
                         <p style={{ fontSize: '14px', margin: '8px 0 0', color: 'var(--ink)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                           {brief[key] || <span style={{ color: 'var(--ink-soft)', fontStyle: 'italic' }}>Not yet drafted — ask the Copilot.</span>}
@@ -2656,7 +2672,7 @@ export default function App() {
                   </div>
                   <div style={{ marginTop: 16 }}>
                     <button className={`copilot-toggle-btn ${loading[16] ? 'danger' : ''}`} style={loading[16] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => loading[16] ? cancelGeneration(16) : generateStage(16)}>
-                      {loading[16] ? <>🛑 Stop Generating</> : '✨ Re-draft all from research'}
+                      {loading[16] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Square size={14} /> Stop Generating</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Sparkles size={14} /> Re-draft all from research</span>}
                     </button>
                   </div>
                 </div>
@@ -2691,7 +2707,7 @@ export default function App() {
                     <h3 style={{ margin: 0, color: '#9a3412' }}>The plan came back empty</h3>
                     <p style={{ fontSize: '13px', color: '#9a3412', margin: '6px 0 12px' }}>The AI response was empty or got cut off (often when the timeline is long). Click Re-draft to try again — the plan is now capped to stay within limits.</p>
                     <button className={`btn ${loading[17] ? 'danger' : ''}`} style={loading[17] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : {}} onClick={() => loading[17] ? cancelGeneration(17) : generateStage(17)}>
-                      {loading[17] ? <>🛑 Stop Generating</> : '✨ Re-draft plan'}
+                      {loading[17] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Square size={14} /> Stop Generating</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Sparkles size={14} /> Re-draft plan</span>}
                     </button>
                   </div>
                 )}
@@ -2700,7 +2716,7 @@ export default function App() {
                   <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h2>Moments &amp; Seasonality</h2>
-                      <button onClick={() => discussPlan('moments')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                      <button onClick={() => discussPlan('moments')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}><MessageSquare size={13} /> Discuss</button>
                     </div>
                     <p className="sub">Real festivals/seasons worth capitalizing on across the project timeline.</p>
                     <div style={{ overflowX: 'auto' }}>
@@ -2720,7 +2736,7 @@ export default function App() {
                   <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h2>Market-Entry Strategy {entry.operationsBasis && <span className="phase p1" style={{ marginLeft: 6, verticalAlign: 'middle' }}>{entry.operationsBasis}</span>}</h2>
-                      <button onClick={() => discussPlan('market-entry strategy')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                      <button onClick={() => discussPlan('market-entry strategy')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}><MessageSquare size={13} /> Discuss</button>
                     </div>
                     {entry.posture && (<div style={{ marginTop: 8 }}><span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)' }}>Entry Posture</span><p style={{ fontSize: '14px', margin: '4px 0 0', color: 'var(--ink)' }}>{entry.posture}</p></div>)}
                     {entry.differentiation && (<div style={{ marginTop: 12, background: 'var(--grey-soft)', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)' }}><span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)' }}>🎯 Our Wedge vs Incumbents</span><p style={{ fontSize: '14px', margin: '4px 0 0', fontWeight: 500, color: 'var(--ink)' }}>{entry.differentiation}</p></div>)}
@@ -2745,7 +2761,7 @@ export default function App() {
                   <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h2>Funnel Strategy</h2>
-                      <button onClick={() => discussPlan('funnel strategy')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                      <button onClick={() => discussPlan('funnel strategy')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}><MessageSquare size={13} /> Discuss</button>
                     </div>
                     <p className="sub">Awareness → onboarding → loyalty, sequenced to serve the entry strategy above.</p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 12 }}>
@@ -2769,7 +2785,7 @@ export default function App() {
                   <div className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h2>Narrative &amp; Messaging</h2>
-                      <button onClick={() => discussPlan('narrative & messaging')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>💬 Discuss</button>
+                      <button onClick={() => discussPlan('narrative & messaging')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}><MessageSquare size={13} /> Discuss</button>
                     </div>
                     <p className="sub">The messaging that grounds every hook in the calendar below.</p>
                     {narrative.corePillars?.length > 0 && (
@@ -2812,7 +2828,7 @@ export default function App() {
                 <div className="card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h2>Omnichannel Campaign Matrix</h2>
-                    <button onClick={() => discussPlan('campaign matrix')} style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>✨ Discuss</button>
+                    <button onClick={() => discussPlan('campaign matrix')} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}><Sparkles size={13} /> Discuss</button>
                   </div>
                   <p className="sub">Master campaigns and their granular, actionable deliverables flowing into Orchestration.</p>
                   
@@ -2873,7 +2889,7 @@ export default function App() {
 
                 <div style={{ marginTop: 16 }}>
                   <button className={`copilot-toggle-btn ${loading[17] ? 'danger' : ''}`} style={loading[17] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={() => loading[17] ? cancelGeneration(17) : generateStage(17)}>
-                    {loading[17] ? <>🛑 Stop Generating</> : '✨ Re-draft plan from brief'}
+                    {loading[17] ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Square size={14} /> Stop Generating</span> : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Sparkles size={14} /> Re-draft plan from brief</span>}
                   </button>
                 </div>
               </div>
@@ -2902,9 +2918,9 @@ export default function App() {
                       <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>Every planned task, matched to the right person by skill. Defaults are auto-suggested from each member's skill set — change anyone via the dropdown. ({assignedCount}/{tasks.length} locked)</p>
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <button className="btn" onClick={autoAssignAll}>✨ Auto-assign by skill</button>
+                      <button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={autoAssignAll}><Sparkles size={15} /> Auto-assign by skill</button>
                       <button className="copilot-toggle-btn" style={{ background: 'var(--grey-soft)', border: '1px solid var(--line)' }} onClick={exportToSheets} disabled={exporting}>
-                        {exporting ? '⏳ Exporting…' : '⬇ Export to Sheets'}
+                        {exporting ? <><RefreshCw size={14} className="spin" /> Exporting…</> : <><Download size={14} /> Export to Sheets</>}
                       </button>
                     </div>
                   </div>
@@ -4385,25 +4401,26 @@ export default function App() {
       <div className={`copilot-panel ${copilotFullpage ? 'fullpage' : copilotCollapsed ? 'collapsed' : ''}`}>
         <div className="copilot-header">
           <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')}){!projectId && <span style={{ marginLeft: 6, fontSize: '10px', fontWeight: 600, color: 'var(--accent)', background: 'var(--grey-soft)', padding: '2px 6px', borderRadius: 10, verticalAlign: 'middle' }}>GENERAL</span>}</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button
-              className="copilot-toggle-btn"
+              className="icon-btn"
               title={copilotFullpage ? 'Dock Binny back to the side' : 'Expand Binny to full page'}
+              aria-label={copilotFullpage ? 'Dock' : 'Full page'}
               onClick={() => setCopilotFullpage(v => !v)}
             >
-              {copilotFullpage ? '⤡ Dock' : '⤢ Full page'}
+              {copilotFullpage ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
             <button
-              className="copilot-toggle-btn"
+              className={`icon-btn ${voiceMode ? 'active' : ''}`}
               title={voiceMode ? 'Voice replies ON — Binny speaks' : 'Voice replies OFF'}
-              style={{ background: voiceMode ? 'var(--accent)' : 'var(--grey-soft)', color: voiceMode ? '#fff' : 'var(--ink)', border: '1px solid var(--line)' }}
+              aria-label="Toggle voice replies"
               onClick={() => { const nv = !voiceMode; setVoiceMode(nv); if (!nv) stopSpeaking(); }}
             >
-              {voiceMode ? '🔊 Voice' : '🔇 Voice'}
+              {voiceMode ? <Volume2 size={16} /> : <VolumeX size={16} />}
             </button>
             <div style={{ position: 'relative' }} ref={chatDropdownRef}>
-              <button className="copilot-toggle-btn" onClick={() => setChatHistoryDropdownOpen(!chatHistoryDropdownOpen)}>
-                Chats ?
+              <button className="icon-btn" title="Chat history" aria-label="Chat history" onClick={() => setChatHistoryDropdownOpen(!chatHistoryDropdownOpen)}>
+                <MessagesSquare size={16} />
               </button>
               {chatHistoryDropdownOpen && (
                 <div style={{
@@ -4434,7 +4451,7 @@ export default function App() {
                       gap: '6px'
                     }}
                   >
-                    <span>+ New Chat</span>
+                    <Plus size={14} /><span>New Chat</span>
                   </div>
                   {chatThreads.map(t => (
                     <div 
@@ -4457,14 +4474,14 @@ export default function App() {
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
                         {t.title}
                       </span>
-                      <span 
+                      <span
                         onClick={(e) => deleteThread(t.id, e)}
                         title="Delete Chat"
-                        style={{ opacity: 0.5, cursor: 'pointer', fontSize: '14px' }}
-                        onMouseEnter={(e) => e.target.style.opacity = 1}
-                        onMouseLeave={(e) => e.target.style.opacity = 0.5}
+                        style={{ opacity: 0.45, cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = 0.45}
                       >
-                        ❌
+                        <X size={14} />
                       </span>
                     </div>
                   ))}
@@ -4540,9 +4557,9 @@ export default function App() {
                     <button
                       title="Copy — keeps tables and formatting"
                       onClick={async () => { const ok = await copyMessageFormatted(msg.text); if (ok) { setCopiedMsgIdx(i); setTimeout(() => setCopiedMsgIdx(c => c === i ? null : c), 1500); } }}
-                      style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 8px', fontSize: '11px', color: 'var(--ink-soft)', cursor: 'pointer' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'transparent', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 9px', fontSize: '11px', color: copiedMsgIdx === i ? 'var(--accent)' : 'var(--ink-soft)', cursor: 'pointer' }}
                     >
-                      {copiedMsgIdx === i ? '✓ Copied' : '⧉ Copy'}
+                      {copiedMsgIdx === i ? <><Check size={13} /> Copied</> : <><Copy size={13} /> Copy</>}
                     </button>
                   </div>
                 )}
@@ -4615,7 +4632,7 @@ export default function App() {
             {isListening ? (
               <span style={{ display: 'inline-block', width: '8px', height: '8px', background: '#ffffff', borderRadius: '50%' }} />
             ) : (
-              '🎙️'
+              <Mic size={18} />
             )}
           </button>
           <input
@@ -4627,8 +4644,8 @@ export default function App() {
             disabled={copilotLoading}
             style={{ flex: 1, height: '40px' }}
           />
-          <button className="btn" style={{ padding: '8px 16px', height: '40px' }} onClick={handleCopilotSend} disabled={copilotLoading || !copilotQuery.trim()}>
-            Send
+          <button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', height: '40px' }} onClick={handleCopilotSend} disabled={copilotLoading || !copilotQuery.trim()}>
+            <Send size={15} /> Send
           </button>
         </div>
       </div>
