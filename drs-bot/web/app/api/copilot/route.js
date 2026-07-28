@@ -63,8 +63,11 @@ STRICT FORMAT (critical — or the Apply button will not appear):
 - Put the proposal block(s) at the very END of your reply, after your chat text.
 ` : '';
 
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const systemPrompt = `You are the context-aware AI Copilot for the Recykal DRS (Deposit Return System) Roadmap Engine.
 You are helping the DRS Pod Leader who is currently viewing the "${tab}" tab.
+
+TIME AWARENESS (critical): Today's date is ${today}. Reason relative to this date. Any event/launch/regulation dated before today has ALREADY happened — never describe a past event as upcoming. If a market's DRS has already launched, discuss the current post-launch reality (adoption, competition, optimization), not pre-launch prep. Verify current status via grounded search rather than relying on outdated training-era assumptions.
 ${coAuthorBlock}
 
 PROJECT CONTEXT & CURRENT TAB DATA:

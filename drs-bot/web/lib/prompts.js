@@ -51,7 +51,16 @@ CRITICAL GEOGRAPHIC COMPLIANCE WARNING:
 - Instead, map them to the real local equivalents in ${country} (e.g. EU regulations, National/Local Environmental Agencies, credit/debit card transfers or standard bank wires instead of UPI, and actual local cities/towns in ${country}).
 ` : '';
 
-  const contextHeader = `CONTEXT (from Stage 1 Setup):
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const timeAwareness = `TIME AWARENESS (critical):
+- Today's date is ${today}. Reason relative to this date.
+- Any event, launch, tender, or regulation dated BEFORE today has ALREADY happened — never describe a past event as upcoming or "will happen".
+- If the target market's DRS (or a competitor's) has already launched, base the strategy on the CURRENT post-launch reality (adoption, competition, optimization, share-gain) — NOT pre-launch preparation.
+- Verify the real current status via grounded search rather than assuming; do not rely on outdated training-era framing.
+
+`;
+
+  const contextHeader = `${timeAwareness}CONTEXT (from Stage 1 Setup):
 - Country: ${country}
 - State/region: ${isNat ? 'National Level (Whole Country)' : state}
 - Implementation model: ${implementationModel}
