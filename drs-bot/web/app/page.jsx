@@ -388,83 +388,124 @@ export default function App() {
   const [chatHistoryDropdownOpen, setChatHistoryDropdownOpen] = useState(false);
   const chatDropdownRef = useRef(null);
 
-  // Chat Persistence Logic
-  // Chats are scoped to a project; when no project is open we fall back to a
-  // persistent "General" chat (GLOBAL) so brainstorming in Setup/History is
-  // never lost.
+  // ---- Chat persistence (Supabase-backed, SHARED per scope) ----
+  // Chats live in the `chats` table so they follow the project, not the browser:
+  // any teammate who opens a project sees its conversations. Scope is the
+  // project id, or 'GLOBAL' for the project-less "General" chat. localStorage is
+  // kept only as an offline mirror / fallback when the cloud is unreachable.
   const getChatScope = (pid) => (pid && pid !== 'NEW_PROJECT_PLACEHOLDER') ? pid : 'GLOBAL';
-  const loadChatThreads = (pid) => {
+  const CHAT_GREETING = 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.';
+  const makeThread = (text) => ({
+    id: 'thread_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    title: 'New Chat',
+    messages: [{ sender: 'assistant', text: text || CHAT_GREETING }],
+  });
+  const chatLoadToken = useRef(0);       // guards against out-of-order loads
+  const deletedChatIds = useRef(new Set()); // never resurrect a deleted thread
+
+  const readLocalChats = (scope) => {
+    try {
+      const raw = localStorage.getItem('drs_chats_' + scope);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return Array.isArray(parsed) ? parsed.filter(t => t && t.id && Array.isArray(t.messages)) : [];
+    } catch { return []; }
+  };
+  const mirrorLocalChats = (scope, threads) => {
+    try { localStorage.setItem('drs_chats_' + scope, JSON.stringify(threads)); } catch {}
+  };
+
+  const loadChatThreads = async (pid) => {
     const scope = getChatScope(pid);
-    const stored = localStorage.getItem('drs_chats_' + scope);
-    if (stored) {
-      try {
-        const threads = JSON.parse(stored);
-        if (threads && threads.length > 0) {
-          setChatThreads(threads);
-          setActiveThreadId(threads[0].id);
-          setCopilotMessages(threads[0].messages);
-          return;
-        }
-      } catch (e) {}
+    const token = ++chatLoadToken.current;
+    let threads = [];
+    let cloudOk = false;
+    try {
+      const { data, error } = await supabase
+        .from('chats')
+        .select('id, title, messages, updated_at')
+        .eq('scope', scope)
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      cloudOk = true;
+      threads = (data || []).map(r => ({
+        id: r.id,
+        title: r.title || 'New Chat',
+        messages: (Array.isArray(r.messages) && r.messages.length) ? r.messages : [{ sender: 'assistant', text: CHAT_GREETING }],
+      }));
+    } catch (e) {
+      threads = readLocalChats(scope); // offline / table not created yet
     }
-    const defaultThread = {
-      id: 'thread_' + Date.now(),
-      title: 'New Chat',
-      messages: [{ sender: 'assistant', text: 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.' }]
-    };
-    setChatThreads([defaultThread]);
-    setActiveThreadId(defaultThread.id);
-    setCopilotMessages(defaultThread.messages);
-    localStorage.setItem('drs_chats_' + scope, JSON.stringify([defaultThread]));
+
+    // One-time migration: lift any local-only conversations into the cloud.
+    if (cloudOk) {
+      const cloudIds = new Set(threads.map(t => t.id));
+      const orphans = readLocalChats(scope).filter(t => t.messages.length > 1 && !cloudIds.has(t.id) && !deletedChatIds.current.has(t.id));
+      if (orphans.length) {
+        try {
+          await supabase.from('chats').upsert(
+            orphans.map(t => ({
+              id: t.id, scope, title: t.title || 'New Chat', messages: t.messages,
+              created_by: authUser?.id || null, updated_at: new Date().toISOString(),
+            })),
+            { onConflict: 'id' }
+          );
+          threads = [...orphans, ...threads];
+        } catch (e) { /* keep local copy; retried on next load */ }
+      }
+    }
+
+    if (token !== chatLoadToken.current) return; // superseded by a newer load
+    if (threads.length === 0) threads = [makeThread()];
+    setChatThreads(threads);
+    setActiveThreadId(threads[0].id);
+    setCopilotMessages(threads[0].messages);
+    mirrorLocalChats(scope, threads);
   };
 
   useEffect(() => {
     loadChatThreads(projectId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
+  // Debounced save of the active thread (skips greeting-only threads so we
+  // never create empty rows).
   useEffect(() => {
-    if (!activeThreadId) return;
+    if (!activeThreadId || deletedChatIds.current.has(activeThreadId)) return;
+    if (!Array.isArray(copilotMessages) || copilotMessages.length <= 1) return;
     const scope = getChatScope(projectId);
-    // Debounce or directly save on message change
-    setChatThreads(prev => {
-      // Find current thread to see if messages are actually different
-      const current = prev.find(t => t.id === activeThreadId);
-      if (current && current.messages.length === copilotMessages.length) {
-        // Quick check, might not need save, but let's save to be safe
-      }
-      
-      const updated = prev.map(t => {
-        if (t.id === activeThreadId) {
-          // Auto-name thread based on first user query if it is still "New Chat"
-          let title = t.title;
-          if (title === 'New Chat' && copilotMessages.length > 1) {
-            const firstUser = copilotMessages.find(m => m.sender === 'user');
-            if (firstUser) {
-              title = firstUser.text.substring(0, 20) + (firstUser.text.length > 20 ? '...' : '');
-            }
-          }
-          return { ...t, title, messages: copilotMessages };
-        }
-        return t;
+    const firstUser = copilotMessages.find(m => m.sender === 'user');
+    const title = firstUser?.text
+      ? firstUser.text.substring(0, 30) + (firstUser.text.length > 30 ? '…' : '')
+      : 'New Chat';
+
+    const timer = setTimeout(async () => {
+      if (deletedChatIds.current.has(activeThreadId)) return;
+      setChatThreads(prev => {
+        const exists = prev.some(t => t.id === activeThreadId);
+        const next = exists
+          ? prev.map(t => (t.id === activeThreadId ? { ...t, title, messages: copilotMessages } : t))
+          : [{ id: activeThreadId, title, messages: copilotMessages }, ...prev];
+        mirrorLocalChats(scope, next);
+        return next;
       });
-      localStorage.setItem('drs_chats_' + scope, JSON.stringify(updated));
-      return updated;
-    });
+      try {
+        await supabase.from('chats').upsert({
+          id: activeThreadId, scope, title, messages: copilotMessages,
+          created_by: authUser?.id || null, updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
+      } catch (e) { /* mirrored locally; will sync on a later save */ }
+    }, 700);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [copilotMessages, projectId, activeThreadId]);
 
   const createNewThread = () => {
-    const newThread = {
-      id: 'thread_' + Date.now(),
-      title: 'New Chat',
-      messages: [{ sender: 'assistant', text: 'Conversation reset. Ask me anything!' }]
-    };
-    setChatThreads(prev => {
-      const updated = [newThread, ...prev];
-      localStorage.setItem('drs_chats_' + getChatScope(projectId), JSON.stringify(updated));
-      return updated;
-    });
-    setActiveThreadId(newThread.id);
-    setCopilotMessages(newThread.messages);
+    // Not written to the cloud until it has a real message (avoids empty rows).
+    const scope = getChatScope(projectId);
+    const t = makeThread('Conversation reset. Ask me anything!');
+    setChatThreads(prev => { const next = [t, ...prev]; mirrorLocalChats(scope, next); return next; });
+    setActiveThreadId(t.id);
+    setCopilotMessages(t.messages);
     setChatHistoryDropdownOpen(false);
   };
 
@@ -477,24 +518,19 @@ export default function App() {
     }
   };
 
-  const deleteThread = (id, e) => {
+  const deleteThread = async (id, e) => {
     e.stopPropagation();
-    const updated = chatThreads.filter(t => t.id !== id);
-    let finalUpdated = updated;
-    if (updated.length === 0) {
-      const defaultThread = {
-        id: 'thread_' + Date.now(),
-        title: 'New Chat',
-        messages: [{ sender: 'assistant', text: 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.' }]
-      };
-      finalUpdated = [defaultThread];
-    }
-    setChatThreads(finalUpdated);
-    localStorage.setItem('drs_chats_' + getChatScope(projectId), JSON.stringify(finalUpdated));
+    deletedChatIds.current.add(id);
+    const scope = getChatScope(projectId);
+    const remaining = chatThreads.filter(t => t.id !== id);
+    const finalThreads = remaining.length ? remaining : [makeThread()];
+    setChatThreads(finalThreads);
+    mirrorLocalChats(scope, finalThreads);
     if (activeThreadId === id) {
-      setActiveThreadId(finalUpdated[0].id);
-      setCopilotMessages(finalUpdated[0].messages);
+      setActiveThreadId(finalThreads[0].id);
+      setCopilotMessages(finalThreads[0].messages);
     }
+    try { await supabase.from('chats').delete().eq('id', id); } catch (e) { /* local state already updated */ }
   };
 
   useEffect(() => {
