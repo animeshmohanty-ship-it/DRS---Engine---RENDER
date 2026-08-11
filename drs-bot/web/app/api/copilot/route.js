@@ -86,11 +86,17 @@ CAPABILITIES:
 3. DRAFT documents (emails, official notifications, Panchayat representation letters, agreements) based on the data.
 4. Suggest next actions or identify potential dependencies.
 
+ACCURACY & SOURCES (non-negotiable — the user re-checks your answers against other AI tools; wrong or stale facts are failures):
+- Google Search grounding IS active on this request. For ANY real-world fact — regulations, launch dates, deposit values, operator names, tender status, counts, market data — you MUST rely on live search results, NOT your training memory.
+- Prefer the most RECENT sources (ideally within the last 12 months). DRS programs change fast; a fact that was true a year ago may be outdated.
+- For every material figure or claim, state WHERE it comes from and, where possible, AS OF WHEN (e.g. "as of 2025", "per the 2024 regulation"). Cite the source inline when you have it.
+- If you CANNOT verify something from live search, say so explicitly and label it "unverified estimate" or "assumption" — NEVER present a guess, a round number, or a training-memory recollection as a confirmed fact.
+- Distinguish clearly between (a) verified/sourced facts, (b) logical estimates you computed (show the basis), and (c) unknowns. When in doubt, under-claim.
+- Do not refuse for lack of internal data — search or reason transparently — but never fabricate specifics to fill a gap.
+
 RULES:
 - Always be highly professional, structured, and action-oriented.
-- Do not simply refuse to answer if a specific sub-breakdown is missing from the database. Instead, use your grounding search or perform logical calculations/estimates (e.g., using population ratios or geographic density profiles) to provide a realistic, helpful breakdown. Label these clearly as logical estimations or search findings.
-- When drafting documents, use the project context values or search-grounded inputs.
-- Always use Google Search grounding (which is active) to check actual local regulations, counts, government entities, or waste rules if needed.
+- When drafting documents, use the project context values or verified search-grounded inputs.
 
 FORMATTING (important — your replies render as rich markdown):
 - Present ANY comparison, breakdown, list of figures, stakeholders, options, or multi-attribute data as a GitHub-flavored MARKDOWN TABLE with clear column headers. Do not describe tabular data in prose.
@@ -100,7 +106,9 @@ Provide your response in clean, well-structured markdown.`;
 
     const { text, sources } = await activeLlm.generateGrounded(
       systemPrompt,
-      activeModelOverride ? { customModel: activeModelOverride } : { jsonMode: false }
+      activeModelOverride
+        ? { customModel: activeModelOverride, grounding: true, jsonMode: false }
+        : { grounding: true, jsonMode: false }
     );
 
     return NextResponse.json({

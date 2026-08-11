@@ -8,7 +8,7 @@ import { AuthScreens } from './authScreens.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
-  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users
+  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users, ExternalLink
 } from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
@@ -1563,7 +1563,8 @@ export default function App() {
       for (const [s, e] of cuts.reverse()) display = display.slice(0, s) + display.slice(e);
       display = display.replace(/::end::/g, '').trim();
       const spokenText = display || 'I have proposed changes below.';
-      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: spokenText, proposals: proposals.length ? proposals : undefined, tab: tabParam }]);
+      const msgSources = Array.isArray(data.sources) ? data.sources.filter(s => s && s.uri) : [];
+      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: spokenText, proposals: proposals.length ? proposals : undefined, tab: tabParam, sources: msgSources.length ? msgSources : undefined }]);
       if (voiceMode) speak(spokenText);
     } catch (err) {
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
@@ -4791,6 +4792,19 @@ export default function App() {
             return (
               <div key={i} className={`chat-message ${msg.sender === 'user' ? 'user' : 'assistant'}`}>
                 <div className="md-body" style={{ lineHeight: 1.5, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
+                {msg.sender === 'assistant' && msg.sources && msg.sources.length > 0 && (
+                  <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--line)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--ink-soft)', marginBottom: 4 }}>SOURCES ({msg.sources.length})</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      {msg.sources.slice(0, 6).map((s, si) => (
+                        <a key={si} href={s.uri} target="_blank" rel="noreferrer" title={s.uri} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--accent)', textDecoration: 'none', overflow: 'hidden' }}>
+                          <ExternalLink size={11} style={{ flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title || s.uri}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {msg.sender === 'assistant' && msg.text && (
                   <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
                     <button

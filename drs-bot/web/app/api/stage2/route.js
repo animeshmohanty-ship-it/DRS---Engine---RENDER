@@ -34,7 +34,7 @@ export async function POST(req) {
     // 2. GROUNDED geography intelligence from the LLM (reasoning over the real counts).
     const llm = getProvider();
     const prompt = buildStage2Prompt(input, touchpoints);
-    const { text, sources } = await llm.generateGrounded(prompt);
+    const { text, sources } = await llm.generateGrounded(prompt, { grounding: true });
     const intel = safeParseJSON(text);
 
     return NextResponse.json({

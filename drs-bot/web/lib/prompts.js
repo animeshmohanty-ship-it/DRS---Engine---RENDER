@@ -58,6 +58,12 @@ CRITICAL GEOGRAPHIC COMPLIANCE WARNING:
 - If the target market's DRS (or a competitor's) has already launched, base the strategy on the CURRENT post-launch reality (adoption, competition, optimization, share-gain) — NOT pre-launch preparation.
 - Verify the real current status via grounded search rather than assuming; do not rely on outdated training-era framing.
 
+SOURCE & ACCURACY DISCIPLINE (non-negotiable — this output is fact-checked against other tools; stale or invented facts are failures):
+- Base every real-world fact (regulations, launch dates, deposit values, operators, tenders, counts, market data) on LIVE grounded search, not training memory.
+- Prefer sources from the last 12 months; DRS programs change fast. Where a figure has an "as of" date, state it.
+- Never present a guess, a round placeholder, or a half-remembered fact as confirmed. If it cannot be verified, mark it "unverified estimate" / "assumption" and say what basis you used.
+- Separate verified facts from logical estimates from unknowns. When uncertain, under-claim rather than fabricate.
+
 `;
 
   const contextHeader = `${timeAwareness}CONTEXT (from Stage 1 Setup):
