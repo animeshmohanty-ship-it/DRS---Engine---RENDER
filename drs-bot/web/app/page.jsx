@@ -1743,14 +1743,14 @@ export default function App() {
         </div>
         
         <div className="sidebar-menu">
-          <div className={`menu-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+          <div className={`menu-item nav-teal ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
             <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src="/logo.png" alt="Logo" className="spin-slow" style={{ width: '16px', height: '16px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
             </div>
             <span>Project History</span>
           </div>
 
-          <div className={`menu-item ${activeTab === 'help' ? 'active' : ''}`} onClick={() => setActiveTab('help')}>
+          <div className={`menu-item nav-amber ${activeTab === 'help' ? 'active' : ''}`} onClick={() => setActiveTab('help')}>
             <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <HelpCircle size={16} />
             </div>
@@ -1758,7 +1758,7 @@ export default function App() {
           </div>
 
           {isAdmin && (
-            <div className={`menu-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+            <div className={`menu-item nav-violet ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
               <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ShieldCheck size={16} />
               </div>

@@ -117,6 +117,20 @@ html, body {
   color: #ffffff;
 }
 
+/* Utility nav items (Project History / Help / Admin) — distinct identity
+   colours, soft-tint active pill, so they read apart from the workflow stages. */
+.nav-teal .badge-icon   { color: #0E7C66; }
+.nav-amber .badge-icon  { color: #B7791F; }
+.nav-violet .badge-icon { color: #6D5AE0; }
+
+.nav-teal.active   { background: #E1F0EB; color: #0A5A4A; font-weight: 600; }
+.nav-amber.active  { background: #FAEEDA; color: #8A5A12; font-weight: 600; }
+.nav-violet.active { background: #ECE9FB; color: #4A3C9E; font-weight: 600; }
+
+.nav-teal.active .badge-icon   { background: transparent; color: #0E7C66; }
+.nav-amber.active .badge-icon  { background: transparent; color: #B7791F; }
+.nav-violet.active .badge-icon { background: transparent; color: #6D5AE0; }
+
 .badge-icon {
   display: flex;
   align-items: center;
