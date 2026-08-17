@@ -17,25 +17,34 @@ export async function POST(req) {
       return NextResponse.json({ ok: false, error: 'No file uploaded' }, { status: 400 });
     }
 
-    const filename = file.name || 'document.pdf';
-    if (!/\.pdf$/i.test(filename)) {
-      return NextResponse.json({ ok: false, error: 'Only PDF files are supported for now' }, { status: 400 });
+    const filename = file.name || 'document';
+    const isPdf = /\.pdf$/i.test(filename);
+    const isText = /\.(md|markdown|txt|csv|tsv|json|log)$/i.test(filename);
+    if (!isPdf && !isText) {
+      return NextResponse.json({ ok: false, error: 'Supported files: PDF, Markdown (.md), text (.txt), CSV.' }, { status: 400 });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // ---- Extract text ----
     let rawText = '';
-    try {
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      rawText = (result?.text || '').replace(/\s+\n/g, '\n').trim();
-    } catch (e) {
-      return NextResponse.json({ ok: false, error: `Could not read PDF: ${e.message}` }, { status: 422 });
-    }
-
-    if (!rawText) {
-      return NextResponse.json({ ok: false, error: 'This PDF has no extractable text (it may be a scanned image).' }, { status: 422 });
+    if (isPdf) {
+      try {
+        const parser = new PDFParse({ data: buffer });
+        const result = await parser.getText();
+        rawText = (result?.text || '').replace(/\s+\n/g, '\n').trim();
+      } catch (e) {
+        return NextResponse.json({ ok: false, error: `Could not read PDF: ${e.message}` }, { status: 422 });
+      }
+      if (!rawText) {
+        return NextResponse.json({ ok: false, error: 'This PDF has no extractable text (it may be a scanned image).' }, { status: 422 });
+      }
+    } else {
+      // Plain-text formats (md / txt / csv / …) — read directly, no parser needed.
+      rawText = buffer.toString('utf8').replace(/\r\n/g, '\n').trim();
+      if (!rawText) {
+        return NextResponse.json({ ok: false, error: 'This file is empty.' }, { status: 422 });
+      }
     }
 
     const fullChars = rawText.length;

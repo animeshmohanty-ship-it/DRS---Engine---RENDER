@@ -1431,10 +1431,10 @@ export default function App() {
     }
   };
 
-  // ---- Project Knowledge (uploaded PDFs → the bot's "brain") ----
+  // ---- Project Knowledge (uploaded docs → the bot's "brain") ----
   const uploadKnowledge = async (file) => {
     if (!file) return;
-    if (!/\.pdf$/i.test(file.name || '')) { setError('Only PDF files are supported for now.'); return; }
+    if (!/\.(pdf|md|markdown|txt|csv|tsv|json|log)$/i.test(file.name || '')) { setError('Supported files: PDF, Markdown (.md), text (.txt), CSV.'); return; }
     setKnowledgeUploading(true);
     setError('');
     try {
@@ -1474,12 +1474,12 @@ export default function App() {
             Project Knowledge{docs.length ? ` (${docs.length})` : ''}
           </div>
           <label className="copilot-toggle-btn" style={{ cursor: knowledgeUploading ? 'wait' : 'pointer', opacity: knowledgeUploading ? 0.6 : 1, height: 30, padding: '0 12px' }}>
-            {knowledgeUploading ? <><RefreshCw size={13} className="spin" /> Reading…</> : <><Plus size={14} /> Add PDF</>}
-            <input type="file" accept="application/pdf,.pdf" style={{ display: 'none' }} disabled={knowledgeUploading}
+            {knowledgeUploading ? <><RefreshCw size={13} className="spin" /> Reading…</> : <><Plus size={14} /> Add file</>}
+            <input type="file" accept=".pdf,.md,.markdown,.txt,.csv,.tsv,.json,.log,application/pdf,text/markdown,text/plain,text/csv" style={{ display: 'none' }} disabled={knowledgeUploading}
               onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) uploadKnowledge(f); e.target.value = ''; }} />
           </label>
         </div>
-        {!compact && <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: '6px 0 0' }}>Upload tenders, regulations, past reports — Binny reads them and uses them as context in every stage it generates.</p>}
+        {!compact && <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: '6px 0 0' }}>Upload tenders, regulations, reports, notes — PDF, Markdown (.md), text or CSV. Binny reads them and uses them as context in every stage it generates.</p>}
         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
           {docs.length === 0 && <div style={{ fontSize: '12px', color: 'var(--ink-soft)', fontStyle: 'italic' }}>No documents added yet.</div>}
           {docs.map(d => (
