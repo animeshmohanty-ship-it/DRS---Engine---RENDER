@@ -8,7 +8,7 @@ import { AuthScreens } from './authScreens.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
-  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users, ExternalLink
+  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users, ExternalLink, HelpCircle
 } from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
@@ -547,6 +547,9 @@ export default function App() {
   const [copilotFullpage, setCopilotFullpage] = useState(false);
   const [knowledgeUploading, setKnowledgeUploading] = useState(false);
   const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
+  useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
+  const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
 
   // ---- Auth (Phase 1: Google login + Recykal domain + approval gate) ----
   const [authMode, setAuthMode] = useState(AUTH_ENABLED ? 'loading' : 'active'); // loading|login|pending|blocked|active
@@ -1747,6 +1750,13 @@ export default function App() {
             <span>Project History</span>
           </div>
 
+          <div className={`menu-item ${activeTab === 'help' ? 'active' : ''}`} onClick={() => setActiveTab('help')}>
+            <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <HelpCircle size={16} />
+            </div>
+            <span>Help &amp; Playbook</span>
+          </div>
+
           {isAdmin && (
             <div className={`menu-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
               <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1873,7 +1883,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1988,6 +1998,25 @@ export default function App() {
           )}
 
           {/* HISTORY TAB */}
+          {activeTab === 'help' && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                <HelpCircle size={22} style={{ color: 'var(--accent)' }} />
+                <h3 style={{ margin: 0 }}>The Complete Playbook</h3>
+                <a href="/DRS-Bot-Playbook.pdf" download className="copilot-toggle-btn" style={{ marginLeft: 'auto', height: 32, textDecoration: 'none', color: 'var(--ink)' }}>
+                  <Download size={14} /> Download PDF
+                </a>
+                <a href="/DRS-Bot-Playbook.pdf" target="_blank" rel="noreferrer" className="copilot-toggle-btn" style={{ height: 32, textDecoration: 'none', color: 'var(--ink)' }}>
+                  <ExternalLink size={14} /> Open in tab
+                </a>
+              </div>
+              <p className="sub" style={{ marginTop: 4 }}>New to the DRS bot? This manual explains every concept (Greenfield vs Brownfield, the implementation models, each stage) and walks you through building your first project. You can also just ask Binny "how do I use this?"</p>
+              <div style={{ marginTop: 14, border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden', background: 'var(--panel)' }}>
+                <iframe src="/DRS-Bot-Playbook.pdf#view=FitH" title="DRS Bot Playbook" style={{ width: '100%', height: '78vh', border: 'none', display: 'block' }} />
+              </div>
+            </div>
+          )}
+
           {activeTab === 'admin' && isAdmin && (() => {
             const projCount = (id) => adminProjects.filter(p => p.created_by === id).length;
             const pending = adminProfiles.filter(p => p.status === 'pending').length;
@@ -2079,6 +2108,28 @@ export default function App() {
 
           {activeTab === 'history' && (
             <div>
+              {!welcomeDismissed && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '16px 18px', marginBottom: 20, borderRadius: 12, background: 'var(--accent)', color: '#fff' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <HelpCircle size={22} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: '"Poppins", sans-serif', fontWeight: 600, fontSize: 15, marginBottom: 2 }}>New to the DRS bot?</div>
+                    <div style={{ fontSize: 13, opacity: 0.92, lineHeight: 1.5 }}>The Playbook explains everything — Greenfield vs Brownfield, the models, every stage — and walks you through your first project. You can also just ask Binny "how do I use this?"</div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                      <button onClick={() => setActiveTab('help')} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff', color: 'var(--accent)', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        <BookOpen size={15} /> Read the Playbook
+                      </button>
+                      <button onClick={dismissWelcome} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.5)', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        Got it, dismiss
+                      </button>
+                    </div>
+                  </div>
+                  <button onClick={dismissWelcome} title="Dismiss" style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.8, flexShrink: 0 }}>
+                    <X size={18} />
+                  </button>
+                </div>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h3>Active Projects</h3>
                 <button className="btn" onClick={initNewProject}>+ Create New Project</button>

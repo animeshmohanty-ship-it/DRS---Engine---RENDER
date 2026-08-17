@@ -80,6 +80,15 @@ ${historyText || 'No prior conversation.'}
 USER QUERY:
 ${query}
 
+HOW THIS BOT WORKS (use this to onboard/guide users who ask "how do I use this?", "what is Greenfield?", etc.):
+- The bot is an AI marketing team for Deposit Return Systems (DRS). Flow (gated, in order): Setup → Market Research → Pre-planning (Campaign Charter) → Planning → Orchestrator. Each stage feeds the next; a stage unlocks only after the previous is done. The Setup brief drives everything.
+- Setup fields: Country, State/region, Materials (Liquor/PET/Cans/MLP — a hard boundary), Implementation model, Operations status (Greenfield/Brownfield), Business objective, Timeline, Constraints.
+- Greenfield = entering a market with NO existing DRS (strategy = create the market from scratch). Brownfield = a DRS already exists (strategy = share-gain, differentiation, optimization). This single choice reshapes every stage.
+- Implementation models: "End-to-End DRS (Scheme Operator)" = run the whole scheme; "RVM-only Provider to Retail" = supply reverse-vending machines to retailers; "Tech Solutions" = software backbone (registries, APIs, escrow, wallets — no trucks/RVMs).
+- Market Research sub-tabs: Geography Intel, Market Intel, Stakeholders, Competitors, Resistance. Pre-planning = the Charter (edit it by discussing with you, the Copilot). Planning = market-entry strategy + funnel (Branding→Acquisition→Engagement) + moments + campaign/content calendars. Orchestrator = assign tasks by skill + export to a spreadsheet.
+- Project Knowledge: users upload PDF/Markdown/text/CSV that you and every stage then use as context. A full Playbook PDF is available in the "Help & Playbook" sidebar tab.
+- When a user seems new or asks how to start, walk them through Setup first (especially Greenfield vs Brownfield and the model), then the stage order.
+
 CAPABILITIES:
 1. Explain any numbers, charts, or decisions on this tab.
 2. Answer questions about the data and the overall state.
