@@ -8,7 +8,8 @@ import { AuthScreens } from './authScreens.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
-  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users, ExternalLink, HelpCircle
+  MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users, ExternalLink, HelpCircle,
+  Brain, Trash2
 } from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
@@ -621,6 +622,51 @@ export default function App() {
     catch (e) { setError('Update failed: ' + e.message); }
   };
   useEffect(() => { if (activeTab === 'admin' && isAdmin) loadAdmin(); /* eslint-disable-next-line */ }, [activeTab, isAdmin]);
+
+  // ---- DRS Brain admin ----
+  const [brainStatus, setBrainStatus] = useState(null);
+  const [brainBusy, setBrainBusy] = useState(false);
+  const [brainText, setBrainText] = useState('');
+  const [brainSource, setBrainSource] = useState('');
+  const [brainVisibility, setBrainVisibility] = useState('internal');
+  const [brainSearchQuery, setBrainSearchQuery] = useState('');
+  const [brainResults, setBrainResults] = useState(null);
+  const [brainMsg, setBrainMsg] = useState('');
+
+  const loadBrainStatus = async () => {
+    try { const r = await fetch('/api/brain/status'); setBrainStatus(await r.json()); }
+    catch (e) { setBrainStatus({ ok: false, error: e.message }); }
+  };
+  const addToBrain = async () => {
+    if (!brainText.trim()) return;
+    setBrainBusy(true); setBrainMsg('');
+    try {
+      const r = await fetch('/api/brain/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: brainText, source: brainSource || 'Manual add', origin: 'seed', tags: { scope: 'drs', visibility: brainVisibility } }) });
+      const d = await r.json();
+      setBrainMsg(d.ok ? `Added ${d.stored} chunk(s) to the Brain.` : (d.disabled ? 'Brain is disabled (set BRAIN_ENABLED + service key).' : `Failed: ${d.error}`));
+      if (d.ok) { setBrainText(''); setBrainSource(''); loadBrainStatus(); }
+    } catch (e) { setBrainMsg('Failed: ' + e.message); } finally { setBrainBusy(false); }
+  };
+  const runBrainVerify = async () => {
+    setBrainBusy(true); setBrainMsg('Verifying a batch (grounding each fact)…');
+    try {
+      const r = await fetch('/api/brain/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit: 8 }) });
+      const d = await r.json();
+      setBrainMsg(d.ok ? `Processed ${d.processed}: ${d.promoted} verified, ${d.quarantined} quarantined, ${d.left} left as experience. Run again for the next batch.` : `Failed: ${d.error || 'disabled'}`);
+      loadBrainStatus();
+    } catch (e) { setBrainMsg('Failed: ' + e.message); } finally { setBrainBusy(false); }
+  };
+  const searchBrain = async () => {
+    if (!brainSearchQuery.trim()) return;
+    setBrainBusy(true); setBrainResults(null);
+    try {
+      const r = await fetch('/api/brain/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: brainSearchQuery }) });
+      const d = await r.json();
+      setBrainResults(d.ok ? (d.results || []) : []);
+    } catch (e) { setBrainResults([]); } finally { setBrainBusy(false); }
+  };
+  useEffect(() => { if (activeTab === 'brain' && isAdmin) loadBrainStatus(); /* eslint-disable-next-line */ }, [activeTab, isAdmin]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
@@ -1767,6 +1813,15 @@ export default function App() {
             </div>
           )}
 
+          {isAdmin && (
+            <div className={`menu-item nav-violet ${activeTab === 'brain' ? 'active' : ''}`} onClick={() => setActiveTab('brain')}>
+              <div className="badge-icon" style={{ background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Brain size={16} />
+              </div>
+              <span>DRS Brain</span>
+            </div>
+          )}
+
           <div style={{ padding: '8px 14px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-soft)' }}>ROADMAP FLOW</div>
 
           {(() => {
@@ -1884,7 +1939,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -1999,6 +2054,95 @@ export default function App() {
           )}
 
           {/* HISTORY TAB */}
+          {activeTab === 'brain' && isAdmin && (() => {
+            const s = brainStatus;
+            const by = s?.byStatus || {};
+            const tile = (label, val, color) => (
+              <div style={{ background: 'var(--grey-soft)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{label}</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: color || 'var(--ink)' }}>{val}</div>
+              </div>
+            );
+            return (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <Brain size={22} style={{ color: '#6D5AE0' }} />
+                  <h3 style={{ margin: 0 }}>DRS Brain</h3>
+                  <button className="copilot-toggle-btn" style={{ marginLeft: 'auto', height: 32 }} onClick={loadBrainStatus}><RefreshCw size={13} /> Refresh</button>
+                </div>
+                <p className="sub" style={{ marginTop: 4 }}>The bot's central memory. Add knowledge, verify it (grounded), and search what it knows. Uploads, generations, and Binny chats also feed it automatically.</p>
+
+                {s && !s.enabled && (
+                  <div style={{ margin: '14px 0', padding: '12px 16px', borderRadius: 10, background: '#FBEAEA', color: '#A32D2D', fontSize: 13 }}>
+                    Brain is <b>disabled</b>. Set <code>BRAIN_ENABLED=true</code> and <code>SUPABASE_SERVICE_ROLE_KEY</code> on Render, then redeploy.
+                  </div>
+                )}
+                {s && s.enabled && !s.connected && (
+                  <div style={{ margin: '14px 0', padding: '12px 16px', borderRadius: 10, background: '#FAEEDA', color: '#854F0B', fontSize: 13 }}>
+                    Enabled but not connected to Supabase — check the service key + that SQL_BRAIN.sql was run.
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, margin: '16px 0 22px' }}>
+                  {tile('Total facts', s?.total ?? '—')}
+                  {tile('Verified', by.verified ?? '—', '#0F6E56')}
+                  {tile('Experience', by.experience ?? '—', '#854F0B')}
+                  {tile('Quarantined', by.quarantined ?? '—', '#A32D2D')}
+                </div>
+
+                {/* Add to Brain */}
+                <div className="card" style={{ marginBottom: 16 }}>
+                  <h4 style={{ margin: '0 0 8px' }}>Add knowledge</h4>
+                  <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: '0 0 10px' }}>Paste text to add directly to the central Brain. (For PDFs/files, upload via Project Knowledge — it also feeds the Brain.)</p>
+                  <textarea value={brainText} onChange={(e) => setBrainText(e.target.value)} placeholder="Paste facts, notes, regulations, specs…" style={{ width: '100%', minHeight: 100, fontSize: 13 }} />
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 }}>
+                    <input value={brainSource} onChange={(e) => setBrainSource(e.target.value)} placeholder="Source (e.g. UK DRS regulation 2025)" style={{ flex: 1, minWidth: 180, fontSize: 13, height: 36 }} />
+                    <select value={brainVisibility} onChange={(e) => setBrainVisibility(e.target.value)} style={{ fontSize: 13, height: 36, borderRadius: 6, border: '1px solid var(--line)', padding: '0 8px' }}>
+                      <option value="internal">Internal only</option>
+                      <option value="external">Shareable</option>
+                    </select>
+                    <button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={addToBrain} disabled={brainBusy || !brainText.trim()}><Plus size={15} /> Add to Brain</button>
+                  </div>
+                </div>
+
+                {/* Verify */}
+                <div className="card" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <h4 style={{ margin: '0 0 4px' }}>Verify facts</h4>
+                    <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: 0 }}>Runs the Verification Agent on a batch: grounds each unverified doc-fact and promotes the corroborated ones. Run repeatedly to clear the backlog.</p>
+                  </div>
+                  <button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={runBrainVerify} disabled={brainBusy}><ShieldCheck size={15} /> Run verification</button>
+                </div>
+
+                {brainMsg && <div style={{ margin: '0 0 16px', padding: '10px 14px', borderRadius: 8, background: 'var(--grey-soft)', fontSize: 13 }}>{brainMsg}</div>}
+
+                {/* Search */}
+                <div className="card">
+                  <h4 style={{ margin: '0 0 8px' }}>Search the Brain</h4>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={brainSearchQuery} onChange={(e) => setBrainSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchBrain()} placeholder="e.g. Poland deposit value, Retearn RVM specs…" style={{ flex: 1, fontSize: 13, height: 38 }} />
+                    <button className="btn" onClick={searchBrain} disabled={brainBusy}>Search</button>
+                  </div>
+                  {brainResults && (
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {brainResults.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-soft)' }}>No matches.</div>}
+                      {brainResults.map((r, i) => (
+                        <div key={i} style={{ padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--panel)' }}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: r.status === 'verified' ? '#E1F0EB' : '#FAEEDA', color: r.status === 'verified' ? '#0F6E56' : '#854F0B' }}>{r.status}{r.confidence ? ' · ' + r.confidence : ''}</span>
+                            {r.source && <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{r.source}</span>}
+                            <span style={{ fontSize: 11, color: 'var(--ink-soft)', marginLeft: 'auto' }}>{Math.round((r.similarity || 0) * 100)}% match</span>
+                          </div>
+                          <div style={{ fontSize: 12.5, lineHeight: 1.5 }}>{(r.content || '').slice(0, 300)}{(r.content || '').length > 300 ? '…' : ''}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
           {activeTab === 'help' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
