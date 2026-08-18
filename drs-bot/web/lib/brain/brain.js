@@ -113,7 +113,9 @@ export function formatRecallBlock(rows) {
   return `
 
 DRS BRAIN — recalled knowledge (Recykal's memory; use it, but obey these rules):
-- Facts marked "Verified" are trusted; "Experience · unverified" is context only — never present it as confirmed fact.
+- DO NOT COPY THESE VERBATIM. Synthesize them into your own reasoning, and CROSS-CHECK against your live grounded search. If a recalled fact conflicts with fresher authoritative data, prefer the fresh data and note the discrepancy.
+- Facts marked "Verified" are trusted anchors; "Experience · unverified" is context only — never present it as confirmed fact, and re-verify it before relying on it.
+- Only use a recalled fact if it is genuinely RELEVANT to this specific task/geography; ignore the rest. Do not force-fit unrelated facts.
 - CAPABILITY TRAVELS, TACTICS DON'T: a proven capability/precedent can be cited as evidence, but do NOT transplant a market-specific tactic; adapt to THIS project's market. If a fact's context differs from the target, say so.
 - Never expose "internal"-scoped facts (financials, investors) in external-facing content.
 ${lines.join('\n')}`;

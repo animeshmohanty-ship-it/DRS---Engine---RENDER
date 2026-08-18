@@ -499,8 +499,10 @@ export async function POST(req) {
 
         try {
           console.log(`[Stage 2 Split] Finalizing layout sequence for ${targetLocation}...`);
-          const finalizePrompt = buildStage2FinalizePrompt(input, touchpoints, stateSummary);
-          
+          const s2q = `${input.country || ''} ${input.state || ''} DRS demographics population districts urbanization retail liquor touchpoints`.trim();
+          const s2brain = brainReady() ? await recallBlock(s2q, { projectId }).catch(() => '') : '';
+          const finalizePrompt = buildStage2FinalizePrompt(input, touchpoints, stateSummary) + s2brain;
+
           const response = await callLlmWithFallback(
             activeLlm,
             finalizePrompt,
@@ -591,7 +593,9 @@ export async function POST(req) {
       }
     } else if (stageNum === 5) {
       // Stage 5 Competitor Analysis (LLM Grounded prompt with local search grounding)
-      const prompt = buildCompetitorsPrompt(input);
+      const s5q = `${input.country || ''} ${input.state || ''} DRS competitors RVM providers operators ${(input.materials || input.selectedMaterials || []).join(' ')}`.trim();
+      const s5brain = brainReady() ? await recallBlock(s5q, { projectId }).catch(() => '') : '';
+      const prompt = buildCompetitorsPrompt(input) + s5brain;
       // Pass grounding: true to explicitly trigger Google Search
       const { text, sources } = await callLlmWithFallback(
         activeLlm,
