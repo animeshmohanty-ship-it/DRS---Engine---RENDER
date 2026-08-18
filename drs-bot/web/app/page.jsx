@@ -633,9 +633,22 @@ export default function App() {
   const [brainResults, setBrainResults] = useState(null);
   const [brainMsg, setBrainMsg] = useState('');
 
+  const [brainSources, setBrainSources] = useState(null);
   const loadBrainStatus = async () => {
     try { const r = await fetch('/api/brain/status'); setBrainStatus(await r.json()); }
     catch (e) { setBrainStatus({ ok: false, error: e.message }); }
+    try { const r = await fetch('/api/brain/sources'); const d = await r.json(); setBrainSources(d.ok ? (d.sources || []) : []); }
+    catch { setBrainSources([]); }
+  };
+  const removeBrainSource = async (source) => {
+    if (!window.confirm(`Remove "${source}" and all its facts from the Brain? This cannot be undone.`)) return;
+    setBrainBusy(true);
+    try {
+      const r = await fetch('/api/brain/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source }) });
+      const d = await r.json();
+      setBrainMsg(d.ok ? `Removed "${source}" (${d.deleted} chunks).` : `Failed: ${d.error}`);
+      loadBrainStatus();
+    } catch (e) { setBrainMsg('Failed: ' + e.message); } finally { setBrainBusy(false); }
   };
   const addToBrain = async () => {
     if (!brainText.trim()) return;
@@ -2088,6 +2101,38 @@ export default function App() {
                   {tile('Verified', by.verified ?? '—', '#0F6E56')}
                   {tile('Experience', by.experience ?? '—', '#854F0B')}
                   {tile('Quarantined', by.quarantined ?? '—', '#A32D2D')}
+                </div>
+
+                {/* Contents — what's in the Brain */}
+                <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+                  <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FileText size={16} /><strong style={{ fontSize: 14 }}>What's in the Brain</strong>
+                    <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--ink-soft)' }}>{brainSources ? `${brainSources.length} source(s)` : ''}</span>
+                  </div>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 620 }}>
+                      <thead>
+                        <tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}>
+                          <th style={{ padding: '9px 14px' }}>Source</th><th style={{ padding: '9px 10px' }}>Type</th><th style={{ padding: '9px 10px' }}>Facts</th><th style={{ padding: '9px 10px' }}>✅</th><th style={{ padding: '9px 10px' }}>⚠️</th><th style={{ padding: '9px 10px' }}>🚫</th><th style={{ padding: '9px 10px' }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(brainSources || []).map((s, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--line)' }}>
+                            <td style={{ padding: '9px 14px', maxWidth: 320 }}>{s.source}</td>
+                            <td style={{ padding: '9px 10px' }}><span style={{ fontSize: 11, background: 'var(--grey-soft)', padding: '1px 7px', borderRadius: 20 }}>{['upload','seed'].includes(s.origin) ? 'doc' : s.origin}</span></td>
+                            <td style={{ padding: '9px 10px' }}>{s.total}</td>
+                            <td style={{ padding: '9px 10px', color: '#0F6E56' }}>{s.verified}</td>
+                            <td style={{ padding: '9px 10px', color: '#854F0B' }}>{s.experience}</td>
+                            <td style={{ padding: '9px 10px', color: '#A32D2D' }}>{s.quarantined}</td>
+                            <td style={{ padding: '9px 10px' }}><span onClick={() => removeBrainSource(s.source)} title="Remove from Brain" style={{ cursor: 'pointer', color: '#A32D2D', display: 'inline-flex' }}><Trash2 size={14} /></span></td>
+                          </tr>
+                        ))}
+                        {brainSources && brainSources.length === 0 && <tr><td colSpan={7} style={{ padding: 18, textAlign: 'center', color: 'var(--ink-soft)' }}>The Brain is empty. Add knowledge below.</td></tr>}
+                        {!brainSources && <tr><td colSpan={7} style={{ padding: 18, textAlign: 'center', color: 'var(--ink-soft)' }}>Loading…</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 {/* Add to Brain */}
