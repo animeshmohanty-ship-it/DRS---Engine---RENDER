@@ -30,13 +30,31 @@ function getClient() {
 }
 
 // Returns an array of number[] vectors, one per input string.
+// Batches requests so we never exceed the embedding model's per-request token
+// cap (~20k). ~4 chars/token, so we keep each batch well under ~12k chars.
+const MAX_BATCH_CHARS = 12000;
+const MAX_BATCH_ITEMS = 50;
+
 export async function embed(texts) {
-  const items = Array.isArray(texts) ? texts : [texts];
+  const items = (Array.isArray(texts) ? texts : [texts]).map((t) => String(t || '').slice(0, 8000));
   if (!items.length) return [];
   const ai = getClient();
-  const res = await ai.models.embedContent({ model: EMBED_MODEL, contents: items });
-  const embs = res?.embeddings || [];
-  return embs.map((e) => e.values || e.value || []);
+  const out = [];
+  let batch = [], chars = 0;
+  const flush = async () => {
+    if (!batch.length) return;
+    const res = await ai.models.embedContent({ model: EMBED_MODEL, contents: batch });
+    for (const e of (res?.embeddings || [])) out.push(e.values || e.value || []);
+    batch = []; chars = 0;
+  };
+  for (const it of items) {
+    if (batch.length && (chars + it.length > MAX_BATCH_CHARS || batch.length >= MAX_BATCH_ITEMS)) {
+      await flush();
+    }
+    batch.push(it); chars += it.length;
+  }
+  await flush();
+  return out;
 }
 
 export async function embedOne(text) {
