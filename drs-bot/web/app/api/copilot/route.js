@@ -5,12 +5,13 @@ import * as vertex from '../../../lib/llm/vertex.js';
 import * as claude from '../../../lib/llm/claude.js';
 import { getProvider } from '../../../lib/llm/provider.js';
 import { buildKnowledgeBlock } from '../../../lib/prompts.js';
+import { recallBlock, ingest, brainReady } from '../../../lib/brain/brain.js';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    const { tab, stateData, query, history = [], model: selectedModel, knowledge = [] } = await req.json();
+    const { tab, stateData, query, history = [], model: selectedModel, knowledge = [], projectId = null } = await req.json();
 
     if (!query) {
       return NextResponse.json({ ok: false, error: 'Query is required' }, { status: 400 });
@@ -111,7 +112,7 @@ FORMATTING (important — your replies render as rich markdown):
 - Present ANY comparison, breakdown, list of figures, stakeholders, options, or multi-attribute data as a GitHub-flavored MARKDOWN TABLE with clear column headers. Do not describe tabular data in prose.
 - Use ## / ### headings to structure longer answers, bullet or numbered lists for steps, **bold** for key terms, and \`code\` for exact values/IDs.
 - Keep it clean and scannable — lead with the answer, then the supporting detail. No walls of text.
-Provide your response in clean, well-structured markdown.`;
+Provide your response in clean, well-structured markdown.${await recallBlock(query, { projectId }).catch(() => '')}`;
 
     const { text, sources } = await activeLlm.generateGrounded(
       systemPrompt,
@@ -119,6 +120,14 @@ Provide your response in clean, well-structured markdown.`;
         ? { customModel: activeModelOverride, grounding: true, jsonMode: false }
         : { grounding: true, jsonMode: false }
     );
+
+    // Auto-learn: capture the exchange into the Brain's experience layer
+    // (fire-and-forget; never blocks or breaks the reply).
+    if (brainReady() && text) {
+      ingest(`Q: ${query}\nA: ${text}`, {
+        origin: 'chat', projectId, source: `Binny chat (${tab || 'general'})`,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       ok: true,

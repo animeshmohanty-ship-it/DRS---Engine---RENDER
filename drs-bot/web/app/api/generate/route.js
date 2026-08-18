@@ -9,6 +9,7 @@ import { buildStagePrompt, buildStage6SearchPrompt, buildStage6FinalizePrompt } 
 import { buildCompetitorsPrompt } from '../../../lib/prompts/competitors.js';
 import { supabase } from '../../../lib/supabase.js';
 import { calculateConsensus } from '../../../lib/utils/consensus.js';
+import { recallBlock, ingest, brainReady } from '../../../lib/brain/brain.js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
@@ -807,8 +808,10 @@ export async function POST(req) {
       }
     } else {
       // Stages 3, 4, 6 to 11 logic
-      const prompt = buildStagePrompt(stageNum, input, projectData, action);
-      
+      const brainQuery = `${input.country || ''} ${input.state || ''} DRS ${(input.materials || input.selectedMaterials || []).join(' ')} ${input.objective || ''} ${input.operationsStatus || ''} stage ${stageNum} ${action || ''}`.trim();
+      const brainBlock = brainReady() ? await recallBlock(brainQuery, { projectId }).catch(() => '') : '';
+      const prompt = buildStagePrompt(stageNum, input, projectData, action) + brainBlock;
+
       // Factual research stages (3, 4, 6, 12) require Google Search Grounding to pull actual stats
       // Other stages are logical/SOP templates and run at maximum speed
       const researchStages = [3, 4, 6, 12];
@@ -828,6 +831,14 @@ export async function POST(req) {
       // Log run history
       if (data) {
         await saveGenerationRun(projectId, stageNum, input, data, sources);
+        // Auto-learn: capture the generated stage into the Brain (experience).
+        if (brainReady()) {
+          ingest(`DRS stage ${stageNum} output for ${input.country || ''} ${input.state || ''}:\n${JSON.stringify(data).slice(0, 6000)}`, {
+            origin: 'generation', projectId,
+            source: `Generated stage ${stageNum}`,
+            tags: { geo: input.state || input.country || null, market_type: input.operationsStatus || null, model: input.implementationModel || input.model || null },
+          }).catch(() => {});
+        }
       }
 
       const resultData = {

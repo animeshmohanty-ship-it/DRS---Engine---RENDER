@@ -1520,7 +1520,8 @@ export default function App() {
           query: userMsg.text,
           history: copilotMessages.slice(-6),
           model: selectedModel,
-          knowledge: projectStages.knowledge || []
+          knowledge: projectStages.knowledge || [],
+          projectId: projectId || null
         })
       });
       const data = await res.json();

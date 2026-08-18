@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PDFParse } from 'pdf-parse';
 import * as vertex from '../../../lib/llm/vertex.js';
+import { ingest, brainReady } from '../../../lib/brain/brain.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +72,16 @@ ${rawText.slice(0, HARD_CAP)}`;
         brainText = rawText.slice(0, SUMMARY_THRESHOLD);
         summarized = true;
       }
+    }
+
+    // Feed the FULL text into the central Brain (chunked + embedded for RAG),
+    // so uploads become long-term memory — not just per-project injection.
+    if (brainReady()) {
+      const projectId = form.get('projectId') || null;
+      ingest(rawText, {
+        origin: 'upload', projectId: projectId || null, source: filename,
+        tags: { scope: 'drs', visibility: 'internal' },
+      }).catch(() => {});
     }
 
     return NextResponse.json({
