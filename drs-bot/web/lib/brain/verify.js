@@ -67,12 +67,12 @@ export async function verifyBatch({ limit = 8 } = {}) {
       if (v.verdict === 'corroborated') {
         await supabaseAdmin.from('brain_chunks').update({ status: 'verified', confidence: v.confidence || 'Verified' }).eq('id', chunk.id);
         promoted++;
-      } else if (v.verdict === 'contradicted') {
-        await supabaseAdmin.from('brain_chunks').update({ status: 'quarantined', confidence: v.confidence || 'Assumption', meta: { ...(chunk.meta || {}), note: v.note || 'contradicted' } }).eq('id', chunk.id);
-        quarantined++;
       } else {
-        // Uncertain — leave as experience but mark attempted so we don't re-check it.
-        await supabaseAdmin.from('brain_chunks').update({ meta: { ...(chunk.meta || {}), verify_attempted: true, note: v.note || 'uncertain' } }).eq('id', chunk.id);
+        // Never quarantine document-sourced facts. "contradicted" or "uncertain"
+        // → keep as experience (labeled, still usable as context), flag it, and
+        // mark attempted so we don't re-check. Quarantine is reserved for the
+        // bot's own unsourced output, not curated uploads.
+        await supabaseAdmin.from('brain_chunks').update({ meta: { ...(chunk.meta || {}), verify_attempted: true, note: v.note || v.verdict, flagged: v.verdict === 'contradicted' } }).eq('id', chunk.id);
         left++;
       }
     }

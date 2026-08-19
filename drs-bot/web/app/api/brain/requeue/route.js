@@ -10,7 +10,18 @@ export const dynamic = 'force-dynamic';
 export async function POST(req) {
   try {
     if (!brainReady()) return NextResponse.json({ ok: false, disabled: true });
-    const { source } = (await req.json().catch(() => ({}))) || {};
+    const { source, trust } = (await req.json().catch(() => ({}))) || {};
+
+    // Trust-by-source: accept a curated authoritative document as verified
+    // outright (no grounded re-check). Requires an explicit source.
+    if (trust && source) {
+      const { error, count } = await supabaseAdmin
+        .from('brain_chunks')
+        .update({ status: 'verified', confidence: 'Verified' }, { count: 'exact' })
+        .eq('source', source);
+      if (error) throw error;
+      return NextResponse.json({ ok: true, trusted: count || 0, source });
+    }
 
     // 1) quarantined → experience
     let q1 = supabaseAdmin.from('brain_chunks').update({ status: 'experience', meta: {} }, { count: 'exact' }).eq('status', 'quarantined');
