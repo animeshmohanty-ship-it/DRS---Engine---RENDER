@@ -11,10 +11,13 @@ function header(input) {
 }
 
 const RULES = `
+YOU ARE AN AUTONOMOUS RESEARCHER — not a database reader. Your job is to FIND the data, not wait for it.
 RULES (critical):
-- Base answers on the PROJECT KNOWLEDGE / DRS BRAIN facts below when they cover this place; otherwise use live grounded web search for THIS EXACT place.
-- Adapt to the country's real administrative structure and currency (e.g. districts in India, counties/councils in the UK, powiats/voivodeships in Poland). Do NOT use another country's units.
-- Every figure: include a "source" (URL or named authority) and a "confidence" of "Verified" (named authoritative source), "Inferred" (reasoned), or "Assumption". NEVER fabricate — if unknown, use null and confidence "Assumption".
+- RESEARCH FIRST via grounded web search. Actively consult AUTHORITATIVE sources: the national census (for India: Census of India / District Census Handbooks), the government local-government directory (for India: LGD — Local Government Directory, which lists districts→blocks→panchayats→wards with counts), the national statistics office / data.gov.in, state statistical handbooks, and well-maintained encyclopaedic pages (e.g. Wikipedia district pages, which reliably carry per-district population, households, area, literacy). Cross-check across sources.
+- The DRS BRAIN facts below are a HEAD START / cache — use them if present, but NEVER depend on them: research the web thoroughly for everything they don't cover. An empty Brain must NOT produce empty output.
+- FILL EVERY FIELD. Do not leave a field blank if it can be reasonably derived. If a hard figure isn't published, compute a clearly-labelled REASONED ESTIMATE and mark its confidence "Inferred" (e.g. households ≈ population ÷ average household size, ~4.3–4.6 for India; local-body counts from LGD or state directories). Only use null + "Assumption" as a genuine last resort.
+- Confidence per item: "Verified" (found in a named authoritative source), "Inferred" (reasoned/derived — show the basis in a note), "Assumption" (weak). Label estimates honestly — never mark an estimate "Verified".
+- Adapt to the country's real administrative structure and currency (districts in India, counties/councils in the UK, powiats/voivodeships in Poland). Do NOT use another country's units.
 - Return STRICT JSON only, no prose, no markdown fences.`;
 
 export function buildGeoDeepPrompt(section, input, brainBlock = '', opts = {}) {
@@ -63,10 +66,14 @@ JSON schema:
     const size = opts.size || 18;
     return `${ctx}
 
-TASK: Return administrative sub-divisions of ${place} with demographics, ORDERED BY POPULATION (largest first). Return items ${start + 1} to ${start + size}. ${isNat ? 'Since this is a national scope, return the top macro-regions/states, not every local body.' : 'Return the districts/equivalent of this state.'} If fewer exist, return only those (and set "endOfList":true).
+TASK: Research and return administrative sub-divisions of ${place} with demographics, ORDERED BY POPULATION (largest first). Return items ${start + 1} to ${start + size}. ${isNat ? 'National scope → return the top macro-regions/states, not every local body.' : 'Return the districts/equivalent of this state.'} If fewer exist, return only those (and set "endOfList":true).
+RESEARCH EVERY FIELD — do not leave blanks:
+- population, literacyPct, urbanPct → from Census / Wikipedia district pages.
+- households → if not published, ESTIMATE = population ÷ ~4.4 (label confidence "Inferred").
+- level2Count (blocks/taluks) & level3Count (panchayats/wards) → from the Local Government Directory (LGD) or state directory; estimate from district norms if needed ("Inferred").
 JSON schema:
 {"endOfList":<true|false>,"districts":[
-  {"name":"<unit name>","population":"<number or null>","households":"<number or null>","urbanPct":"<number or null>","literacyPct":"<number or null>","level2Count":"<count of next-tier subdivisions or null>","level3Count":"<count of local bodies or null>","confidence":"Verified|Inferred|Assumption","source":""}
+  {"name":"<unit name>","population":"<number>","households":"<number — real or estimated, never blank>","urbanPct":"<number>","literacyPct":"<number>","level2Count":"<blocks/taluks count>","level3Count":"<panchayats/wards count>","confidence":"Verified|Inferred|Assumption","source":""}
 ]}`;
   }
 
