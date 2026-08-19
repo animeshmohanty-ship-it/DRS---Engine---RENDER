@@ -153,6 +153,15 @@ An **AI marketing team** for **Recykal + Retearn** — not a generic tool.
 
 ---
 
+## 🧭 GTM BLUEPRINT — LOCKED SPEC (building now, phase by phase, from 2026-08-19)
+
+New sidebar tab **"GTM Blueprint"** replacing Geo Intel/Market Research. Implements Alokesh's DRS Formula: **scenario-aware** (Regional [India+state] / National [India+national] / International [non-India / RVM-to-retail], auto from Setup + override) with **4 phase sub-tabs**:
+- **Phase 1 · Research** — layered like the TN workbook: (A) State Snapshot tiles, (B) District Intelligence table *with names* (pop/urban%/literacy/SC-ST%/religion%/ULBs/panchayats/blocks/taluks), (C) Sub-district units, (D) Priority rollout ranking, (E) Economic profile, (F) Income-class distribution (deposit-claim likelihood), (G) Context & threats (waste scenario/associations/DRS threats/channelisation), (H) Human workstreams (media/events/activation/PR/influencers → Orchestrator), + Sources.
+- **Phase 2 · Targeted Research** — touchpoints from the Google-Maps-scraped data in the Brain (per city×category: liquor/HoReCa/retail/MRF/schools/malls/petrol/theatres/religious), name+phone+rating; retailer pain-points = field research (human).
+- **Phase 3 · Narrative** — bot-generated story blocks (WM challenge → DRS solution → thought-leader → events), channel-tagged, Binny-editable.
+- **Phase 4 · Awareness** — bot-generated public activation content cards (what/benefits/how/global-success/counter-narrative/demos), channel-tagged → feeds Planning calendar.
+Every card: **confidence badge** (Verified/Experience/Estimate) + **channel tag** (Team Research=bot fills; PR/Events/Field/Design=human → Orchestrator). **Brain-first**, grounded gap-fill, generated narrative. Data stored in `projectStages.gtm`. Backend reuses the multi-call pattern (`/api/geodeep` + `lib/prompts/geoDeep.js`, scenario-aware). Mockups approved for all 4 phases. Geo Intel to be retired once GTM is live.
+
 ## 🚀 NEXT-LEVEL ROADMAP (backlog — TO BE DONE, parked 2026-08-17)
 
 > Status: **agreed to build ALL of these, phased.** PAUSED — user will say when to resume. Build design-first, each phase reversible/flagged, test on Render between. Foundation (Brain, agents, LLM, exports, auth, roster, gates) already exists.

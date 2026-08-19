@@ -70,5 +70,71 @@ JSON schema:
 ]}`;
   }
 
+  if (section === 'snapshot') {
+    return `${ctx}
+
+TASK: Return a top-line snapshot of ${place} for a DRS launch.
+JSON schema:
+{"snapshot":{
+  "population":"<e.g. 7.76 crore or null>","adminDivisions":"<count + label, e.g. 38 districts>","urbanLocalBodies":"<count or null>","localBodies":"<panchayats/wards count or null>","households":"<count or null>","urbanPct":"<number or null>","literacyPct":"<number or null>","otherKeyStat":"<e.g. HDI / life expectancy / poverty rate, or null>",
+  "source":"","confidence":"Verified|Inferred|Assumption"
+}}`;
+  }
+
+  if (section === 'context') {
+    return `${ctx}
+
+TASK: Return the DRS context & threats for ${place}.
+JSON schema:
+{"context":{
+  "wasteScenario":"<current waste-management / plastic-ban / any DRS pilot status>",
+  "associations":["<key waste / retailer / distributor associations>"],
+  "threats":[{"threat":"<name>","type":"Political|Retailer|Distributor|PIBO|ConsumerForum|Other","note":"<why it's a risk to DRS>"}],
+  "channelisation":"<who channelises the waste, where, and how>",
+  "confidence":"Verified|Inferred|Assumption","source":""
+}}`;
+  }
+
+  if (section === 'touchpoints') {
+    const cat = opts.category || 'retail';
+    return `${ctx}
+
+TASK: For ${place}, summarise the "${cat}" touchpoint category for DRS (prefer real named outlets from the Brain; else grounded estimate). Give counts + notable named examples.
+JSON schema:
+{"touchpoints":{
+  "category":"${cat}","estimatedCount":"<number or range or null>","densityNote":"<concentration by city/area>",
+  "examples":[{"name":"<outlet>","area":"<locality/city>","note":"<phone/rating if known>"}],
+  "confidence":"Verified|Inferred|Assumption","source":""
+}}`;
+  }
+
+  if (section === 'narrative') {
+    return `${ctx}
+
+TASK: Draft the DRS NARRATIVE for ${place} (${opts.scenario || 'Regional'} scenario). Ground it in the real local context (waste issues, any pilot, culture). Do NOT invent facts.
+JSON schema:
+{"narrative":[
+  {"block":"Current waste-management challenge","content":"<2-3 sentences, locally grounded>","channel":"News/Social/Radio/Events"},
+  {"block":"DRS as the solution","content":"<2-3 sentences positioning Recykal/Retearn DRS>","channel":""},
+  {"block":"Thought-leader angle","content":"<who should carry it + the message>","channel":""},
+  {"block":"Event & speakership plan","content":"<target forums/events>","channel":"Events"}
+]}`;
+  }
+
+  if (section === 'awareness') {
+    return `${ctx}
+
+TASK: Draft the DRS PUBLIC AWARENESS plan for ${place} (${opts.scenario || 'Regional'} scenario) — content ideas per theme, with the channel.
+JSON schema:
+{"awareness":[
+  {"theme":"What is DRS?","content":"<short content idea>","channel":"Social/News/Influencer"},
+  {"theme":"Benefits of DRS","content":"","channel":""},
+  {"theme":"How DRS works","content":"","channel":""},
+  {"theme":"Global success of DRS","content":"","channel":""},
+  {"theme":"Counter-narrative","content":"<pre-empt objections>","channel":""},
+  {"theme":"Event activation & demos","content":"","channel":"Events"}
+]}`;
+  }
+
   return `${ctx}\nReturn {}.`;
 }

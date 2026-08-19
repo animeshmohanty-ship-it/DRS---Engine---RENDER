@@ -550,6 +550,10 @@ export default function App() {
   const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
   const [geoDeepBusy, setGeoDeepBusy] = useState(false);
   const [geoDeepStage, setGeoDeepStage] = useState('');
+  const [gtmPhase, setGtmPhase] = useState('research');
+  const [gtmBusy, setGtmBusy] = useState(false);
+  const [gtmStage, setGtmStage] = useState('');
+  const [gtmScenarioOverride, setGtmScenarioOverride] = useState('');
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1665,6 +1669,187 @@ export default function App() {
     );
   };
 
+  // ================= GTM BLUEPRINT (Alokesh's DRS Formula) =================
+  const gtmScenario = gtmScenarioOverride || (() => {
+    const isIndia = (country || '').trim().toLowerCase() === 'india';
+    const isNat = !state || /national|whole country/i.test(state);
+    if (!isIndia) return 'International';
+    return isNat ? 'National' : 'Regional';
+  })();
+  const persistGtm = async (gtm) => {
+    const base = projectStagesRef.current || {};
+    const next = { ...base, gtm: { ...gtm, scenario: gtmScenario, updatedAt: new Date().toISOString() } };
+    projectStagesRef.current = next; setProjectStages(next); await saveProjectToStorage(next);
+  };
+  const gtmRun = async (section, opts = {}) => {
+    const input = { ...(projectStages.setup || {}), country, state, materials: selectedMaterials, selectedMaterials, implementationModel: model, operationsStatus };
+    const res = await fetch('/api/geodeep', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ section, input, projectId, opts: { ...opts, scenario: gtmScenario }, model: selectedModel }) });
+    const d = await res.json(); return d.ok ? d.data : null;
+  };
+  const generateGtmResearch = async () => {
+    setGtmBusy(true); setError('');
+    const gtm = { ...((projectStagesRef.current || {}).gtm || {}) }; gtm.research = { ...(gtm.research || {}) };
+    try {
+      setGtmStage('snapshot'); let r = await gtmRun('snapshot'); if (r?.snapshot) { gtm.research.snapshot = r.snapshot; await persistGtm(gtm); }
+      setGtmStage('districts'); let all = []; for (let b = 0; b < 3; b++) { const dd = await gtmRun('districts', { start: b * 18, size: 18 }); if (!dd || !Array.isArray(dd.districts) || !dd.districts.length) break; all = [...all, ...dd.districts]; gtm.research.districts = all; await persistGtm(gtm); if (dd.endOfList) break; }
+      setGtmStage('priority'); r = await gtmRun('priority', { limit: 12 }); if (r?.priorityUnits) { gtm.research.priorityUnits = r.priorityUnits; await persistGtm(gtm); }
+      setGtmStage('economic'); r = await gtmRun('economic'); if (r?.economicProfile) { gtm.research.economicProfile = r.economicProfile; await persistGtm(gtm); }
+      setGtmStage('income'); r = await gtmRun('income'); if (r?.incomeClasses) { gtm.research.incomeClasses = r.incomeClasses; await persistGtm(gtm); }
+      setGtmStage('context'); r = await gtmRun('context'); if (r?.context) { gtm.research.context = r.context; await persistGtm(gtm); }
+    } catch (e) { setError('GTM Research failed: ' + e.message); } finally { setGtmBusy(false); setGtmStage(''); }
+  };
+  const generateGtmTargeted = async () => {
+    setGtmBusy(true); setError('');
+    const gtm = { ...((projectStagesRef.current || {}).gtm || {}) }; gtm.targeted = { ...(gtm.targeted || {}) };
+    const cats = [['liquor', 'Liquor outlets'], ['horeca', 'HoReCa'], ['retail', 'Retail / supermarkets'], ['mrf', 'MRF / scrap dealers']];
+    try {
+      for (const [key, label] of cats) { setGtmStage(key); const r = await gtmRun('touchpoints', { category: key }); if (r?.touchpoints) { gtm.targeted[key] = { label, ...r.touchpoints }; await persistGtm(gtm); } }
+    } catch (e) { setError('GTM Targeted failed: ' + e.message); } finally { setGtmBusy(false); setGtmStage(''); }
+  };
+  const generateGtmNarrative = async () => {
+    setGtmBusy(true); setError('');
+    const gtm = { ...((projectStagesRef.current || {}).gtm || {}) };
+    try { setGtmStage('narrative'); const r = await gtmRun('narrative'); if (r?.narrative) { gtm.narrative = r.narrative; await persistGtm(gtm); } }
+    catch (e) { setError('GTM Narrative failed: ' + e.message); } finally { setGtmBusy(false); setGtmStage(''); }
+  };
+  const generateGtmAwareness = async () => {
+    setGtmBusy(true); setError('');
+    const gtm = { ...((projectStagesRef.current || {}).gtm || {}) };
+    try { setGtmStage('awareness'); const r = await gtmRun('awareness'); if (r?.awareness) { gtm.awareness = r.awareness; await persistGtm(gtm); } }
+    catch (e) { setError('GTM Awareness failed: ' + e.message); } finally { setGtmBusy(false); setGtmStage(''); }
+  };
+
+  const gtmConf = (c) => {
+    const m = { Verified: ['#E1F0EB', '#0F6E56'], Inferred: ['#FAEEDA', '#854F0B'], Assumption: ['#F1EFE8', '#5F5E5A'] };
+    const [bg, fg] = m[c] || ['#F1EFE8', '#5F5E5A'];
+    return <span style={{ fontSize: 10, fontWeight: 600, background: bg, color: fg, padding: '1px 6px', borderRadius: 10 }}>{c || '—'}</span>;
+  };
+  const gtmChan = (c) => c ? <span style={{ fontSize: 10, background: '#E6F1FB', color: '#185FA5', padding: '1px 6px', borderRadius: 10 }}>{c}</span> : null;
+
+  const renderGtm = () => {
+    const gtm = projectStages?.gtm || {};
+    const R = gtm.research || {};
+    const busyTag = gtmBusy ? <span style={{ fontSize: 11, color: 'var(--accent)' }}><span className="spinner" style={{ borderTopColor: 'var(--accent)', width: 11, height: 11, display: 'inline-block' }} /> {gtmStage || 'working'}…</span> : null;
+    const phaseBtn = (key, label) => (
+      <span onClick={() => setGtmPhase(key)} style={{ cursor: 'pointer', fontSize: 12.5, fontWeight: gtmPhase === key ? 600 : 500, background: gtmPhase === key ? '#0E7C66' : 'var(--grey-soft)', color: gtmPhase === key ? '#fff' : 'var(--ink-soft)', padding: '6px 13px', borderRadius: 8 }}>{label}</span>
+    );
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
+          <h3 style={{ margin: 0, color: '#0E7C66' }}>GTM Blueprint</h3>
+          <span style={{ fontSize: 12, background: '#E1F0EB', color: '#0A5A4A', padding: '2px 9px', borderRadius: 20 }}>{state ? `${state} · ${country}` : country || '—'}</span>
+          <select value={gtmScenario} onChange={(e) => setGtmScenarioOverride(e.target.value)} style={{ fontSize: 12, padding: '3px 8px', borderRadius: 20, border: '1px solid var(--line)' }}>
+            <option>Regional</option><option>National</option><option>International</option>
+          </select>
+          {busyTag}
+        </div>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>Alokesh's DRS Formula — {gtmScenario} scenario. Brain-first; each item tagged by confidence + channel.</p>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 16 }}>
+          {phaseBtn('research', '1 · Research')}{phaseBtn('targeted', '2 · Targeted Research')}{phaseBtn('narrative', '3 · Narrative')}{phaseBtn('awareness', '4 · Awareness')}
+        </div>
+
+        {/* PHASE 1 · RESEARCH */}
+        {gtmPhase === 'research' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmResearch} disabled={gtmBusy}><Sparkles size={15} /> {R.snapshot ? 'Refresh' : 'Generate'} Research</button></div>
+
+            {R.snapshot && (
+              <div className="card"><h4 style={{ margin: '0 0 8px' }}>A · State Snapshot {gtmConf(R.snapshot.confidence)}</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 8 }}>
+                  {[['Population', R.snapshot.population], ['Admin divisions', R.snapshot.adminDivisions], ['Urban local bodies', R.snapshot.urbanLocalBodies], ['Local bodies', R.snapshot.localBodies], ['Urban %', R.snapshot.urbanPct], ['Literacy %', R.snapshot.literacyPct]].map(([l, v]) => (
+                    <div key={l} style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: '8px 10px' }}><div style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>{l}</div><div style={{ fontSize: 15, fontWeight: 700 }}>{v ?? '—'}</div></div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {Array.isArray(R.districts) && R.districts.length > 0 && (
+              <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}><strong>B · District Intelligence</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({R.districts.length} units)</span></div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 620 }}>
+                    <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '7px 10px' }}>Unit</th><th style={{ padding: '7px 10px' }}>Population</th><th style={{ padding: '7px 10px' }}>Households</th><th style={{ padding: '7px 10px' }}>Urban%</th><th style={{ padding: '7px 10px' }}>Literacy%</th><th style={{ padding: '7px 10px' }}>Sub-div</th><th style={{ padding: '7px 10px' }}>Local bodies</th></tr></thead>
+                    <tbody>{R.districts.map((d, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '7px 10px', fontWeight: 600 }}>{d.name}</td><td style={{ padding: '7px 10px' }}>{d.population ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.households ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.urbanPct ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.literacyPct ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.level2Count ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.level3Count ?? '—'}</td></tr>))}</tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {Array.isArray(R.priorityUnits) && R.priorityUnits.length > 0 && (
+                <div className="card"><h4 style={{ margin: '0 0 8px' }}>D · Priority Ranking</h4>
+                  {R.priorityUnits.slice(0, 12).map((u, i) => (<div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, padding: '2px 0' }}><b style={{ color: '#0E7C66' }}>{u.rank ?? i + 1}</b><span>{u.unit}</span><span style={{ marginLeft: 'auto', color: 'var(--ink-soft)' }}>{u.population ?? ''}</span></div>))}
+                </div>
+              )}
+              {R.economicProfile && (
+                <div className="card"><h4 style={{ margin: '0 0 8px' }}>E · Economic Profile {gtmConf(R.economicProfile.perCapitaIncome?.confidence)}</h4>
+                  <div style={{ fontSize: 12, lineHeight: 1.7 }}>PCI <b>{R.economicProfile.perCapitaIncome?.value ?? '—'}</b> ({R.economicProfile.perCapitaIncome?.year ?? '—'})<br />GSDP <b>{R.economicProfile.gsdp?.value ?? '—'}</b>{R.economicProfile.gsdp?.growthPct ? ` · ${R.economicProfile.gsdp.growthPct}% growth` : ''}</div>
+                  {R.economicProfile.notes && <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>{R.economicProfile.notes}</p>}
+                </div>
+              )}
+            </div>
+
+            {Array.isArray(R.incomeClasses) && R.incomeClasses.length > 0 && (
+              <div className="card"><h4 style={{ margin: '0 0 8px' }}>F · Income-Class Distribution <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>(deposit-claim likelihood)</span></h4>
+                <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 520 }}><thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '6px 9px' }}>Class</th><th style={{ padding: '6px 9px' }}>Range</th><th style={{ padding: '6px 9px' }}>% HH</th><th style={{ padding: '6px 9px' }}>Claim</th><th style={{ padding: '6px 9px' }}></th></tr></thead>
+                  <tbody>{R.incomeClasses.map((c, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '6px 9px', fontWeight: 600 }}>{c.class}</td><td style={{ padding: '6px 9px' }}>{c.incomeRange}</td><td style={{ padding: '6px 9px' }}>{c.pctHouseholds ?? '—'}</td><td style={{ padding: '6px 9px' }}>{c.depositClaimLikelihood ?? '—'}</td><td style={{ padding: '6px 9px' }}>{gtmConf(c.confidence)}</td></tr>))}</tbody></table></div>
+              </div>
+            )}
+
+            {R.context && (
+              <div className="card"><h4 style={{ margin: '0 0 8px' }}>G · Context & Threats {gtmConf(R.context.confidence)}</h4>
+                <div style={{ fontSize: 12, lineHeight: 1.6 }}><b>Waste scenario:</b> {R.context.wasteScenario || '—'}</div>
+                {Array.isArray(R.context.associations) && R.context.associations.length > 0 && <div style={{ fontSize: 12, marginTop: 6 }}><b>Associations:</b> {R.context.associations.join(', ')}</div>}
+                {Array.isArray(R.context.threats) && R.context.threats.length > 0 && <div style={{ fontSize: 12, marginTop: 6 }}><b>DRS threats:</b> {R.context.threats.map(t => `${t.threat} (${t.type})`).join('; ')}</div>}
+                {R.context.channelisation && <div style={{ fontSize: 12, marginTop: 6 }}><b>Channelisation:</b> {R.context.channelisation}</div>}
+              </div>
+            )}
+
+            <div className="card" style={{ borderStyle: 'dashed', borderColor: '#6D5AE0' }}><h4 style={{ margin: '0 0 4px' }}>H · Human Workstreams</h4>
+              <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: 0 }}>Media agency · Events · Activation+Pilot · PR breakdown · Influencers — not auto-generated. <span style={{ fontSize: 10, background: '#EDEBFB', color: '#4A3C9E', padding: '1px 6px', borderRadius: 10 }}>🧑 Assign in Orchestrator</span></p>
+            </div>
+          </div>
+        )}
+
+        {/* PHASE 2 · TARGETED RESEARCH */}
+        {gtmPhase === 'targeted' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmTargeted} disabled={gtmBusy}><Sparkles size={15} /> {gtm.targeted ? 'Refresh' : 'Generate'} Touchpoints</button> <span style={{ fontSize: 11, color: 'var(--ink-soft)', marginLeft: 8 }}>Real named outlets (Brain/scraper) where available.</span></div>
+            {gtm.targeted && Object.entries(gtm.targeted).map(([k, t]) => (
+              <div key={k} className="card"><h4 style={{ margin: '0 0 6px' }}>{t.label} {gtmConf(t.confidence)} <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· est. {t.estimatedCount ?? '—'}</span></h4>
+                {t.densityNote && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 6 }}>{t.densityNote}</div>}
+                {Array.isArray(t.examples) && t.examples.map((e, i) => (<div key={i} style={{ fontSize: 12, padding: '2px 0' }}>• <b>{e.name}</b>{e.area ? ` · ${e.area}` : ''}{e.note ? ` · ${e.note}` : ''}</div>))}
+              </div>
+            ))}
+            <div className="card" style={{ borderStyle: 'dashed', borderColor: '#6D5AE0' }}><div style={{ fontSize: 12 }}><b>Retailer pain points</b> — field research. <span style={{ fontSize: 10, background: '#EDEBFB', color: '#4A3C9E', padding: '1px 6px', borderRadius: 10 }}>🧑 Orchestrator</span></div></div>
+          </div>
+        )}
+
+        {/* PHASE 3 · NARRATIVE */}
+        {gtmPhase === 'narrative' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmNarrative} disabled={gtmBusy}><Sparkles size={15} /> {Array.isArray(gtm.narrative) && gtm.narrative.length ? 'Refresh' : 'Generate'} Narrative</button></div>
+            {Array.isArray(gtm.narrative) && gtm.narrative.map((b, i) => (
+              <div key={i} className="card"><div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><strong style={{ fontSize: 12.5 }}>{i + 1} · {b.block}</strong><span style={{ marginLeft: 'auto' }}>{gtmChan(b.channel)}</span></div><div style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.55 }}>{b.content}</div></div>
+            ))}
+          </div>
+        )}
+
+        {/* PHASE 4 · AWARENESS */}
+        {gtmPhase === 'awareness' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmAwareness} disabled={gtmBusy}><Sparkles size={15} /> {Array.isArray(gtm.awareness) && gtm.awareness.length ? 'Refresh' : 'Generate'} Awareness plan</button></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(215px,1fr))', gap: 10 }}>
+              {Array.isArray(gtm.awareness) && gtm.awareness.map((a, i) => (
+                <div key={i} className="card"><div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 4 }}>{a.theme}</div><div style={{ fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>{a.content}</div><div style={{ marginTop: 6 }}>{gtmChan(a.channel)}</div></div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const handleCopilotSend = async () => {
     if (!copilotQuery.trim()) return;
     const userMsg = { sender: 'user', text: copilotQuery };
@@ -1983,6 +2168,16 @@ export default function App() {
                   </div>
                 )}
 
+                {/* GTM BLUEPRINT — new scenario-aware Formula (Research→Awareness) */}
+                <div
+                  className={`menu-item ${activeTab === 'gtm' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('gtm')}
+                >
+                  <span className="badge-icon">GT</span>
+                  <span>GTM Blueprint</span>
+                </div>
+
                 {/* PRE-PLANNING — visible always, accessible once Setup is saved */}
                 <div
                   className={`menu-item ${activeTab === 'preplanning' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
@@ -2057,7 +2252,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -2172,6 +2367,8 @@ export default function App() {
           )}
 
           {/* HISTORY TAB */}
+          {activeTab === 'gtm' && renderGtm()}
+
           {activeTab === 'brain' && isAdmin && (() => {
             const s = brainStatus;
             const by = s?.byStatus || {};

@@ -22,6 +22,11 @@ const RECALL = {
   income: (i) => `${i.state || i.country} household income class distribution poverty affluent`,
   priority: (i) => `${i.state || i.country} largest cities corporations municipalities districts population priority`,
   districts: (i) => `${i.state || i.country} districts population households urban literacy taluks panchayats`,
+  snapshot: (i) => `${i.state || i.country} population districts urban local bodies households literacy`,
+  context: (i) => `${i.state || i.country} waste management plastic ban DRS pilot associations threats channelisation`,
+  touchpoints: (i, o) => `${i.state || i.country} ${o?.category || ''} outlets stores count density`,
+  narrative: (i) => `${i.state || i.country} DRS waste challenges solution thought leaders events`,
+  awareness: (i) => `${i.state || i.country} DRS awareness benefits demos activation`,
 };
 
 export async function POST(req) {
@@ -37,7 +42,7 @@ export async function POST(req) {
     else if (ml.startsWith('gemini')) { llm = gemini; override = selectedModel; }
     else if (ml.startsWith('llama') || ml.startsWith('groq')) { llm = groq; }
 
-    const q = (RECALL[section] || RECALL.districts)(input);
+    const q = (RECALL[section] || RECALL.districts)(input, opts);
     const brain = brainReady() ? await recallBlock(q, { projectId, k: 10 }).catch(() => '') : '';
     const prompt = buildGeoDeepPrompt(section, input, brain, opts);
 
