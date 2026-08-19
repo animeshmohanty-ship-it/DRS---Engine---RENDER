@@ -247,3 +247,5 @@ _Format: date — what changed — files touched — why — verified?_
 - **Other candidates (not started):**
   1. **Fix broken/risky items** — rotate committed GCP secret, fix latent Stage 2 crash (route.js:549), remove dead code, make Claude/Copilot options honest.
   2. **Prototype execution layer** — turn one stage from "writes a plan" into "produces a real asset/action" (human-approved). The biggest vision gap.
+
+- **2026-08-19** — **FREE autonomous data: Wikidata connector.** Bot no longer depends on a manually-fed Brain. New `lib/opendata/wikidata.js` (no key, no cost): resolves place→QID (wbsearchentities) + SPARQL for real administrative subdivisions with population/area; wired into `/api/geodeep` (districts/priority/snapshot) as an authoritative seed injected into the prompt. Also strengthened prompts to be research-first + fill-every-field (labeled estimates, no blanks). Validated live: TN→39 districts w/ pop+area; Wikipedia REST also reachable (200). Next free sources to add: Wikipedia infobox extract (households/literacy), OSM Overpass (touchpoints), LGD/data.gov.in (block/panchayat counts). Deploy pushed.
