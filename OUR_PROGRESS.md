@@ -151,6 +151,33 @@ An **AI marketing team** for **Recykal + Retearn** — not a generic tool.
 
 - **2026-08-17** — **Verification model resolved (trust-by-source) + Brain clean.** After grounded verification repeatedly quarantined granular historical dataset figures (2011 Census vs current), changed the philosophy: verifier NEVER quarantines document facts (contradicted/uncertain → experience, flagged), and authoritative curated uploads are accepted **verified by source** via `/api/brain/requeue {trust,source}`. Applied: TN Research Data → 33/33 verified; all quarantines cleared. Brain now: **108 verified · 78 experience · 0 quarantined (186 total)**, 9 sources. Deep Geography (Stage 2) now recalls TN's verified numbers. Net: curated docs trusted, nothing hidden, auto-captured generations/chats remain experience. Deploy live.
 
+---
+
+## 🚀 NEXT-LEVEL ROADMAP (backlog — TO BE DONE, parked 2026-08-17)
+
+> Status: **agreed to build ALL of these, phased.** PAUSED — user will say when to resume. Build design-first, each phase reversible/flagged, test on Render between. Foundation (Brain, agents, LLM, exports, auth, roster, gates) already exists.
+
+**The 10 add-ons:**
+1. **Execution Agents** — plan → real deliverables (draft emails, copy, tender docs, signage); human-approved; drafts/files only (no auto-send). *The biggest leap.*
+2. **Real Multi-Agent Team** — named crew (Researcher, Strategist, Copywriter, Analyst, PM) collaborating, coordinated by the Orchestrator/roster.
+3. **Content Studio** — Content Calendar rows → actual assets (copy + AI creatives), export-ready.
+4. **Entry-Pathway / GTM Gate engine** — tender vs certification vs license logic per market, injected into Geo Intel. *(Needs nothing from user — can start anytime.)*
+5. **Live Data Connectors** — OSM/Overpass (touchpoints, free), official stats APIs (data.gov.in/ONS/Eurostat) for population, regulatory/news feeds → real, fresh, sourced numbers into the Brain.
+6. **DRS Economics / ROI Modeler** — RVM unit economics, CAPEX/OPEX, deposit float, return-rate projections, break-even, tender-bid economics.
+7. **Always-On Intelligence Agent** — scheduled monitoring of tenders/competitors/regulation per market → feeds Brain + alerts. (Seed: existing `Aria_Research` crawler.)
+8. **Conversational "Mission Control" UI** — chat + artifact canvas, voice, gates; run the campaign by talking to Binny. Build as parallel `/chat` route (reversible).
+9. **Full Deliverable Suite** — one-click branded PPTX deck + PDF dossier + XLSX plan + shareable microsite.
+10. **Collaboration & Approval Workflow** — comment/approve/version every artifact, assignments, notifications (on the existing auth).
+
+**Recommended sequence:** #4 Entry-Gate → #6 ROI Modeler → #3 Content Studio → #5 Live Data → #1/#2 Execution Agents + Team → #8 Mission Control; fold in #7 Monitoring, #9 Deliverables, #10 Collaboration along the way.
+
+**NEEDED FROM USER before/for certain phases:**
+- **Brand kit + asset templates** (logos variants, palette, fonts [have Poppins/Open Sans], tone-of-voice, boilerplate, example templates: social/email/one-pager/deck/signage) → for #3, #9.
+- **Commercial numbers** (reklaim Pro/Mini price, install+opex, deposit values/market, target return rates, revenue model) → for #6.
+- **Enablements:** Vertex **Imagen** on `travel-elry` (for AI creatives #3) OR skip AI images; a free **data.gov.in API key** (#5).
+- **Scoping decisions:** Execution = drafts-only (no auto-send); Monitoring cadence/sources/markets (+ OK small recurring Vertex cost + Render cron); Notifications in-app vs email (email needs a Resend/SMTP key).
+- **Ongoing:** more seed docs per market (tenders, regulations, market data).
+
 _Discussed, not built:_ Stage-2 data reliability — grounded AI web search is non-deterministic; Consensus Engine (`lib/utils/consensus.js`, mode across `drs_generation_runs`) already stabilizes it. Explored replacing volatile touchpoint counts with **Google Places API** (enabled on `travel-elry` but rejected: paid + 60-result cap) → leaning to **OpenStreetMap Overpass** (free, real coords, no cap) for touchpoints + official stats APIs (data.gov.in/ONS/Eurostat) for population. Deferred. Also designed (deferred): full conversational-first UI (Setup→Research→Charter→Plan→Orchestrator as chat turns + gates + artifact canvas), to be built as a parallel `/chat` route so current UI stays default and reversible.
 
 _Format: date — what changed — files touched — why — verified?_
