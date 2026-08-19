@@ -548,6 +548,8 @@ export default function App() {
   const [copilotFullpage, setCopilotFullpage] = useState(false);
   const [knowledgeUploading, setKnowledgeUploading] = useState(false);
   const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
+  const [geoDeepBusy, setGeoDeepBusy] = useState(false);
+  const [geoDeepStage, setGeoDeepStage] = useState('');
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1556,6 +1558,109 @@ export default function App() {
             </div>
           ))}
         </div>
+      </div>
+    );
+  };
+
+  // ---- Deep Geography (multi-call Geo Intel enrichment) ----
+  const persistDeep = async (deep) => {
+    const base = projectStagesRef.current || {};
+    const next = { ...base, stage2deep: { ...deep, generatedAt: new Date().toISOString() } };
+    projectStagesRef.current = next;
+    setProjectStages(next);
+    await saveProjectToStorage(next);
+  };
+  const generateGeoDeep = async () => {
+    setGeoDeepBusy(true); setError('');
+    const input = { ...(projectStages.setup || {}), country, state, materials: selectedMaterials, selectedMaterials, implementationModel: model, operationsStatus };
+    const deep = { ...((projectStagesRef.current || {}).stage2deep || {}) };
+    const run = async (section, opts = {}) => {
+      const res = await fetch('/api/geodeep', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ section, input, projectId, opts, model: selectedModel }) });
+      const d = await res.json();
+      return d.ok ? d.data : null;
+    };
+    try {
+      setGeoDeepStage('economic'); const e = await run('economic'); if (e?.economicProfile) { deep.economicProfile = e.economicProfile; await persistDeep(deep); }
+      setGeoDeepStage('income'); const inc = await run('income'); if (inc?.incomeClasses) { deep.incomeClasses = inc.incomeClasses; await persistDeep(deep); }
+      setGeoDeepStage('priority'); const p = await run('priority', { limit: 12 }); if (p?.priorityUnits) { deep.priorityUnits = p.priorityUnits; await persistDeep(deep); }
+      setGeoDeepStage('districts');
+      let all = [];
+      for (let b = 0; b < 3; b++) {
+        const dd = await run('districts', { start: b * 18, size: 18 });
+        if (!dd || !Array.isArray(dd.districts) || dd.districts.length === 0) break;
+        all = [...all, ...dd.districts];
+        deep.districts = all;
+        await persistDeep(deep);
+        if (dd.endOfList) break;
+      }
+    } catch (e) {
+      setError('Deep geography failed: ' + e.message);
+    } finally {
+      setGeoDeepBusy(false); setGeoDeepStage('');
+    }
+  };
+
+  const renderGeoDeep = () => {
+    const deep = projectStages?.stage2deep;
+    const lbl = (c) => c === 'Verified' ? { bg: '#E1F0EB', fg: '#0F6E56' } : c === 'Inferred' ? { bg: '#FAEEDA', fg: '#854F0B' } : { bg: '#F1EFE8', fg: '#5F5E5A' };
+    const conf = (c) => { const s = lbl(c); return <span style={{ fontSize: 10, fontWeight: 600, background: s.bg, color: s.fg, padding: '1px 6px', borderRadius: 10 }}>{c || '—'}</span>; };
+    return (
+      <div className="card" style={{ marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+          <h2 style={{ margin: 0 }}>Deep Geography &amp; Targeting</h2>
+          <button className="copilot-toggle-btn" style={{ height: 32 }} onClick={generateGeoDeep} disabled={geoDeepBusy}>
+            {geoDeepBusy ? <><RefreshCw size={13} className="spin" /> {geoDeepStage || 'Working'}…</> : <><Sparkles size={13} /> {deep ? 'Refresh' : 'Generate'} deep data</>}
+          </button>
+          {deep && <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Brain-first · grounded fallback · adapts to the selected place</span>}
+        </div>
+        {!deep && !geoDeepBusy && <p className="sub" style={{ marginTop: 4 }}>District-level demographics, priority rollout ranking, income-class distribution and economic profile for {state || country}. Pulls verified facts from the DRS Brain where available, else grounded live.</p>}
+
+        {deep?.economicProfile && (
+          <div style={{ marginTop: 10 }}>
+            <h3 style={{ margin: '8px 0 4px' }}>Economic profile</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 10 }}>
+              <div style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: 12 }}><div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>Per-capita income {deep.economicProfile.perCapitaIncome?.year ? `(${deep.economicProfile.perCapitaIncome.year})` : ''}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{deep.economicProfile.perCapitaIncome?.value || '—'}</div><div style={{ marginTop: 4 }}>{conf(deep.economicProfile.perCapitaIncome?.confidence)}</div></div>
+              <div style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: 12 }}><div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>GSDP {deep.economicProfile.gsdp?.year ? `(${deep.economicProfile.gsdp.year})` : ''}</div><div style={{ fontSize: 18, fontWeight: 700 }}>{deep.economicProfile.gsdp?.value || '—'}{deep.economicProfile.gsdp?.growthPct ? ` · ${deep.economicProfile.gsdp.growthPct}% growth` : ''}</div><div style={{ marginTop: 4 }}>{conf(deep.economicProfile.gsdp?.confidence)}</div></div>
+            </div>
+            {deep.economicProfile.notes && <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{deep.economicProfile.notes}</p>}
+          </div>
+        )}
+
+        {Array.isArray(deep?.priorityUnits) && deep.priorityUnits.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <h3 style={{ margin: '8px 0 4px' }}>Priority rollout ranking</h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 560 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '6px 8px' }}>#</th><th style={{ padding: '6px 8px' }}>Unit</th><th style={{ padding: '6px 8px' }}>Type</th><th style={{ padding: '6px 8px' }}>Population</th><th style={{ padding: '6px 8px' }}>Urban%</th><th style={{ padding: '6px 8px' }}>Why</th></tr></thead>
+                <tbody>{deep.priorityUnits.map((u, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '6px 8px', fontWeight: 700 }}>{u.rank ?? i + 1}</td><td style={{ padding: '6px 8px' }}>{u.unit}</td><td style={{ padding: '6px 8px' }}>{u.type}</td><td style={{ padding: '6px 8px' }}>{u.population ?? '—'}</td><td style={{ padding: '6px 8px' }}>{u.urbanPct ?? '—'}</td><td style={{ padding: '6px 8px', color: 'var(--ink-soft)', fontSize: 12 }}>{u.rationale}</td></tr>))}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {Array.isArray(deep?.incomeClasses) && deep.incomeClasses.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <h3 style={{ margin: '8px 0 4px' }}>Income-class distribution <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>(deposit-claim likelihood)</span></h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 560 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '6px 8px' }}>Class</th><th style={{ padding: '6px 8px' }}>Income range</th><th style={{ padding: '6px 8px' }}>% HH</th><th style={{ padding: '6px 8px' }}>Est. HH</th><th style={{ padding: '6px 8px' }}>Claim</th><th style={{ padding: '6px 8px' }}></th></tr></thead>
+                <tbody>{deep.incomeClasses.map((c, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '6px 8px', fontWeight: 600 }}>{c.class}</td><td style={{ padding: '6px 8px' }}>{c.incomeRange}</td><td style={{ padding: '6px 8px' }}>{c.pctHouseholds ?? '—'}</td><td style={{ padding: '6px 8px' }}>{c.estHouseholds ?? '—'}</td><td style={{ padding: '6px 8px' }}>{c.depositClaimLikelihood || '—'}</td><td style={{ padding: '6px 8px' }}>{conf(c.confidence)}</td></tr>))}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {Array.isArray(deep?.districts) && deep.districts.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <h3 style={{ margin: '8px 0 4px' }}>District intelligence <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>({deep.districts.length} units, by population)</span></h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5, minWidth: 640 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '6px 8px' }}>Unit</th><th style={{ padding: '6px 8px' }}>Population</th><th style={{ padding: '6px 8px' }}>Households</th><th style={{ padding: '6px 8px' }}>Urban%</th><th style={{ padding: '6px 8px' }}>Literacy%</th><th style={{ padding: '6px 8px' }}>Sub-div</th><th style={{ padding: '6px 8px' }}>Local bodies</th><th style={{ padding: '6px 8px' }}></th></tr></thead>
+                <tbody>{deep.districts.map((d, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '6px 8px', fontWeight: 600 }}>{d.name}</td><td style={{ padding: '6px 8px' }}>{d.population ?? '—'}</td><td style={{ padding: '6px 8px' }}>{d.households ?? '—'}</td><td style={{ padding: '6px 8px' }}>{d.urbanPct ?? '—'}</td><td style={{ padding: '6px 8px' }}>{d.literacyPct ?? '—'}</td><td style={{ padding: '6px 8px' }}>{d.level2Count ?? '—'}</td><td style={{ padding: '6px 8px' }}>{d.level3Count ?? '—'}</td><td style={{ padding: '6px 8px' }}>{conf(d.confidence)}</td></tr>))}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -3610,6 +3715,8 @@ export default function App() {
                   </div>
                 ))}
               </div>
+
+              {renderGeoDeep()}
             </div>
           )}
 

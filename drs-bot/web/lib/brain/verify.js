@@ -30,7 +30,7 @@ CLAIM (source: ${chunk.source || 'unknown'}):
 
 Rules (read carefully — do NOT over-reject):
 - "corroborated" if credible sources support it. IMPORTANT: historical/baseline facts (e.g. a Census year figure) and data attributed to a NAMED AUTHORITATIVE source (national census, government statistics office, official economic survey, regulator) count as corroborated even if the figure is DATED — being old is NOT a reason to reject.
-- "contradicted" ONLY if a credible CURRENT source gives a clearly DIFFERENT value for the SAME metric/entity, or the claim is demonstrably false. Do NOT mark contradicted merely because it is old, granular, or you can't find the exact number.
+- "contradicted" is RARE — use it ONLY if the claim is demonstrably FALSE or fabricated. A figure that is simply OLD or SUPERSEDED by a newer number (e.g. a 2011 Census figure vs a current estimate) is NOT contradicted — it is valid historical/baseline data; mark it "corroborated" (if from a named authoritative source) or "uncertain", never contradicted. Do NOT mark contradicted merely because it is old, granular, superseded, or you can't find the exact number.
 - "uncertain" if you cannot confirm or refute it (including granular figures you can't match exactly, or single-source internal claims). This keeps it as context — the SAFE default. When in doubt, choose "uncertain", NOT "contradicted".
 - Confidence: "Verified" (directly corroborated or from a named authoritative source), "Inferred" (reasonable from evidence), "Assumption" (weak/none).
 Reply with STRICT JSON only:
