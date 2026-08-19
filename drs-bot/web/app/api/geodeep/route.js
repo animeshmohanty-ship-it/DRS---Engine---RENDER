@@ -5,6 +5,7 @@ import * as vertex from '../../../lib/llm/vertex.js';
 import { getProvider } from '../../../lib/llm/provider.js';
 import { buildGeoDeepPrompt } from '../../../lib/prompts/geoDeep.js';
 import { recallBlock, brainReady } from '../../../lib/brain/brain.js';
+import { getSubdivisions, formatSubdivisionsSeed } from '../../../lib/opendata/wikidata.js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -44,7 +45,15 @@ export async function POST(req) {
 
     const q = (RECALL[section] || RECALL.districts)(input, opts);
     const brain = brainReady() ? await recallBlock(q, { projectId, k: 10 }).catch(() => '') : '';
-    const prompt = buildGeoDeepPrompt(section, input, brain, opts);
+
+    // FREE open-data seed (Wikidata) — real subdivisions + populations, no key.
+    let seed = '';
+    if (['districts', 'priority', 'snapshot'].includes(section)) {
+      const place = (input.state && !/national|whole country/i.test(input.state)) ? input.state : input.country;
+      const rows = await getSubdivisions(place, { limit: 80 }).catch(() => []);
+      seed = formatSubdivisionsSeed(rows);
+    }
+    const prompt = buildGeoDeepPrompt(section, input, brain + seed, opts);
 
     const { text, sources } = await llm.generateGrounded(
       prompt,
