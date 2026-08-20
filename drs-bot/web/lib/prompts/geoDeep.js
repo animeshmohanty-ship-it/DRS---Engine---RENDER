@@ -54,10 +54,14 @@ Return the standard tiers (Poor/Low, Lower-Middle, Middle, Upper-Middle, Affluen
   if (section === 'priority') {
     return `${ctx}
 
-TASK: Rank the TOP ${opts.limit || 12} priority rollout units (cities/corporations/municipalities/districts) in ${place} for a DRS launch, by population + urbanisation + commercial density.
+TASK: Rank the TOP ${opts.limit || 12} priority rollout units (cities/corporations/municipalities/districts) in ${place} for a DRS launch, by population + urbanisation + commercial/retail density + tourism/footfall.
+RATIONALE IS MANDATORY — for EVERY unit, explain why it sits at THAT EXACT rank:
+- Cite the concrete drivers from the data (population, urban %, commercial/retail density, tourism, capital/administrative status, key touchpoint concentration).
+- Make it COMPARATIVE where it explains the order — say why it ranks above or below its neighbours (e.g. "ranked above Kangra despite lower population because it is the state capital with 2.5x the urbanisation and the densest retail/HoReCa base").
+- Be specific to this unit; never a generic "important district". 12–30 words.
 JSON schema:
 {"priorityUnits":[
-  {"rank":1,"unit":"<name>","type":"<Corporation|Municipality|District|County|...>","parent":"<district/region>","population":"<number or string>","urbanPct":"<e.g. 95.5 or null>","rationale":"<why this rank for DRS>"}
+  {"rank":1,"unit":"<name>","type":"<Corporation|Municipality|District|County|...>","parent":"<district/region>","population":"<number or string>","urbanPct":"<e.g. 95.5 or null>","rationale":"<specific, comparative reason for THIS exact rank>"}
 ]}`;
   }
 

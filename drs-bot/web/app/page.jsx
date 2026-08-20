@@ -1832,19 +1832,35 @@ export default function App() {
               </div>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {Array.isArray(R.priorityUnits) && R.priorityUnits.length > 0 && (
-                <div className="card"><h4 style={{ margin: '0 0 8px' }}>D · Priority Ranking</h4>
-                  {R.priorityUnits.slice(0, 12).map((u, i) => (<div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, padding: '2px 0' }}><b style={{ color: 'var(--accent)' }}>{u.rank ?? i + 1}</b><span>{u.unit}</span><span style={{ marginLeft: 'auto', color: 'var(--ink-soft)' }}>{u.population ?? ''}</span></div>))}
-                </div>
-              )}
-              {R.economicProfile && (
-                <div className="card"><h4 style={{ margin: '0 0 8px' }}>E · Economic Profile {gtmConf(R.economicProfile.perCapitaIncome?.confidence)}</h4>
-                  <div style={{ fontSize: 12, lineHeight: 1.7 }}>PCI <b>{R.economicProfile.perCapitaIncome?.value ?? '—'}</b> ({R.economicProfile.perCapitaIncome?.year ?? '—'})<br />GSDP <b>{R.economicProfile.gsdp?.value ?? '—'}</b>{R.economicProfile.gsdp?.growthPct ? ` · ${R.economicProfile.gsdp.growthPct}% growth` : ''}</div>
-                  {R.economicProfile.notes && <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>{R.economicProfile.notes}</p>}
-                </div>
-              )}
-            </div>
+            {/* D · Priority Ranking — full width, with the strategy behind each placement */}
+            {Array.isArray(R.priorityUnits) && R.priorityUnits.length > 0 && (
+              <div className="card"><h4 style={{ margin: '0 0 3px' }}>D · Priority Ranking <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· recommended DRS rollout order</span></h4>
+                <p style={{ fontSize: 11, color: 'var(--ink-soft)', margin: '0 0 8px' }}>Ranked by population, urbanisation, commercial density &amp; tourism. Population is verified; the reason line is the AI's strategy for that exact placement.</p>
+                {R.priorityUnits.slice(0, 12).map((u, i) => {
+                  const reason = u.rationale
+                    || [u.population ? `pop ${u.population}` : null, u.urbanPct != null ? `urban ${u.urbanPct}%` : null].filter(Boolean).join(' · ')
+                    || 'ranked by overall DRS launch readiness';
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: 10, padding: '8px 0', borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                      <b style={{ color: 'var(--accent)', minWidth: 16, fontSize: 13 }}>{u.rank ?? i + 1}</b>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                          <span style={{ fontWeight: 600, fontSize: 13 }}>{u.unit}</span>
+                          <span style={{ marginLeft: 'auto', color: 'var(--ink-soft)', fontSize: 12 }}>{u.population ?? ''}</span>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', lineHeight: 1.5, marginTop: 2 }}>{reason}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {R.economicProfile && (
+              <div className="card"><h4 style={{ margin: '0 0 8px' }}>E · Economic Profile {gtmConf(R.economicProfile.perCapitaIncome?.confidence)}</h4>
+                <div style={{ fontSize: 12, lineHeight: 1.7 }}>PCI <b>{R.economicProfile.perCapitaIncome?.value ?? '—'}</b> ({R.economicProfile.perCapitaIncome?.year ?? '—'})<br />GSDP <b>{R.economicProfile.gsdp?.value ?? '—'}</b>{R.economicProfile.gsdp?.growthPct ? ` · ${R.economicProfile.gsdp.growthPct}% growth` : ''}</div>
+                {R.economicProfile.notes && <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>{R.economicProfile.notes}</p>}
+              </div>
+            )}
 
             {Array.isArray(R.incomeClasses) && R.incomeClasses.length > 0 && (
               <div className="card"><h4 style={{ margin: '0 0 8px' }}>F · Income-Class Distribution <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>(deposit-claim likelihood)</span></h4>
