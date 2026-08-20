@@ -98,3 +98,23 @@ export async function getTouchpoints({ country = 'India', city, category } = {})
   const { data } = await q.limit(2000);
   return data || [];
 }
+
+// ---- Prompt seed: verified districts as GROUND TRUTH for the LLM -------------
+// Turns verified rows into an authoritative block the reasoning prompts consume,
+// so priority/snapshot/economic/narrative reason over REAL figures and cite them.
+export function formatDistrictsSeed(rows) {
+  if (!rows?.length) return '';
+  const n = (v) => (v != null ? Number(v).toLocaleString('en-IN') : '?');
+  const lines = rows.slice(0, 45).map((r) => {
+    const rel = Array.isArray(r.religions) && r.religions.length
+      ? `; religion: ${r.religions.map((x) => `${x.name} ${x.pct}%`).join(', ')}` : '';
+    const lit = r.literacy_pct != null ? `, literacy ${r.literacy_pct}%` : '';
+    const hh = r.households != null ? `, ${n(r.households)} HH` : '';
+    return `- ${r.district}: pop ${n(r.population)}${hh}${lit}${rel}`;
+  });
+  const totalPop = rows.reduce((s, r) => s + (Number(r.population) || 0), 0);
+  return `
+
+VERIFIED DISTRICT DATA (${rows.length} districts, total pop ${totalPop.toLocaleString('en-IN')} — from the DRS data layer: Census 2011 / SHRUG / LGD). Treat these as GROUND TRUTH: reason, rank, and total using THESE exact figures, attribute them to "Census 2011 / SHRUG", and NEVER invent, round away, or override them with guesses:
+${lines.join('\n')}`;
+}

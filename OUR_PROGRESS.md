@@ -178,7 +178,15 @@ Every card: **confidence badge** (Verified/Experience/Estimate) + **channel tag*
 - **Proven:** census parser tested live — 640 districts, Lahul&Spiti Buddhist 62% (was 1.15% aggregate), TN top-4 = Hindu/Christian/Muslim/NotStated. Real per-district variation confirmed.
 - **Not yet sourced:** level2/level3 counts (blocks/panchayats) — need LGD sub-unit files aggregated; show "—" honestly for now. urban_pct not in these files → "—".
 
-**Next:** Phase 2 (Crawlee scraper for liquor/kirana/MRF gaps + pg-boss + Data Extractor UI), Phase 3 (LLM reads tables, cites sources), Phase 4 (cron schedules + freshness UI).
+**Phase 3 (LLM reasons over verified data) — BUILT 2026-08-20:** `db.js formatDistrictsSeed()` + geodeep route injects verified district figures as GROUND TRUTH into snapshot/priority/economic/income/context/narrative prompts (LLM ranks/totals using real numbers, cites Census/SHRUG, never invents).
+
+**Phase 2 (touchpoints, FREE — no paid worker) — BUILT 2026-08-20:** Decision: user cannot pay, so NO Render Background Worker / pg-boss / proxy. Instead: (a) `/api/extract` runs OSM/Overpass live inside the web request (seconds) — free; (b) GTM Targeted tab has a **Data Extractor** (type city → Extract → real named touchpoints, source-badged); (c) gap categories (liquor/kirana/MRF, sparse in OSM) filled by running the local Python gmaps-scraper on the user's laptop (residential IP, no proxy) → `worker/ingest.js import <csv>` maps + upserts. Targeted tab keeps LLM density estimate as complement.
+
+**Phase 4 (free automation) — BUILT 2026-08-20:** `.github/workflows/data-layer-refresh.yml` — GitHub Actions (free) runs census/shrug/lgd monthly + manual dispatch (optional city for OSM), Supabase creds via repo secrets. Replaces paid Render Cron.
+
+**COST: everything runs on free tiers only** — Supabase (existing), open data (no key), existing Render web service, free GitHub Actions. No paid infra anywhere.
+
+**REMAINING (user, one-time, at the end):** run `db/001_data_layer.sql` in Supabase; then load data (local `node worker/ingest.js census|shrug|lgd` OR GitHub Actions). International demographics still LLM-fallback until per-country sources wired.
 
 **FIX 2026-08-20 — religion columns restored (mandatory, country-adaptive).** The approved mockup + spec (District Intelligence "religion%") were dropped in the first country-generic build — the prompt never asked for religion and the table had no columns. Now: (1) `geoDeep.js` districts prompt returns a mandatory `religions:[{name,pct}×4]` = the place's TOP-4 religions by overall share, SAME 4 names/order for every unit, adapting to the country (India → Hindu/Muslim/Christian/Sikh; Poland → Catholic/Orthodox; etc.), Census/Pew-sourced, estimated from parent distribution if unit-level missing; (2) the District table (`page.jsx`) renders 4 dynamic religion columns, header names read from the data (top-4 of that place) — so Regional/National/International all get religion columns keyed to their own country. Compiles clean; needs a live Generate run to see data populate.
 

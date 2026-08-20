@@ -68,6 +68,24 @@ async function main() {
     case 'shrug':  { const { loadShrug }           = await import('../lib/datalayer/sources/shrug.js');  return runDistrictSource('shrug', () => loadShrug(arg)); }
     case 'lgd':    { const { loadLgd }             = await import('../lib/datalayer/sources/lgd.js');    return runDistrictSource('lgd', () => loadLgd(arg)); }
     case 'osm':    return runOsm(arg);
+    case 'import': {
+      const { loadScraperCsv } = await import('../lib/datalayer/sources/scraperImport.js');
+      const { validateTouchpoints } = await import('../lib/datalayer/validate.js');
+      const { upsertTouchpoints } = await import('../lib/datalayer/db.js');
+      const runId = await startRun('scraper');
+      try {
+        const rows = await loadScraperCsv(arg);
+        const { clean, rejected } = validateTouchpoints(rows);
+        const { written } = await upsertTouchpoints(clean);
+        await finishRun(runId, { status: 'ok', rowsIn: rows.length, rowsWritten: written, rowsRejected: rejected.length, message: 'scraper CSV import' });
+        await touchSource('scraper', 'ok');
+        console.log(`[import] in=${rows.length} written=${written} rejected=${rejected.length}`);
+      } catch (e) {
+        await finishRun(runId, { status: 'failed', message: e.message });
+        console.error('[import] FAILED:', e.message); process.exitCode = 1;
+      }
+      return;
+    }
     default: console.error(`unknown source: ${source}`); process.exit(1);
   }
 }

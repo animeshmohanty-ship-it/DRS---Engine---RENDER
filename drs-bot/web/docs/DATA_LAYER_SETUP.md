@@ -19,46 +19,49 @@ Creates: `data_sources`, `ingest_runs`, `geo_districts`, `geo_touchpoints`
 ## Step 2 — Add env vars
 
 The worker reuses the bot's existing Supabase env (already set on Render):
-`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`. **Nothing else is required** —
+Census / SHRUG / LGD / OSM all use open URLs with **no key, no cost**.
 
-Add one new (free) key for government open data:
-- `DATA_GOV_IN_API_KEY` — get it free at https://data.gov.in → sign in → *My Account*.
+Optional:
+- `DATA_GOV_IN_API_KEY` — only for *future* data.gov.in sources (free at https://data.gov.in → My Account).
+- `OVERPASS_URL` — a mirror/self-hosted Overpass endpoint (defaults to the public one).
 
-Optional overrides:
-- `OVERPASS_URL` — a self-hosted / mirror Overpass endpoint (defaults to the public one).
+## Step 3 — Load the data (100% free — pick ONE way)
 
-## Step 3 — Load the data + schedule refreshes (Render)
-
-### First load (run each once, in order)
-From a Render **Shell** (or locally with env set), inside `drs-bot/web`:
+### Option A — Run locally, once (simplest; Census is frozen 2011 data)
+On your laptop, inside `drs-bot/web`, with the two Supabase env vars set:
 
 ```bash
 node worker/ingest.js census     # FIRST — district religion + names + population (Census 2011)
 node worker/ingest.js shrug      # then — households + literacy (joins onto census by population)
 node worker/ingest.js lgd        # then — official LGD codes (joins onto census by name)
-node worker/ingest.js osm Chennai   # touchpoints for one city (repeat per city)
 ```
 
-> Order matters: `census` builds the district rows (with names); `shrug` and
-> `lgd` attach extra columns onto them. Running shrug/lgd before census errors
-> out with a clear message.
+> Order matters: `census` builds the district rows; `shrug`/`lgd` attach onto them.
 
-Check results: Supabase → Table editor → `geo_districts`, and `ingest_runs`
-for the audit log (status `ok` / `flagged` / `failed`).
+### Option B — GitHub Actions (free, automated, "0 manual")
+Repo → **Settings → Secrets and variables → Actions** → add `NEXT_PUBLIC_SUPABASE_URL`
+and `SUPABASE_SERVICE_ROLE_KEY`. Then **Actions tab → "Data Layer Refresh" → Run
+workflow** (or let the monthly cron run it). Defined in
+[`.github/workflows/data-layer-refresh.yml`](../../../.github/workflows/data-layer-refresh.yml).
+Free-tier minutes easily cover these seconds-long jobs. **No paid Render worker/cron.**
 
-### Keep it fresh (Render Cron Jobs — the "0 manual" part)
-Render Dashboard → **New → Cron Job**, one per source. Command =
-`node worker/ingest.js <source>`, Root Directory = `drs-bot/web`.
+Verify either way: Supabase → Table editor → `geo_districts` (~640 rows) and
+`ingest_runs` for the audit log (status `ok` / `flagged` / `failed`).
 
-| Source  | Suggested schedule | Cron |
-|---------|--------------------|------|
-| `lgd`   | monthly            | `0 3 1 * *` |
-| `census`| yearly (it's static) | `0 4 1 1 *` |
-| `shrug` | yearly             | `0 5 1 1 *` |
-| `osm <City>` | weekly, per priority city | `0 2 * * 0` |
+## Touchpoints — two free ways
 
-Census 2011 is frozen data, so it effectively only needs loading once; the
-yearly cron just re-confirms the mirror still matches.
+1. **Live, from the bot** — GTM → Targeted Research → **Data Extractor**: type a
+   city, click Extract. Pulls real named touchpoints from OpenStreetMap inside the
+   normal web request (no worker). Best for fuel/schools/malls/hotels/supermarkets/cinemas.
+
+2. **Gap categories (liquor / kirana / scrap-MRF)** — sparse in OSM. Run your local
+   scraper (residential IP = no blocking, no proxy cost), then import its CSV:
+   ```bash
+   node worker/ingest.js import "path/to/scraped.csv::Coimbatore::liquor"
+   ```
+   Columns auto-map (name/address/phone/rating/lat/lon). Rows land in the same
+   table and appear in the bot alongside the OSM ones.
 
 ---
 
@@ -75,7 +78,10 @@ rejects a religion breakdown that is identical across every district (the
 state-aggregate-copied-down bug). A flagged run still writes clean rows but marks
 `ingest_runs.status = 'flagged'` for review.
 
-## Phase 2 (scraper) note
-The on-demand scraper (liquor / kirana / scrap-MRF, which OSM lacks) needs an
-always-on **Render Background Worker** + `pg-boss` queue — documented separately
-when Phase 2 lands.
+## Cost note
+Everything here runs on **free tiers only** — Supabase (existing), open data
+sources (no key), the bot's existing Render web service, and free GitHub Actions.
+There is **no paid Render worker, no queue, no proxy**. The one trade-off vs.
+paying: the informal-retail scraper (gap categories) runs from your laptop /
+GitHub Actions rather than live inside the bot — the bot always *displays*
+whatever has been collected.

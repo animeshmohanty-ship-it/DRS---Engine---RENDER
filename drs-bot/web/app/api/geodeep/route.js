@@ -6,6 +6,7 @@ import { getProvider } from '../../../lib/llm/provider.js';
 import { buildGeoDeepPrompt } from '../../../lib/prompts/geoDeep.js';
 import { recallBlock, brainReady } from '../../../lib/brain/brain.js';
 import { getSubdivisions, formatSubdivisionsSeed } from '../../../lib/opendata/wikidata.js';
+import { getDistricts, formatDistrictsSeed } from '../../../lib/datalayer/db.js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -53,7 +54,18 @@ export async function POST(req) {
       const rows = await getSubdivisions(place, { limit: 80 }).catch(() => []);
       seed = formatSubdivisionsSeed(rows);
     }
-    const prompt = buildGeoDeepPrompt(section, input, brain + seed, opts);
+    // VERIFIED data-layer seed — inject real district figures as ground truth so
+    // downstream reasoning (ranking, snapshot, economics, narrative) is grounded
+    // in sourced data and cites it, instead of the LLM inventing numbers.
+    let verified = '';
+    if (['snapshot', 'priority', 'economic', 'income', 'context', 'narrative'].includes(section)) {
+      const vplace = (input.state && !/national|whole country/i.test(input.state)) ? input.state : null;
+      if (vplace) {
+        const drows = await getDistricts({ country: input.country || 'India', state: vplace }).catch(() => []);
+        verified = formatDistrictsSeed(drows);
+      }
+    }
+    const prompt = buildGeoDeepPrompt(section, input, brain + seed + verified, opts);
 
     const { text, sources } = await llm.generateGrounded(
       prompt,

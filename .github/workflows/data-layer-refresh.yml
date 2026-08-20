@@ -1,0 +1,46 @@
+# Free scheduled ingestion for the DRS verified data layer (GitHub Actions).
+# No paid Render worker/cron needed. Runs the same worker scripts, writing to
+# Supabase via repo secrets.
+#
+# One-time setup (Settings → Secrets and variables → Actions → New secret):
+#   NEXT_PUBLIC_SUPABASE_URL      = your Supabase project URL
+#   SUPABASE_SERVICE_ROLE_KEY     = your Supabase service-role key
+#
+# Trigger: monthly cron, OR manually (Actions tab → this workflow → Run workflow,
+# optionally pass a city to also extract touchpoints).
+name: Data Layer Refresh
+
+on:
+  schedule:
+    - cron: '0 3 1 * *'        # 03:00 UTC on the 1st of each month
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'Optional city to extract OSM touchpoints for (e.g. Coimbatore)'
+        required: false
+        default: ''
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: drs-bot/web
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm ci --omit=dev || npm install --omit=dev
+      - name: Ingest district facts (census → shrug → lgd)
+        run: |
+          node worker/ingest.js census
+          node worker/ingest.js shrug
+          node worker/ingest.js lgd
+      - name: Extract touchpoints (optional city)
+        if: ${{ github.event.inputs.city != '' }}
+        run: node worker/ingest.js osm "${{ github.event.inputs.city }}"

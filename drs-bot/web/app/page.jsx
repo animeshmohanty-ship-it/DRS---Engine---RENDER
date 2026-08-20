@@ -554,6 +554,9 @@ export default function App() {
   const [gtmBusy, setGtmBusy] = useState(false);
   const [gtmStage, setGtmStage] = useState('');
   const [gtmScenarioOverride, setGtmScenarioOverride] = useState('');
+  const [extractCity, setExtractCity] = useState('');
+  const [extractBusy, setExtractBusy] = useState('');
+  const [extractResults, setExtractResults] = useState(null); // { city, byCat: {cat: rows}, notes: [] }
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1728,6 +1731,24 @@ export default function App() {
       for (const [key, label] of cats) { setGtmStage(key); const r = await gtmRun('touchpoints', { category: key }); if (r?.touchpoints) { gtm.targeted[key] = { label, ...r.touchpoints }; await persistGtm(gtm); } }
     } catch (e) { setError('GTM Targeted failed: ' + e.message); } finally { setGtmBusy(false); setGtmStage(''); }
   };
+  // Live touchpoint extractor (free — OpenStreetMap via /api/extract, no worker).
+  const runExtract = async () => {
+    const city = extractCity.trim();
+    if (!city) return;
+    setExtractResults(null); setError('');
+    const cats = [['fuel', 'Fuel'], ['school', 'Schools'], ['mall', 'Malls'], ['hotel', 'Hotels'], ['retail', 'Retail/Supermarkets'], ['horeca', 'HoReCa'], ['cinema', 'Cinemas'], ['liquor', 'Liquor'], ['mrf', 'Scrap/MRF']];
+    const byCat = {}; const notes = [];
+    for (const [key, label] of cats) {
+      setExtractBusy(label);
+      try {
+        const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ city, category: key, state, country }) });
+        const j = await res.json();
+        if (j?.ok) { byCat[key] = { label, rows: j.rows || [] }; if (j.note) notes.push(`${label}: ${j.note}`); }
+      } catch { /* skip category on error */ }
+      setExtractResults({ city, byCat: { ...byCat }, notes: [...notes] });
+    }
+    setExtractBusy('');
+  };
   const generateGtmNarrative = async () => {
     setGtmBusy(true); setError('');
     const gtm = { ...((projectStagesRef.current || {}).gtm || {}) };
@@ -1847,7 +1868,33 @@ export default function App() {
         {/* PHASE 2 · TARGETED RESEARCH */}
         {gtmPhase === 'targeted' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmTargeted} disabled={gtmBusy}><Sparkles size={15} /> {gtm.targeted ? 'Refresh' : 'Generate'} Touchpoints</button> <span style={{ fontSize: 11, color: 'var(--ink-soft)', marginLeft: 8 }}>Real named outlets (Brain/scraper) where available.</span></div>
+            {/* Live Data Extractor — real named touchpoints from OpenStreetMap (free) */}
+            <div className="card" style={{ borderColor: '#0E7C66' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <h4 style={{ margin: 0, color: '#0E7C66' }}>🛰️ Data Extractor</h4>
+                <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Real named touchpoints from OpenStreetMap — live, free.</span>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <input value={extractCity} onChange={(e) => setExtractCity(e.target.value)} placeholder="City (e.g. Coimbatore)" style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, minWidth: 200 }} onKeyDown={(e) => { if (e.key === 'Enter' && !extractBusy) runExtract(); }} />
+                <button className="btn" onClick={runExtract} disabled={!!extractBusy || !extractCity.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{extractBusy ? <><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> {extractBusy}…</> : <><Sparkles size={15} /> Extract</>}</button>
+              </div>
+              {extractResults && (
+                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {Object.entries(extractResults.byCat).map(([k, c]) => (
+                    <div key={k}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 3 }}>{c.label} <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· {c.rows.length} found</span></div>
+                      {c.rows.slice(0, 8).map((r, i) => (<div key={i} style={{ fontSize: 12, padding: '1px 0', color: 'var(--ink-soft)' }}>• <b style={{ color: 'var(--ink)' }}>{r.name}</b>{r.address ? ` · ${r.address}` : ''}{r.phone ? ` · ${r.phone}` : ''} <span style={{ fontSize: 9.5, background: '#E6F1FB', color: '#185FA5', padding: '0 5px', borderRadius: 8 }}>{r.source}</span></div>))}
+                      {c.rows.length > 8 && <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>…{c.rows.length - 8} more</div>}
+                      {!c.rows.length && <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>none in OpenStreetMap — run local collector to fill</div>}
+                    </div>
+                  ))}
+                  {extractResults.notes.length > 0 && (
+                    <div style={{ fontSize: 10.5, color: '#854F0B', background: '#FAEEDA', padding: '6px 9px', borderRadius: 8 }}>{extractResults.notes.map((n, i) => <div key={i}>{n}</div>)}</div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmTargeted} disabled={gtmBusy}><Sparkles size={15} /> {gtm.targeted ? 'Refresh' : 'Generate'} Touchpoints (LLM estimate)</button> <span style={{ fontSize: 11, color: 'var(--ink-soft)', marginLeft: 8 }}>Density estimates where live extract is thin.</span></div>
             {gtm.targeted && Object.entries(gtm.targeted).map(([k, t]) => (
               <div key={k} className="card"><h4 style={{ margin: '0 0 6px' }}>{t.label} {gtmConf(t.confidence)} <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· est. {t.estimatedCount ?? '—'}</span></h4>
                 {t.densityNote && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 6 }}>{t.densityNote}</div>}
