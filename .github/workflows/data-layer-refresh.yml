@@ -36,11 +36,12 @@ jobs:
           node-version: '20'
       - name: Install deps
         run: npm ci --omit=dev || npm install --omit=dev
-      - name: Ingest district facts (census → shrug → lgd)
+      - name: Ingest district facts (census → shrug → lgd → lgdunits)
         run: |
           node worker/ingest.js census
           node worker/ingest.js shrug
           node worker/ingest.js lgd
+          node worker/ingest.js lgdunits
       - name: Extract touchpoints (optional city)
         if: ${{ github.event.inputs.city != '' }}
         run: node worker/ingest.js osm "${{ github.event.inputs.city }}"

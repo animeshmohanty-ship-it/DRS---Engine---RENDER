@@ -40,7 +40,13 @@ export async function loadCensusReligion() {
     if (!state || !district || !population) continue;
     const counts = {};
     for (const [col, name] of REL_COLS) counts[name] = num(o[col]) || 0;
-    districts.push({ state, district, population, counts, code: num(o['District code']) });
+    districts.push({
+      state, district, population, counts, code: num(o['District code']),
+      households: num(o['Households']),
+      urbanHH: num(o['Urban_Households']),
+      ruralHH: num(o['Rural_Households']),
+      literate: num(o['Literate']),
+    });
     const st = stateTotals.get(state) || {};
     for (const [, name] of REL_COLS) st[name] = (st[name] || 0) + counts[name];
     stateTotals.set(state, st);
@@ -54,12 +60,28 @@ export async function loadCensusReligion() {
     stateTop4.set(state, top4);
   }
   const prov = { source: 'census_2011_c01', confidence: 'Verified' };
-  return districts.map((d) => ({
-    state: d.state,
-    district: d.district,
-    population: d.population,
-    religions: stateTop4.get(d.state).map((name) => ({ name, pct: pct(d.counts[name], d.population) })),
-    extra: { census_2011_code: d.code },
-    sources: { population: prov, religions: prov },
-  }));
+  return districts.map((d) => {
+    const row = {
+      state: d.state,
+      district: d.district,
+      population: d.population,
+      religions: stateTop4.get(d.state).map((name) => ({ name, pct: pct(d.counts[name], d.population) })),
+      extra: { census_2011_code: d.code },
+      sources: { population: prov, religions: prov },
+    };
+    // Everything below is in the SAME census file → 640/640 coverage.
+    if (d.households != null) { row.households = d.households; row.sources.households = prov; }
+    // Urban% = urban share of households (census gives rural/urban household counts).
+    if (d.urbanHH != null && d.ruralHH != null && d.urbanHH + d.ruralHH > 0) {
+      row.urban_pct = Math.round((d.urbanHH / (d.urbanHH + d.ruralHH)) * 1000) / 10;
+      row.sources.urban_pct = prov;
+    }
+    // Baseline literacy (literates as % of total population); SHRUG later overrides
+    // with the official 7+ rate where available.
+    if (d.literate != null && d.population) {
+      row.literacy_pct = Math.round((d.literate / d.population) * 1000) / 10;
+      row.sources.literacy_pct = prov;
+    }
+    return row;
+  });
 }

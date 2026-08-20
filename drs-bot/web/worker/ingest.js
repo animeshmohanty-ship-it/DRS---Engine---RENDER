@@ -67,6 +67,7 @@ async function main() {
     case 'census': { const { loadCensusReligion } = await import('../lib/datalayer/sources/census.js'); return runDistrictSource('census_2011_c01', () => loadCensusReligion(arg)); }
     case 'shrug':  { const { loadShrug }           = await import('../lib/datalayer/sources/shrug.js');  return runDistrictSource('shrug', () => loadShrug(arg)); }
     case 'lgd':    { const { loadLgd }             = await import('../lib/datalayer/sources/lgd.js');    return runDistrictSource('lgd', () => loadLgd(arg)); }
+    case 'lgdunits': { const { loadLgdUnits }      = await import('../lib/datalayer/sources/lgdUnits.js'); return runDistrictSource('lgd', () => loadLgdUnits(arg)); }
     case 'osm':    return runOsm(arg);
     case 'import': {
       const { loadScraperCsv } = await import('../lib/datalayer/sources/scraperImport.js');

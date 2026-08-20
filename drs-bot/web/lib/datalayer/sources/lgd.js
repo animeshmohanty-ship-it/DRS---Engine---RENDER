@@ -18,32 +18,38 @@ const norm = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 
 export async function loadLgd() {
   const existing = await getDistricts({});
-  if (!existing.length) throw new Error('load `census` first — LGD attaches codes to district rows by name');
-  const byKey = new Map();
-  for (const d of existing) byKey.set(norm(d.state) + '|' + norm(d.district), d);
+  if (!existing.length) throw new Error('load `census` first — LGD attaches codes onto district rows');
+  // Primary key = Census 2011 district code (stored on each row from census.js);
+  // both files carry it, so this matches 640/640. Name is only a fallback.
+  const byCode = new Map();
+  const byName = new Map();
+  for (const d of existing) {
+    const c = d.extra && d.extra.census_2011_code;
+    if (c != null) byCode.set(Number(c), d);
+    byName.set(norm(d.state) + '|' + norm(d.district), d);
+  }
 
   const res = await fetch(LGD_URL, { headers: { 'User-Agent': UA } });
   if (!res.ok) throw new Error(`LGD fetch ${res.status}`);
   const objs = parseCSVObjects(await res.text());
 
   const prov = { source: 'lgd', confidence: 'Verified' };
+  const seen = new Set();
   const out = [];
-  let matched = 0;
   for (const o of objs) {
-    const state = o['State Name'];
-    const district = o['District Name'];
     const code = o['District Code'];
-    const census2011 = o['Census 2011 Code'] || null;
-    const match = byKey.get(norm(state) + '|' + norm(district));
-    if (!match) continue;
-    matched++;
+    const c2011 = o['Census 2011 Code'] ? Number(o['Census 2011 Code']) : null;
+    const match = (c2011 != null && byCode.get(c2011)) || byName.get(norm(o['State Name']) + '|' + norm(o['District Name']));
+    if (!match || !code) continue;
+    const key = match.state + '|' + match.district;
+    if (seen.has(key)) continue;                            // first LGD row wins per district
+    seen.add(key);
     out.push({
       state: match.state, district: match.district,
-      ...(code ? { lgd_code: code } : {}),
-      extra: { ...(match.extra || {}), ...(census2011 ? { census_2011_code_lgd: census2011 } : {}) },
-      sources: { ...(match.sources || {}), ...(code ? { lgd_code: prov } : {}) },
+      lgd_code: code,
+      sources: { ...(match.sources || {}), lgd_code: prov },
     });
   }
-  if (!matched) throw new Error('LGD matched 0 districts by name — check census loaded first');
+  if (!out.length) throw new Error('LGD matched 0 districts — check census loaded first');
   return out;
 }

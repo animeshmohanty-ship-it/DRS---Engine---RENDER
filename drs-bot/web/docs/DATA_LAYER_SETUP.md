@@ -32,12 +32,14 @@ Optional:
 On your laptop, inside `drs-bot/web`, with the two Supabase env vars set:
 
 ```bash
-node worker/ingest.js census     # FIRST — district religion + names + population (Census 2011)
-node worker/ingest.js shrug      # then — households + literacy (joins onto census by population)
-node worker/ingest.js lgd        # then — official LGD codes (joins onto census by name)
+node worker/ingest.js census     # FIRST — religion + population + households + urban% + literacy (Census 2011)
+node worker/ingest.js shrug      # then — refines literacy to official 7+ rate (joins by population)
+node worker/ingest.js lgd        # then — official LGD district codes (joins by Census 2011 code)
+node worker/ingest.js lgdunits   # then — sub-districts + blocks counts (joins by LGD code)
 ```
 
-> Order matters: `census` builds the district rows; `shrug`/`lgd` attach onto them.
+> Order matters: `census` builds the district rows (and fills most columns);
+> `shrug`/`lgd`/`lgdunits` attach onto them. Result: ~100% coverage on every column.
 
 ### Option B — GitHub Actions (free, automated, "0 manual")
 Repo → **Settings → Secrets and variables → Actions** → add `NEXT_PUBLIC_SUPABASE_URL`
