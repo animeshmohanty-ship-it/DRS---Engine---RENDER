@@ -2422,7 +2422,7 @@ export default function App() {
                 </div>
               )}
             </div>
-            {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && (
+            {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && activeTab !== 'gtm' && (
               <button
                 className={`copilot-toggle-btn ${loading[activeStageNum] ? 'danger' : ''}`}
                 style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
