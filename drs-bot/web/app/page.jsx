@@ -1691,7 +1691,29 @@ export default function App() {
     const gtm = { ...((projectStagesRef.current || {}).gtm || {}) }; gtm.research = { ...(gtm.research || {}) };
     try {
       setGtmStage('snapshot'); let r = await gtmRun('snapshot'); if (r?.snapshot) { gtm.research.snapshot = r.snapshot; await persistGtm(gtm); }
-      setGtmStage('districts'); let all = []; for (let b = 0; b < 3; b++) { const dd = await gtmRun('districts', { start: b * 18, size: 18 }); if (!dd || !Array.isArray(dd.districts) || !dd.districts.length) break; all = [...all, ...dd.districts]; gtm.research.districts = all; await persistGtm(gtm); if (dd.endOfList) break; }
+      // Districts: prefer the VERIFIED data layer (real sourced rows). Only fall
+      // back to LLM generation if the table has nothing for this state yet.
+      setGtmStage('districts');
+      let usedVerified = false;
+      try {
+        const vres = await fetch('/api/geodata', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resource: 'districts', country, state }) });
+        const vj = await vres.json();
+        if (vj?.ok && Array.isArray(vj.rows) && vj.rows.length) {
+          gtm.research.districts = vj.rows.map((d) => ({
+            name: d.district, population: d.population, households: d.households,
+            urbanPct: d.urban_pct, literacyPct: d.literacy_pct, religions: d.religions,
+            level2Count: d.level2_count, level3Count: d.level3_count,
+            confidence: 'Verified', source: d.sources,
+          }));
+          gtm.research.districtsVerified = true;
+          await persistGtm(gtm);
+          usedVerified = true;
+        }
+      } catch { /* fall back to generation */ }
+      if (!usedVerified) {
+        gtm.research.districtsVerified = false;
+        let all = []; for (let b = 0; b < 3; b++) { const dd = await gtmRun('districts', { start: b * 18, size: 18 }); if (!dd || !Array.isArray(dd.districts) || !dd.districts.length) break; all = [...all, ...dd.districts]; gtm.research.districts = all; await persistGtm(gtm); if (dd.endOfList) break; }
+      }
       setGtmStage('priority'); r = await gtmRun('priority', { limit: 12 }); if (r?.priorityUnits) { gtm.research.priorityUnits = r.priorityUnits; await persistGtm(gtm); }
       setGtmStage('economic'); r = await gtmRun('economic'); if (r?.economicProfile) { gtm.research.economicProfile = r.economicProfile; await persistGtm(gtm); }
       setGtmStage('income'); r = await gtmRun('income'); if (r?.incomeClasses) { gtm.research.incomeClasses = r.incomeClasses; await persistGtm(gtm); }
@@ -1765,7 +1787,7 @@ export default function App() {
 
             {Array.isArray(R.districts) && R.districts.length > 0 && (
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}><strong>B · District Intelligence</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({R.districts.length} units)</span></div>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}><strong>B · District Intelligence</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({R.districts.length} units)</span>{R.districtsVerified ? <span style={{ fontSize: 10.5, background: '#E1F0EB', color: '#0F6E56', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>✓ Verified · Census / SHRUG / LGD</span> : <span style={{ fontSize: 10.5, background: '#FAEEDA', color: '#854F0B', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>LLM estimate — data layer empty for this state</span>}</div>
                 <div style={{ overflowX: 'auto' }}>
                   {(() => {
                     // Religion columns adapt to the place's top-4 (same 4 for every row).

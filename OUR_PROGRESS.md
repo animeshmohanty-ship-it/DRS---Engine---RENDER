@@ -162,6 +162,24 @@ New sidebar tab **"GTM Blueprint"** replacing Geo Intel/Market Research. Impleme
 - **Phase 4 · Awareness** — bot-generated public activation content cards (what/benefits/how/global-success/counter-narrative/demos), channel-tagged → feeds Planning calendar.
 Every card: **confidence badge** (Verified/Experience/Estimate) + **channel tag** (Team Research=bot fills; PR/Events/Field/Design=human → Orchestrator). **Brain-first**, grounded gap-fill, generated narrative. Data stored in `projectStages.gtm`. Backend reuses the multi-call pattern (`/api/geodeep` + `lib/prompts/geoDeep.js`, scenario-aware). Mockups approved for all 4 phases. Geo Intel to be retired once GTM is live.
 
+## 🏗️ VERIFIED DATA LAYER — building now (from 2026-08-20)
+
+**Why:** the bot was letting the LLM *generate* facts (district population/religion/etc.), which produced state-aggregates copied across every district (60% guessed). Decision: **LLM stops producing facts; it READS a verified data store that offline workers fill from authoritative open sources, and only REASONS on top.** Runs on Render. Census religion sourced from a verified community mirror (user approved 2026-08-20) — no live gov API exists.
+
+**Scope/coverage:** India states + India-national = fully verified (Census/SHRUG/LGD cover all 640 districts). International demographics = LLM fallback (amber badge) until per-country sources wired (schema is country-keyed/pluggable). Touchpoints via OSM = already global.
+
+**Phase 0 (spine) + Phase 1 (India district facts) — BUILT & tested 2026-08-20:**
+- `db/001_data_layer.sql` — tables `geo_districts`, `geo_touchpoints`, `data_sources`, `ingest_runs` (run once in Supabase SQL editor).
+- `lib/datalayer/{db,validate,csv}.js` — write/read helpers, the validation GATE (rejects identical-across-all-districts columns — the exact bug), dependency-free CSV/TSV parser.
+- `lib/datalayer/sources/{census,shrug,lgd,osm}.js` — verified sources: Census 2011 C-01 religion (raw GitHub mirror, per-state top-4, self-contained w/ names+pop); SHRUG (Dataverse TSV, joins onto census BY POPULATION → households+literacy); LGD (planemad CSV, joins by name → LGD code); OSM/Overpass touchpoints (global).
+- `worker/ingest.js` + `loadEnv.js` — standalone runner: `node worker/ingest.js <census|shrug|lgd|osm City>`. Order: census FIRST.
+- `app/api/geodata/route.js` — read API. `app/page.jsx` — District tab PREFERS verified data, LLM fallback if empty, green "✓ Verified" vs amber "LLM estimate" badge.
+- `docs/DATA_LAYER_SETUP.md` — one-time setup (SQL + free DATA_GOV_IN key + Render Cron Jobs).
+- **Proven:** census parser tested live — 640 districts, Lahul&Spiti Buddhist 62% (was 1.15% aggregate), TN top-4 = Hindu/Christian/Muslim/NotStated. Real per-district variation confirmed.
+- **Not yet sourced:** level2/level3 counts (blocks/panchayats) — need LGD sub-unit files aggregated; show "—" honestly for now. urban_pct not in these files → "—".
+
+**Next:** Phase 2 (Crawlee scraper for liquor/kirana/MRF gaps + pg-boss + Data Extractor UI), Phase 3 (LLM reads tables, cites sources), Phase 4 (cron schedules + freshness UI).
+
 **FIX 2026-08-20 — religion columns restored (mandatory, country-adaptive).** The approved mockup + spec (District Intelligence "religion%") were dropped in the first country-generic build — the prompt never asked for religion and the table had no columns. Now: (1) `geoDeep.js` districts prompt returns a mandatory `religions:[{name,pct}×4]` = the place's TOP-4 religions by overall share, SAME 4 names/order for every unit, adapting to the country (India → Hindu/Muslim/Christian/Sikh; Poland → Catholic/Orthodox; etc.), Census/Pew-sourced, estimated from parent distribution if unit-level missing; (2) the District table (`page.jsx`) renders 4 dynamic religion columns, header names read from the data (top-4 of that place) — so Regional/National/International all get religion columns keyed to their own country. Compiles clean; needs a live Generate run to see data populate.
 
 ## 🚀 NEXT-LEVEL ROADMAP (backlog — TO BE DONE, parked 2026-08-17)
