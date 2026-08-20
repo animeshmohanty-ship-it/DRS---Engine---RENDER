@@ -33,12 +33,20 @@ out center tags 400;`;
 // Fetch touchpoints for one city+category. Returns geo_touchpoints-shaped rows.
 export async function fetchOsmTouchpoints({ city, category, state = null, country = 'India' }) {
   const query = buildQuery(city, category);
-  const res = await fetch(OVERPASS, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA },
-    body: 'data=' + encodeURIComponent(query),
-  });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
+  // The public Overpass endpoint rate-limits (429) under load — retry with backoff.
+  let res, lastStatus = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(OVERPASS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': UA },
+      body: 'data=' + encodeURIComponent(query),
+    });
+    if (res.ok) break;
+    lastStatus = res.status;
+    if (res.status === 429 || res.status === 504) { await new Promise((r) => setTimeout(r, 2500 * (attempt + 1))); continue; }
+    break;
+  }
+  if (!res.ok) throw new Error(`Overpass ${res.status || lastStatus}${res.status === 429 ? ' (rate-limited — try again in a moment)' : ''}`);
   const { elements = [] } = await res.json();
   const seen = new Set();
   const rows = [];

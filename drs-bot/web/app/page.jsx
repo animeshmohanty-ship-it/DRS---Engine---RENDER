@@ -1731,21 +1731,52 @@ export default function App() {
       for (const [key, label] of cats) { setGtmStage(key); const r = await gtmRun('touchpoints', { category: key }); if (r?.touchpoints) { gtm.targeted[key] = { label, ...r.touchpoints }; await persistGtm(gtm); } }
     } catch (e) { setError('GTM Targeted failed: ' + e.message); } finally { setGtmBusy(false); setGtmStage(''); }
   };
+  // Parse a natural query → { city, category } (e.g. "10 top restaurants in Shimla").
+  const parseExtractQuery = (raw) => {
+    const s = String(raw || '').trim();
+    const CAT = [
+      [/\b(restaurant|resturant|cafe|coffee|dining|eatery|eateries|food|hotel|bar|pub|horeca)\b/i, 'horeca'],
+      [/\b(liquor|wine|alcohol|tasmac|beer|booze|off[- ]?licen[cs]e)\b/i, 'liquor'],
+      [/\b(supermarket|grocery|groceries|kirana|retail|mart|departmental)\b/i, 'retail'],
+      [/\b(scrap|recycl\w*|mrf|kabad\w*|junk|second[- ]?hand)\b/i, 'mrf'],
+      [/\b(school|schools|college)\b/i, 'school'],
+      [/\b(mall|malls)\b/i, 'mall'],
+      [/\b(fuel|petrol|gas station|pump|filling station)\b/i, 'fuel'],
+      [/\b(cinema|cinemas|theatre|theater|multiplex|movie)\b/i, 'cinema'],
+    ];
+    let category = null;
+    for (const [re, c] of CAT) { if (re.test(s)) { category = c; break; } }
+    let city = null;
+    const m = s.match(/\b(?:in|at|near|for|around|of)\s+([a-z .&'-]+)\s*$/i);
+    if (m) city = m[1].trim();
+    if (!city) {
+      city = s.replace(/\b(top|best|the|a|an|list|show|find|me|get|all|\d+|restaurants?|resturants?|cafes?|coffee|dining|eatery|eateries|food|hotels?|bars?|pubs?|liquor|wine|alcohol|shops?|stores?|outlets?|supermarkets?|grocery|groceries|kirana|retail|marts?|malls?|schools?|colleges?|fuel|petrol|pumps?|cinemas?|theatres?|theaters?|multiplex|scrap|recycl\w*|mrf|junk|in|at|near|for|around|of)\b/gi, '').replace(/[^a-z .&'-]/gi, ' ').replace(/\s+/g, ' ').trim();
+    }
+    if (!city) city = s;
+    city = city.replace(/\b\w/g, (c) => c.toUpperCase());
+    return { city, category };
+  };
   // Live touchpoint extractor (free — OpenStreetMap via /api/extract, no worker).
   const runExtract = async () => {
-    const city = extractCity.trim();
+    const { city, category } = parseExtractQuery(extractCity);
     if (!city) return;
     setExtractResults(null); setError('');
-    const cats = [['fuel', 'Fuel'], ['school', 'Schools'], ['mall', 'Malls'], ['hotel', 'Hotels'], ['retail', 'Retail/Supermarkets'], ['horeca', 'HoReCa'], ['cinema', 'Cinemas'], ['liquor', 'Liquor'], ['mrf', 'Scrap/MRF']];
+    const ALL = [['fuel', 'Fuel'], ['school', 'Schools'], ['mall', 'Malls'], ['hotel', 'Hotels'], ['retail', 'Retail/Supermarkets'], ['horeca', 'HoReCa'], ['cinema', 'Cinemas'], ['liquor', 'Liquor'], ['mrf', 'Scrap/MRF']];
+    const LABELS = Object.fromEntries(ALL);
+    // If a category was named in the query, fetch just that (1 call, no rate-limit); else all.
+    const cats = category ? [[category, LABELS[category] || category]] : ALL;
     const byCat = {}; const notes = [];
-    for (const [key, label] of cats) {
-      setExtractBusy(label);
+    for (let i = 0; i < cats.length; i++) {
+      const [key, label] = cats[i];
+      setExtractBusy(`${label} · ${city}`);
       try {
         const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ city, category: key, state, country }) });
         const j = await res.json();
         if (j?.ok) { byCat[key] = { label, rows: j.rows || [] }; if (j.note) notes.push(`${label}: ${j.note}`); }
+        else if (j?.error) notes.push(`${label}: ${j.error}`);
       } catch { /* skip category on error */ }
       setExtractResults({ city, byCat: { ...byCat }, notes: [...notes] });
+      if (i < cats.length - 1) await new Promise((r) => setTimeout(r, 1200)); // throttle public Overpass
     }
     setExtractBusy('');
   };
@@ -1894,7 +1925,7 @@ export default function App() {
                 <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Real named touchpoints from OpenStreetMap — live, free.</span>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                <input value={extractCity} onChange={(e) => setExtractCity(e.target.value)} placeholder="City (e.g. Coimbatore)" style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, minWidth: 200 }} onKeyDown={(e) => { if (e.key === 'Enter' && !extractBusy) runExtract(); }} />
+                <input value={extractCity} onChange={(e) => setExtractCity(e.target.value)} placeholder='e.g. "Shimla" or "restaurants in Shimla"' style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, minWidth: 240 }} onKeyDown={(e) => { if (e.key === 'Enter' && !extractBusy) runExtract(); }} />
                 <button className="btn" onClick={runExtract} disabled={!!extractBusy || !extractCity.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{extractBusy ? <><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> {extractBusy}…</> : <><Sparkles size={15} /> Extract</>}</button>
               </div>
               {extractResults && (
