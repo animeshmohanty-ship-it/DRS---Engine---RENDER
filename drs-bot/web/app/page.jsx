@@ -850,7 +850,7 @@ export default function App() {
     setSelectedWorkstreams(setupMeta.selectedWorkstreams || [1, 2, 3, 4, 5, 6, 7]);
     setCustomConstraints(setupMeta.customConstraints || '');
 
-    setResearchTab(3); setActiveTab('research'); // Jump to Strategic Intelligence
+    setResearchTab(3); setActiveTab('gtm'); // Jump to GTM Blueprint (first stage after Setup)
     setError(null);
   };
 
@@ -1147,7 +1147,7 @@ export default function App() {
     try {
       setLoading({ 1: true });
       await saveProjectToStorage(projectStages);
-      setResearchTab(3); setActiveTab('research'); // Unlocked → open Strategic Intelligence
+      setResearchTab(3); setActiveTab('gtm'); // Unlocked → open GTM Blueprint (first stage after Setup)
     } catch (e) {
       setError(e.message);
     } finally {
@@ -2235,20 +2235,7 @@ export default function App() {
               <>
                 {setupStage && renderStageItem(setupStage)}
 
-                {/* MARKET RESEARCH — single combined page (stages 2-6 live inside as sub-tabs) */}
-                {researchStages.length > 0 && (
-                  <div
-                    className={`menu-item ${activeTab === 'research' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
-                    style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
-                    onClick={() => isSetupDone && setActiveTab('research')}
-                  >
-                    <span className="badge-icon">MR</span>
-                    <span>Strategic Intelligence</span>
-                    {researchStale && <span title="A research stage is out of date — regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
-                  </div>
-                )}
-
-                {/* GTM BLUEPRINT — new scenario-aware Formula (Research→Awareness) */}
+                {/* GTM BLUEPRINT — foundational research (scenario-aware Formula, Research→Awareness). Runs BEFORE Strategic Intelligence. */}
                 <div
                   className={`menu-item ${activeTab === 'gtm' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
                   style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
@@ -2257,6 +2244,19 @@ export default function App() {
                   <span className="badge-icon">GT</span>
                   <span>GTM Blueprint</span>
                 </div>
+
+                {/* STRATEGIC INTELLIGENCE — builds on GTM (stages 3-6 as sub-tabs) */}
+                {researchStages.length > 0 && (
+                  <div
+                    className={`menu-item ${activeTab === 'research' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                    style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                    onClick={() => isSetupDone && setActiveTab('research')}
+                  >
+                    <span className="badge-icon">SI</span>
+                    <span>Strategic Intelligence</span>
+                    {researchStale && <span title="A research stage is out of date — regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
+                  </div>
+                )}
 
                 {/* PRE-PLANNING — visible always, accessible once Setup is saved */}
                 <div

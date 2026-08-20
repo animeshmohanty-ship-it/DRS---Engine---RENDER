@@ -22,6 +22,31 @@ PROJECT KNOWLEDGE (documents uploaded by the user — treat as authoritative ref
 ${parts.join('\n\n')}`;
 }
 
+// Opportunistic context: if the GTM Blueprint has already been generated for this
+// project, summarize it so downstream stages (Strategic Intelligence, brief, plan)
+// build ON it. Returns '' when GTM hasn't been run yet — never blocks.
+export function buildGtmContextBlock(projectData = {}) {
+  const g = projectData?.gtm;
+  if (!g) return '';
+  const R = g.research || {};
+  const parts = [];
+  if (R.snapshot) parts.push(`State snapshot: ${JSON.stringify(R.snapshot).slice(0, 600)}`);
+  if (Array.isArray(R.priorityUnits) && R.priorityUnits.length) parts.push(`Priority rollout units: ${R.priorityUnits.slice(0, 10).map((u) => u.unit || u.name).filter(Boolean).join(', ')}`);
+  if (R.context) parts.push(`Context & threats: ${JSON.stringify(R.context).slice(0, 700)}`);
+  if (R.economicProfile) parts.push(`Economic profile: ${JSON.stringify(R.economicProfile).slice(0, 300)}`);
+  if (g.targeted && typeof g.targeted === 'object') {
+    const cats = Object.entries(g.targeted).map(([k, t]) => `${(t && t.label) || k}${t && t.estimatedCount != null ? ` (~${t.estimatedCount})` : ''}`);
+    if (cats.length) parts.push(`Touchpoint categories mapped: ${cats.join('; ')}`);
+  }
+  if (Array.isArray(g.narrative) && g.narrative.length) parts.push(`Narrative pillars: ${g.narrative.map((b) => b.block).filter(Boolean).slice(0, 6).join('; ')}`);
+  if (Array.isArray(g.awareness) && g.awareness.length) parts.push(`Awareness themes: ${g.awareness.map((a) => a.theme).filter(Boolean).slice(0, 6).join('; ')}`);
+  if (!parts.length) return '';
+  return `
+
+GTM BLUEPRINT (already generated for this market — treat as FOUNDATIONAL context; build ON it, stay consistent, and do not contradict its priority units, touchpoints, or narrative):
+- ${parts.join('\n- ')}`;
+}
+
 export function buildStagePrompt(stageNum, input, projectData = {}, action = null) {
   const {
     country = 'India',
@@ -93,7 +118,7 @@ BRIEF ADHERENCE MANDATE (non-negotiable — output that ignores the brief is a f
 - MATERIALS: Reason ONLY about the selected materials (${materials.join(', ')}). Do not introduce, cost, or plan for any material outside this list.
 - IMPLEMENTATION MODEL: Every recommendation must be executable within the "${implementationModel}" model. Do not propose activities that model does not support (e.g. no truck logistics for "Tech Solutions"; no pure-software plays for "RVM-only").
 - CONSTRAINTS: You MUST explicitly account for the stated local constraints${customConstraints ? `: "${customConstraints}"` : ' where relevant'}.
-- TAILORING: Generic, location-agnostic output is unacceptable. Every section must tie concretely to ${targetLocation} and the brief above.${buildKnowledgeBlock(projectData)}`;
+- TAILORING: Generic, location-agnostic output is unacceptable. Every section must tie concretely to ${targetLocation} and the brief above.${buildKnowledgeBlock(projectData)}${buildGtmContextBlock(projectData)}`;
 
   switch (Number(stageNum)) {
     case 3:
