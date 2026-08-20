@@ -186,7 +186,7 @@ Every card: **confidence badge** (Verified/Experience/Estimate) + **channel tag*
 
 **COST: everything runs on free tiers only** — Supabase (existing), open data (no key), existing Render web service, free GitHub Actions. No paid infra anywhere.
 
-**REMAINING (user, one-time, at the end):** run `db/001_data_layer.sql` in Supabase; then load data (local `node worker/ingest.js census|shrug|lgd` OR GitHub Actions). International demographics still LLM-fallback until per-country sources wired.
+**LOADED TO PRODUCTION 2026-08-20:** Supabase tables created (RLS on); data loaded — census 640, shrug 633 (pop-join), lgd 498 (name-join). Verified TN: 32 districts w/ real pop+HH+literacy+per-district religion. Live bot reads via /api/geodata (service-role bypasses RLS). International demographics still LLM-fallback until per-country sources wired.
 
 **FIX 2026-08-20 — religion columns restored (mandatory, country-adaptive).** The approved mockup + spec (District Intelligence "religion%") were dropped in the first country-generic build — the prompt never asked for religion and the table had no columns. Now: (1) `geoDeep.js` districts prompt returns a mandatory `religions:[{name,pct}×4]` = the place's TOP-4 religions by overall share, SAME 4 names/order for every unit, adapting to the country (India → Hindu/Muslim/Christian/Sikh; Poland → Catholic/Orthodox; etc.), Census/Pew-sourced, estimated from parent distribution if unit-level missing; (2) the District table (`page.jsx`) renders 4 dynamic religion columns, header names read from the data (top-4 of that place) — so Regional/National/International all get religion columns keyed to their own country. Compiles clean; needs a live Generate run to see data populate.
 
