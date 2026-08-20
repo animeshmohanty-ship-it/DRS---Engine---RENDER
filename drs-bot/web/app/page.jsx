@@ -1763,7 +1763,7 @@ export default function App() {
   };
 
   const gtmConf = (c) => {
-    const m = { Verified: ['#E1F0EB', '#0F6E56'], Inferred: ['#FAEEDA', '#854F0B'], Assumption: ['#F1EFE8', '#5F5E5A'] };
+    const m = { Verified: ['#E6F1FB', '#0066CC'], Inferred: ['#FAEEDA', '#854F0B'], Assumption: ['#F1EFE8', '#5F5E5A'] };
     const [bg, fg] = m[c] || ['#F1EFE8', '#5F5E5A'];
     return <span style={{ fontSize: 10, fontWeight: 600, background: bg, color: fg, padding: '1px 6px', borderRadius: 10 }}>{c || '—'}</span>;
   };
@@ -1774,19 +1774,19 @@ export default function App() {
     const R = gtm.research || {};
     const busyTag = gtmBusy ? <span style={{ fontSize: 11, color: 'var(--accent)' }}><span className="spinner" style={{ borderTopColor: 'var(--accent)', width: 11, height: 11, display: 'inline-block' }} /> {gtmStage || 'working'}…</span> : null;
     const phaseBtn = (key, label) => (
-      <span onClick={() => setGtmPhase(key)} style={{ cursor: 'pointer', fontSize: 12.5, fontWeight: gtmPhase === key ? 600 : 500, background: gtmPhase === key ? '#0E7C66' : 'var(--grey-soft)', color: gtmPhase === key ? '#fff' : 'var(--ink-soft)', padding: '6px 13px', borderRadius: 8 }}>{label}</span>
+      <span onClick={() => setGtmPhase(key)} style={{ cursor: 'pointer', fontSize: 12.5, fontWeight: gtmPhase === key ? 600 : 500, background: gtmPhase === key ? 'var(--accent)' : 'var(--grey-soft)', color: gtmPhase === key ? '#fff' : 'var(--ink-soft)', padding: '6px 13px', borderRadius: 8 }}>{label}</span>
     );
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
-          <h3 style={{ margin: 0, color: '#0E7C66' }}>GTM Blueprint</h3>
-          <span style={{ fontSize: 12, background: '#E1F0EB', color: '#0A5A4A', padding: '2px 9px', borderRadius: 20 }}>{state ? `${state} · ${country}` : country || '—'}</span>
+          <h3 style={{ margin: 0, color: 'var(--accent)' }}>GTM Blueprint</h3>
+          <span style={{ fontSize: 12, background: '#E6F1FB', color: '#0066CC', padding: '2px 9px', borderRadius: 20 }}>{state ? `${state} · ${country}` : country || '—'}</span>
           <select value={gtmScenario} onChange={(e) => setGtmScenarioOverride(e.target.value)} style={{ fontSize: 12, padding: '3px 8px', borderRadius: 20, border: '1px solid var(--line)' }}>
             <option>Regional</option><option>National</option><option>International</option>
           </select>
           {busyTag}
         </div>
-        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>Alokesh's DRS Formula — {gtmScenario} scenario. Brain-first; each item tagged by confidence + channel.</p>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>DRS Formula — {gtmScenario} scenario. Brain-first; each item tagged by confidence + channel.</p>
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 16 }}>
           {phaseBtn('research', '1 · Research')}{phaseBtn('targeted', '2 · Targeted Research')}{phaseBtn('narrative', '3 · Narrative')}{phaseBtn('awareness', '4 · Awareness')}
         </div>
@@ -1808,7 +1808,7 @@ export default function App() {
 
             {Array.isArray(R.districts) && R.districts.length > 0 && (
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}><strong>B · District Intelligence</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({R.districts.length} units)</span>{R.districtsVerified ? <span style={{ fontSize: 10.5, background: '#E1F0EB', color: '#0F6E56', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>✓ Verified · Census / SHRUG / LGD</span> : <span style={{ fontSize: 10.5, background: '#FAEEDA', color: '#854F0B', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>LLM estimate — data layer empty for this state</span>}</div>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}><strong>B · District Intelligence</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({R.districts.length} units)</span>{R.districtsVerified ? <span style={{ fontSize: 10.5, background: '#E6F1FB', color: '#0066CC', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>✓ Verified · Census / SHRUG / LGD</span> : <span style={{ fontSize: 10.5, background: '#FAEEDA', color: '#854F0B', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>LLM estimate — data layer empty for this state</span>}</div>
                 <div style={{ overflowX: 'auto' }}>
                   {(() => {
                     // Religion columns adapt to the place's top-4 (same 4 for every row).
@@ -1832,7 +1832,7 @@ export default function App() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               {Array.isArray(R.priorityUnits) && R.priorityUnits.length > 0 && (
                 <div className="card"><h4 style={{ margin: '0 0 8px' }}>D · Priority Ranking</h4>
-                  {R.priorityUnits.slice(0, 12).map((u, i) => (<div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, padding: '2px 0' }}><b style={{ color: '#0E7C66' }}>{u.rank ?? i + 1}</b><span>{u.unit}</span><span style={{ marginLeft: 'auto', color: 'var(--ink-soft)' }}>{u.population ?? ''}</span></div>))}
+                  {R.priorityUnits.slice(0, 12).map((u, i) => (<div key={i} style={{ display: 'flex', gap: 8, fontSize: 12, padding: '2px 0' }}><b style={{ color: 'var(--accent)' }}>{u.rank ?? i + 1}</b><span>{u.unit}</span><span style={{ marginLeft: 'auto', color: 'var(--ink-soft)' }}>{u.population ?? ''}</span></div>))}
                 </div>
               )}
               {R.economicProfile && (
@@ -1869,9 +1869,9 @@ export default function App() {
         {gtmPhase === 'targeted' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {/* Live Data Extractor — real named touchpoints from OpenStreetMap (free) */}
-            <div className="card" style={{ borderColor: '#0E7C66' }}>
+            <div className="card" style={{ borderColor: 'var(--accent)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h4 style={{ margin: 0, color: '#0E7C66' }}>🛰️ Data Extractor</h4>
+                <h4 style={{ margin: 0, color: 'var(--accent)' }}>🛰️ Data Extractor</h4>
                 <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Real named touchpoints from OpenStreetMap — live, free.</span>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
