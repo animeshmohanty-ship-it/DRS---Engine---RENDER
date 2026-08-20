@@ -233,7 +233,7 @@ export default function App() {
   const [projectEndMonth, setProjectEndMonth] = useState('');
   const [projectEndYear, setProjectEndYear] = useState('');
   const [targetTimeline, setTargetTimeline] = useState('180 Days');
-  const [selectedStages, setSelectedStages] = useState([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+  const [selectedStages, setSelectedStages] = useState([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
   const [selectedWorkstreams, setSelectedWorkstreams] = useState([1, 2, 3, 4, 5, 6, 7]);
   const [stagesDropdownOpen, setStagesDropdownOpen] = useState(false);
   const [workstreamsDropdownOpen, setWorkstreamsDropdownOpen] = useState(false);
@@ -846,11 +846,11 @@ export default function App() {
     setProjectEndMonth(setupMeta.projectEndMonth || '');
     setProjectEndYear(setupMeta.projectEndYear || '');
     setTargetTimeline(setupMeta.targetTimeline || '180 Days');
-    setSelectedStages(setupMeta.selectedStages || [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    setSelectedStages((setupMeta.selectedStages || [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]).filter((n) => n !== 2));
     setSelectedWorkstreams(setupMeta.selectedWorkstreams || [1, 2, 3, 4, 5, 6, 7]);
     setCustomConstraints(setupMeta.customConstraints || '');
 
-    setResearchTab(2); setActiveTab('research'); // Jump to Market Research
+    setResearchTab(3); setActiveTab('research'); // Jump to Strategic Intelligence
     setError(null);
   };
 
@@ -1147,7 +1147,7 @@ export default function App() {
     try {
       setLoading({ 1: true });
       await saveProjectToStorage(projectStages);
-      setResearchTab(2); setActiveTab('research'); // Unlocked → open Market Research
+      setResearchTab(3); setActiveTab('research'); // Unlocked → open Strategic Intelligence
     } catch (e) {
       setError(e.message);
     } finally {
@@ -1156,7 +1156,7 @@ export default function App() {
   };
 
   // Market Research combined page: which sub-tab (stage 2-6) is showing + generate-all state.
-  const [researchTab, setResearchTab] = useState(2);
+  const [researchTab, setResearchTab] = useState(3);
   const [researchGenerating, setResearchGenerating] = useState(false);
   const [researchProgress, setResearchProgress] = useState('');
   const [planProgress, setPlanProgress] = useState('');
@@ -2120,7 +2120,7 @@ export default function App() {
 
   // Generate all selected research stages (2-6) in dependency order (2 -> 6).
   const generateAllResearch = async () => {
-    const toRun = [2, 3, 4, 5, 6].filter((n) => selectedStages.includes(n));
+    const toRun = [3, 4, 5, 6].filter((n) => selectedStages.includes(n));
     setResearchGenerating(true);
     try {
       for (const n of toRun) {
@@ -2227,7 +2227,7 @@ export default function App() {
             };
 
             const setupStage = STAGES.find((s) => s.num === 1);
-            const researchStages = STAGES.filter((s) => [2, 3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num));
+            const researchStages = STAGES.filter((s) => [3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num));
             const laterStages = STAGES.filter((s) => s.num >= 7 && selectedStages.includes(s.num));
             const researchStale = isSetupDone && researchStages.some((s) => isStageStale(s.num));
 
@@ -2243,7 +2243,7 @@ export default function App() {
                     onClick={() => isSetupDone && setActiveTab('research')}
                   >
                     <span className="badge-icon">MR</span>
-                    <span>Market Research</span>
+                    <span>Strategic Intelligence</span>
                     {researchStale && <span title="A research stage is out of date — regenerate to sync." style={{ marginLeft: 'auto', fontSize: '12px' }}>⚠️</span>}
                   </div>
                 )}
@@ -2332,7 +2332,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Market Research' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -3167,7 +3167,7 @@ export default function App() {
                         Clear All
                       </button>
                     </div>
-                    {STAGES.filter(s => s.num !== 1).map(s => {
+                    {STAGES.filter(s => s.num !== 1 && s.num !== 2).map(s => {
                       const checked = selectedStages.includes(s.num);
                       return (
                         <div 
@@ -3427,7 +3427,7 @@ export default function App() {
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {STAGES.filter((s) => [2, 3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num)).map((s) => {
+                  {STAGES.filter((s) => [3, 4, 5, 6].includes(s.num) && selectedStages.includes(s.num)).map((s) => {
                     const has = !!projectStages[`stage${s.num}`];
                     const stale = isStageStale(s.num);
                     return (
@@ -3496,7 +3496,7 @@ export default function App() {
               <div>
                 <div className="card" style={{ borderLeft: '4px solid var(--accent)' }}>
                   <span style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)' }}>How this works</span>
-                  <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI Director authored this from your Market Research. To change anything, <strong>discuss it with the Copilot</strong> (right) and approve the updates it proposes — tell it your real objectives, budget, and constraints. Hit <strong>💬 Discuss</strong> on any section to start.</p>
+                  <p style={{ fontSize: '13px', margin: '6px 0 0', color: 'var(--ink-soft)' }}>The AI Director authored this from your Strategic Intelligence. To change anything, <strong>discuss it with the Copilot</strong> (right) and approve the updates it proposes — tell it your real objectives, budget, and constraints. Hit <strong>💬 Discuss</strong> on any section to start.</p>
                 </div>
 
                 <div className="card">
@@ -5265,7 +5265,7 @@ export default function App() {
       {/* 3. Collapsible Right AI Copilot drawer */}
       <div className={`copilot-panel ${copilotFullpage ? 'fullpage' : copilotCollapsed ? 'collapsed' : ''}`}>
         <div className="copilot-header">
-          <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Market Research') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')}){!projectId && <span style={{ marginLeft: 6, fontSize: '10px', fontWeight: 600, color: 'var(--accent)', background: 'var(--grey-soft)', padding: '2px 6px', borderRadius: 10, verticalAlign: 'middle' }}>GENERAL</span>}</h3>
+          <h3>AI Copilot ({activeTab === 'orchestrator' ? 'Task Orchestrator' : activeTab === 'preplanning' ? 'Campaign Brief Co-author' : activeTab === 'planning' ? 'Campaign Plan Co-author' : activeTab === 'research' ? (STAGES.find(s => s.num === researchTab)?.name || 'Strategic Intelligence') : (STAGES.find(s => s.num === activeTab)?.name || 'Setup')}){!projectId && <span style={{ marginLeft: 6, fontSize: '10px', fontWeight: 600, color: 'var(--accent)', background: 'var(--grey-soft)', padding: '2px 6px', borderRadius: 10, verticalAlign: 'middle' }}>GENERAL</span>}</h3>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               className="icon-btn"

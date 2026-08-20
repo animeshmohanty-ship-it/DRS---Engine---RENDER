@@ -237,8 +237,20 @@ export async function POST(req) {
   const t0 = Date.now();
   try {
     const body = await req.json();
-    const { stage, input, projectData, model: selectedModel, action, touchpoints: clientTouchpoints, stateSummary: clientStateSummary, searchReport: clientSearchReport, projectId } = body;
+    const { stage, input, model: selectedModel, action, touchpoints: clientTouchpoints, stateSummary: clientStateSummary, searchReport: clientSearchReport, projectId } = body;
+    let projectData = body.projectData || {};
     const stageNum = Number(stage);
+
+    // REWIRE: Geography Intel (stage 2) is retired. When a project has no stage2
+    // data, synthesize it from the VERIFIED data layer so downstream stages get
+    // real geography/touchpoint evidence instead of generic fallbacks.
+    if ((!projectData.stage2 || !projectData.stage2.intel) && input?.state && stageNum !== 2) {
+      try {
+        const { synthesizeStage2 } = await import('../../../lib/datalayer/stage2synth.js');
+        const s2 = await synthesizeStage2(input.country, input.state);
+        if (s2) projectData = { ...projectData, stage2: s2 };
+      } catch { /* keep fallbacks */ }
+    }
 
     if (!stageNum || !input?.state) {
       return NextResponse.json({ ok: false, error: 'stage and state are required' }, { status: 400 });
