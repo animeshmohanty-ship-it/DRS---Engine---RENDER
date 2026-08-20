@@ -1799,7 +1799,10 @@ export default function App() {
             {R.snapshot && (
               <div className="card"><h4 style={{ margin: '0 0 8px' }}>A · State Snapshot {gtmConf(R.snapshot.confidence)}</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 8 }}>
-                  {[['Population', R.snapshot.population], ['Admin divisions', R.snapshot.adminDivisions], ['Urban local bodies', R.snapshot.urbanLocalBodies], ['Local bodies', R.snapshot.localBodies], ['Urban %', R.snapshot.urbanPct], ['Literacy %', R.snapshot.literacyPct]].map(([l, v]) => (
+                  {(R.snapshot._verified
+                    ? [['Population', R.snapshot.population], ['Districts', R.snapshot.adminDivisions], ['Households', R.snapshot.households], ['Sub-divisions', R.snapshot.subDivisions], ['Blocks', R.snapshot.localBodies], ['Urban %', R.snapshot.urbanPct], ['Literacy %', R.snapshot.literacyPct]]
+                    : [['Population', R.snapshot.population], ['Admin divisions', R.snapshot.adminDivisions], ['Urban local bodies', R.snapshot.urbanLocalBodies], ['Local bodies', R.snapshot.localBodies], ['Urban %', R.snapshot.urbanPct], ['Literacy %', R.snapshot.literacyPct]]
+                  ).map(([l, v]) => (
                     <div key={l} style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: '8px 10px' }}><div style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>{l}</div><div style={{ fontSize: 15, fontWeight: 700 }}>{v ?? '—'}</div></div>
                   ))}
                 </div>

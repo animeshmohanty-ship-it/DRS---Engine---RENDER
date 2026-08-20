@@ -36,6 +36,36 @@ export async function POST(req) {
     const { section, input = {}, projectId = null, opts = {}, model: selectedModel } = await req.json();
     if (!section) return NextResponse.json({ ok: false, error: 'section required' }, { status: 400 });
 
+    // VERIFIED SNAPSHOT: for any state the data layer covers, compute the State
+    // Snapshot directly from geo_districts (same source as the District table) so
+    // the two can never disagree — no LLM. Falls through to LLM only when empty.
+    if (section === 'snapshot') {
+      const vstate = (input.state && !/national|whole country/i.test(input.state)) ? input.state : null;
+      if (vstate) {
+        const drows = await getDistricts({ country: input.country || 'India', state: vstate }).catch(() => []);
+        if (drows.length) {
+          const num = (f) => drows.reduce((s, r) => s + (Number(r[f]) || 0), 0);
+          const pop = num('population'), hh = num('households');
+          const litW = drows.reduce((s, r) => s + (Number(r.literacy_pct) || 0) * (Number(r.population) || 0), 0);
+          const urbW = drows.reduce((s, r) => s + (Number(r.urban_pct) || 0) * (Number(r.households) || 0), 0);
+          const fmt = (n) => (n ? n.toLocaleString('en-IN') : null);
+          const snapshot = {
+            population: fmt(pop),
+            adminDivisions: `${drows.length} districts`,
+            subDivisions: num('level2_count') || null,
+            localBodies: num('level3_count') || null,
+            households: fmt(hh),
+            urbanPct: hh ? Math.round((urbW / hh) * 10) / 10 : null,
+            literacyPct: pop ? Math.round((litW / pop) * 10) / 10 : null,
+            confidence: 'Verified',
+            _verified: true,
+            source: 'Census 2011 / SHRUG / LGD',
+          };
+          return NextResponse.json({ ok: true, section, data: { snapshot }, sources: [] });
+        }
+      }
+    }
+
     // Pick provider (default), honour a Gemini/Vertex override.
     let llm = getProvider();
     const ml = (selectedModel || '').toLowerCase();
