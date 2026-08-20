@@ -67,12 +67,30 @@ export async function upsertDistricts(rows) {
   return { written };
 }
 
+// Normalize a state name for matching: lowercase, & → and, strip punctuation.
+const canonState = (s) => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z]+/g, ' ').trim();
+
+// Modern name / common variant → the name as stored (Census 2011 vintage).
+const STATE_ALIASES = {
+  'odisha': 'orissa',
+  'puducherry': 'pondicherry',
+  'delhi': 'nct of delhi',
+  'uttaranchal': 'uttarakhand',
+  // Telangana (formed 2014) — its districts live under Andhra Pradesh in 2011 data.
+  'telangana': 'andhra pradesh',
+};
+
 export async function getDistricts({ country = 'India', state } = {}) {
   if (!supabaseAdmin) return [];
-  let q = supabaseAdmin.from('geo_districts').select('*').eq('country', country).order('population', { ascending: false, nullsFirst: false });
-  if (state) q = q.eq('state', state);
-  const { data } = await q;
-  return data || [];
+  const { data } = await supabaseAdmin
+    .from('geo_districts').select('*').eq('country', country)
+    .order('population', { ascending: false, nullsFirst: false });
+  let rows = data || [];
+  if (state) {
+    const target = STATE_ALIASES[canonState(state)] || canonState(state);
+    rows = rows.filter((r) => canonState(r.state) === target);
+  }
+  return rows;
 }
 
 // ---- Touchpoints ------------------------------------------------------------
