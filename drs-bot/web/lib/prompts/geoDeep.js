@@ -71,9 +71,10 @@ RESEARCH EVERY FIELD — do not leave blanks:
 - population, literacyPct, urbanPct → from Census / Wikipedia district pages.
 - households → if not published, ESTIMATE = population ÷ ~4.4 (label confidence "Inferred").
 - level2Count (blocks/taluks) & level3Count (panchayats/wards) → from the Local Government Directory (LGD) or state directory; estimate from district norms if needed ("Inferred").
+- religions (MANDATORY) → the top 4 religions of ${place} BY OVERALL SHARE across the whole place. Use the SAME 4 religion names, in the SAME order, for EVERY unit (so the columns stay consistent), and give each unit's own % for those 4 religions. Names must fit the country (India → Hindu/Muslim/Christian/Sikh/…; Poland → Catholic/Orthodox/…; etc.). Source Census / official statistics / Pew; ESTIMATE from the parent state/country distribution if a unit-level figure isn't published (label the unit confidence "Inferred"). Never leave religions blank.
 JSON schema:
 {"endOfList":<true|false>,"districts":[
-  {"name":"<unit name>","population":"<number>","households":"<number — real or estimated, never blank>","urbanPct":"<number>","literacyPct":"<number>","level2Count":"<blocks/taluks count>","level3Count":"<panchayats/wards count>","confidence":"Verified|Inferred|Assumption","source":""}
+  {"name":"<unit name>","population":"<number>","households":"<number — real or estimated, never blank>","urbanPct":"<number>","literacyPct":"<number>","level2Count":"<blocks/taluks count>","level3Count":"<panchayats/wards count>","religions":[{"name":"<religion 1>","pct":"<number>"},{"name":"<religion 2>","pct":"<number>"},{"name":"<religion 3>","pct":"<number>"},{"name":"<religion 4>","pct":"<number>"}],"confidence":"Verified|Inferred|Assumption","source":""}
 ]}`;
   }
 

@@ -1767,10 +1767,21 @@ export default function App() {
               <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}><strong>B · District Intelligence</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({R.districts.length} units)</span></div>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 620 }}>
-                    <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '7px 10px' }}>Unit</th><th style={{ padding: '7px 10px' }}>Population</th><th style={{ padding: '7px 10px' }}>Households</th><th style={{ padding: '7px 10px' }}>Urban%</th><th style={{ padding: '7px 10px' }}>Literacy%</th><th style={{ padding: '7px 10px' }}>Sub-div</th><th style={{ padding: '7px 10px' }}>Local bodies</th></tr></thead>
-                    <tbody>{R.districts.map((d, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '7px 10px', fontWeight: 600 }}>{d.name}</td><td style={{ padding: '7px 10px' }}>{d.population ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.households ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.urbanPct ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.literacyPct ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.level2Count ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.level3Count ?? '—'}</td></tr>))}</tbody>
+                  {(() => {
+                    // Religion columns adapt to the place's top-4 (same 4 for every row).
+                    // Header names come from the first unit that returned them.
+                    const relCols = ((R.districts.find(d => Array.isArray(d.religions) && d.religions.length) || {}).religions || []).slice(0, 4).map(r => r.name);
+                    const relPct = (d, name) => {
+                      const hit = Array.isArray(d.religions) ? d.religions.find(r => r.name === name) : null;
+                      return hit && hit.pct != null && hit.pct !== '' ? `${hit.pct}%` : '—';
+                    };
+                    return (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 620 + relCols.length * 70 }}>
+                    <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '7px 10px' }}>Unit</th><th style={{ padding: '7px 10px' }}>Population</th><th style={{ padding: '7px 10px' }}>Households</th><th style={{ padding: '7px 10px' }}>Urban%</th><th style={{ padding: '7px 10px' }}>Literacy%</th>{relCols.map((n) => (<th key={n} style={{ padding: '7px 10px' }}>{n}%</th>))}<th style={{ padding: '7px 10px' }}>Sub-div</th><th style={{ padding: '7px 10px' }}>Local bodies</th></tr></thead>
+                    <tbody>{R.districts.map((d, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '7px 10px', fontWeight: 600 }}>{d.name}</td><td style={{ padding: '7px 10px' }}>{d.population ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.households ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.urbanPct ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.literacyPct ?? '—'}</td>{relCols.map((n) => (<td key={n} style={{ padding: '7px 10px' }}>{relPct(d, n)}</td>))}<td style={{ padding: '7px 10px' }}>{d.level2Count ?? '—'}</td><td style={{ padding: '7px 10px' }}>{d.level3Count ?? '—'}</td></tr>))}</tbody>
                   </table>
+                    );
+                  })()}
                 </div>
               </div>
             )}
