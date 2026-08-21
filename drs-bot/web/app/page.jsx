@@ -2194,6 +2194,44 @@ export default function App() {
     );
   };
 
+  // Runs a data-collection tool Binny requested, updating that chat message's
+  // toolResult live (spinner → results) — reuses the same job queue as the tabs.
+  const runChatTool = async (tool, msgId) => {
+    const patch = (p) => setCopilotMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, toolResult: { ...(m.toolResult || {}), ...p } } : m)));
+    try {
+      let enqBody, kind, label;
+      if (tool.tool === 'touchpoints') {
+        const city = (tool.city || '').trim();
+        const category = (tool.category || '').trim().toLowerCase();
+        if (!city || !category) { patch({ status: 'error', msg: 'I need a city and a category.' }); return; }
+        kind = 'touchpoints'; label = `${category} · ${city}`;
+        enqBody = { action: 'enqueue', platform: 'google', city, category, state, country };
+      } else if (tool.tool === 'social') {
+        const platform = tool.platform || 'meta_ads';
+        const raw = (tool.query || '').trim();
+        if (!raw) { patch({ status: 'error', msg: 'I need something to search for.' }); return; }
+        const region = tool.country || (platform !== 'meta_ads' ? 'in-en' : null);
+        const query = platform === 'instagram' ? `site:instagram.com ${raw}`
+          : platform === 'linkedin' ? `(site:linkedin.com/posts OR site:linkedin.com/pulse) ${raw}` : raw;
+        kind = platform; label = raw;
+        enqBody = { action: 'enqueue', platform, query, country, region, timelimit: null };
+      } else { patch({ status: 'error', msg: 'Unknown tool.' }); return; }
+
+      patch({ status: 'pending', kind, label, count: 0 });
+      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(enqBody) }).then((r) => r.json()).catch(() => null);
+      if (!enq?.ok) { patch({ status: 'error', msg: enq?.error || 'Could not start collection.' }); return; }
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const sj = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', jobId: enq.jobId }) }).then((r) => r.json()).catch(() => null);
+        if (!sj?.ok || !sj.job) continue;
+        const rows = sj.rows || [];
+        const offline = sj.job.status === 'pending' && (sj.waitedMs || 0) > 25000;
+        patch({ status: sj.job.status, kind, label, count: rows.length, rows, offline });
+        if (sj.job.status === 'done' || sj.job.status === 'failed') break;
+      }
+    } catch (e) { patch({ status: 'error', msg: e.message }); }
+  };
+
   const handleCopilotSend = async () => {
     if (!copilotQuery.trim()) return;
     const userMsg = { sender: 'user', text: copilotQuery };
@@ -2257,12 +2295,32 @@ export default function App() {
           if (p.target) proposals.push(p);
         }
       }
+      // LIVE TOOL directive — Binny asks to run a data collection in-chat.
+      let toolDirective = null;
+      {
+        const tm = /::tool::/g; let tk;
+        while ((tk = tm.exec(display)) !== null) {
+          const start = tk.index;
+          const braceStart = display.indexOf('{', tm.lastIndex);
+          if (braceStart === -1) { cuts.push([start, display.length]); break; }
+          let depth = 0, end = -1;
+          for (let k = braceStart; k < display.length; k++) { if (display[k] === '{') depth++; else if (display[k] === '}') { depth--; if (depth === 0) { end = k; break; } } }
+          const jsonStr = display.slice(braceStart, end === -1 ? display.length : end + 1);
+          let cutEnd = end === -1 ? display.length : end + 1;
+          const em = display.indexOf('::end::', cutEnd); if (em !== -1 && em - cutEnd < 8) cutEnd = em + 7;
+          cuts.push([start, cutEnd]); tm.lastIndex = cutEnd;
+          const p = tryParse(jsonStr);
+          if (p && p.tool && !toolDirective) toolDirective = p;
+        }
+      }
       for (const [s, e] of cuts.reverse()) display = display.slice(0, s) + display.slice(e);
       display = display.replace(/::end::/g, '').trim();
-      const spokenText = display || 'I have proposed changes below.';
+      const spokenText = display || (toolDirective ? 'On it…' : 'I have proposed changes below.');
       const msgSources = Array.isArray(data.sources) ? data.sources.filter(s => s && s.uri) : [];
-      setCopilotMessages(prev => [...prev, { sender: 'assistant', text: spokenText, proposals: proposals.length ? proposals : undefined, tab: tabParam, sources: msgSources.length ? msgSources : undefined }]);
+      const msgId = 'm' + Date.now() + Math.floor(Math.random() * 1000);
+      setCopilotMessages(prev => [...prev, { id: msgId, sender: 'assistant', text: spokenText, proposals: proposals.length ? proposals : undefined, tab: tabParam, sources: msgSources.length ? msgSources : undefined, tool: toolDirective || undefined }]);
       if (voiceMode) speak(spokenText);
+      if (toolDirective) runChatTool(toolDirective, msgId);
     } catch (err) {
       setCopilotMessages(prev => [...prev, { sender: 'assistant', text: `Failed to fetch response: ${err.message}` }]);
     } finally {
@@ -5701,6 +5759,31 @@ export default function App() {
             return (
               <div key={i} className={`chat-message ${msg.sender === 'user' ? 'user' : 'assistant'}`}>
                 <div className="md-body" style={{ lineHeight: 1.5, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
+                {msg.tool && msg.toolResult && (() => {
+                  const t = msg.toolResult;
+                  const rows = Array.isArray(t.rows) ? t.rows : [];
+                  return (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--line)' }}>
+                      <div style={{ fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 6, color: (t.status === 'error' || t.offline) ? '#854F0B' : 'var(--accent)', marginBottom: rows.length ? 6 : 0 }}>
+                        {t.offline ? '⚠️ Collector agent is not running — start it and ask me again.'
+                          : t.status === 'error' ? `⚠️ ${t.msg || 'failed'}`
+                            : t.status === 'failed' ? '⚠️ Collection failed — check the collector agent.'
+                              : t.status === 'done' ? `✓ ${t.count} result${t.count === 1 ? '' : 's'}${t.label ? ` — ${t.label}` : ''}`
+                                : <><span className="spinner" style={{ width: 11, height: 11, display: 'inline-block' }} /> Collecting {t.label || ''}…{t.count ? ` ${t.count} so far` : ''}</>}
+                      </div>
+                      {rows.slice(0, 10).map((r, ri) => (
+                        <div key={ri} style={{ fontSize: 11.5, padding: '4px 0', borderTop: ri ? '1px solid var(--line)' : 'none' }}>
+                          <b>{r.name || r.handle || '—'}</b>{r.phone ? ` · ${r.phone}` : ''}
+                          {r.address ? <span style={{ color: 'var(--ink-soft)' }}> · {r.address}</span> : null}
+                          {r.rating != null ? <span style={{ color: 'var(--ink-soft)' }}> · ⭐{r.rating}</span> : null}
+                          {r.snippet ? <div style={{ color: 'var(--ink-soft)', marginTop: 2 }}>{String(r.snippet).slice(0, 160)}</div> : null}
+                          {r.url ? <a href={r.url} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', fontSize: 10.5 }}>open ↗</a> : null}
+                        </div>
+                      ))}
+                      {rows.length > 10 && <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>…{rows.length - 10} more</div>}
+                    </div>
+                  );
+                })()}
                 {msg.sender === 'assistant' && msg.sources && msg.sources.length > 0 && (
                   <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--line)' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--ink-soft)', marginBottom: 4 }}>SOURCES ({msg.sources.length})</div>

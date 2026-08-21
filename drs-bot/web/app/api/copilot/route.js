@@ -64,9 +64,23 @@ STRICT FORMAT (critical — or the Apply button will not appear):
 - Put the proposal block(s) at the very END of your reply, after your chat text.
 ` : '';
 
+    const toolsBlock = `
+
+LIVE DATA TOOLS — you can collect real data for the user and the results render directly in THIS chat.
+When the user asks to FIND / COLLECT / SCRAPE / LIST real touchpoints or social data, reply with a SHORT chat line (e.g. "On it — collecting liquor shops in Coimbatore…") AND emit exactly ONE tool directive at the very end:
+::tool:: {"tool":"touchpoints","city":"<city>","category":"<liquor|horeca|retail|mrf|school|mall|fuel|cinema|hotel>"} ::end::
+::tool:: {"tool":"social","platform":"<meta_ads|instagram|linkedin>","query":"<terms>","country":"<in-en|wt-wt|pl-pl|gb-en|us-en>"} ::end::
+Guidance:
+- touchpoints = real named outlets in ONE city via maps. Map the user's words to the closest category in the list.
+- social platform "meta_ads" = competitor ADS (query = a brand/keyword, e.g. "tomra"); "instagram" = find INFLUENCERS/creators (query = location + theme, e.g. "sustainability Chennai"); "linkedin" = find public POSTS on a topic (query = topic + place, e.g. "deposit return system Poland"). Default country "in-en" (India) unless the user names another place.
+- Emit a tool block ONLY when the user clearly wants real collected data. For explanation/analysis/drafting, answer normally with NO tool block.
+- One tool block per reply. Keep the chat line short — the live results appear below it automatically.
+STRICT FORMAT: valid JSON, double quotes only, no trailing commas, close with ::end:: on its own line.`;
+
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const systemPrompt = `You are the context-aware AI Copilot for the Recykal DRS (Deposit Return System) Roadmap Engine.
 You are helping the DRS Pod Leader who is currently viewing the "${tab}" tab.
+${toolsBlock}
 
 TIME AWARENESS (critical): Today's date is ${today}. Reason relative to this date. Any event/launch/regulation dated before today has ALREADY happened — never describe a past event as upcoming. If a market's DRS has already launched, discuss the current post-launch reality (adoption, competition, optimization), not pre-launch prep. Verify current status via grounded search rather than relying on outdated training-era assumptions.
 ${coAuthorBlock}
