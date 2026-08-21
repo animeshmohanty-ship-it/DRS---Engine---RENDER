@@ -1811,8 +1811,12 @@ export default function App() {
     const q = socialQuery.trim();
     if (!q) return;
     setSocialRows(null); setSocialJob({ status: 'pending', count: 0, offline: false }); setError('');
+    // Discovery platforms use a targeted site:-search; Meta Ad Library uses the raw query.
+    const query = socialPlatform === 'instagram' ? `site:instagram.com ${q}`
+      : socialPlatform === 'linkedin' ? `(site:linkedin.com/posts OR site:linkedin.com/pulse) ${q}`
+        : q;
     try {
-      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', platform: socialPlatform, query: q, country }) });
+      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', platform: socialPlatform, query, country }) });
       const ej = await enq.json();
       if (!ej?.ok) { setError(ej?.error || 'Could not queue'); setSocialJob(null); return; }
       for (let i = 0; i < 60; i++) {
@@ -2089,22 +2093,23 @@ export default function App() {
     const j = socialJob;
     const busy = j && ['pending', 'running'].includes(j.status);
     const PLATFORMS = [
-      { key: 'meta_ads', label: 'Meta Ad Library', hint: 'Competitor ads (FB + Instagram)', ready: true },
-      { key: 'instagram', label: 'Instagram', hint: 'Influencers & profiles (needs burner login)', ready: false },
-      { key: 'linkedin', label: 'LinkedIn', hint: 'Decision-makers & orgs', ready: false },
+      { key: 'meta_ads', label: 'Meta Ad Library', hint: 'Competitor ads running on Facebook + Instagram (public, no login)', ready: true },
+      { key: 'instagram', label: 'Instagram — Influencer Finder', hint: 'Find real public Instagram creators by location + theme (for your narrative)', ready: true },
+      { key: 'linkedin', label: 'LinkedIn — Conversation Radar', hint: 'Find real public LinkedIn posts on a topic + place (who is saying what)', ready: true },
       { key: 'twitter', label: 'Twitter / X', hint: 'Conversation & sentiment', ready: false },
     ];
     const active = PLATFORMS.find((p) => p.key === socialPlatform) || PLATFORMS[0];
     const placeholder = socialPlatform === 'meta_ads' ? 'Advertiser or keyword — e.g. "Coca-Cola", "recycling", "Bisleri"'
-      : socialPlatform === 'instagram' ? 'Hashtag like "recycling" — or a profile "@handle"'
-        : 'Search…';
+      : socialPlatform === 'instagram' ? 'Location + theme — e.g. "sustainability Chennai" or "eco creator Kerala"'
+        : socialPlatform === 'linkedin' ? 'Topic + place — e.g. "deposit return system Poland"'
+          : 'Search…';
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
           <h3 style={{ margin: 0, color: 'var(--accent)' }}>Social Intelligence</h3>
           <span style={{ fontSize: 12, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 9px', borderRadius: 20 }}>competitor ads · influencers · stakeholders · sentiment</span>
         </div>
-        <p className="sub" style={{ marginTop: 2, marginBottom: 14 }}>Gather intelligence from social platforms. Phase 1: Meta Ad Library — see the live ads competitors are running on Facebook &amp; Instagram (public, no login).</p>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 14 }}>Public social intelligence — no login, no accounts. Competitor ads (Meta Ad Library), Instagram influencers by location, and who's posting about a topic on LinkedIn. Every result is a real, verifiable link.</p>
         {/* platform selector */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
           {PLATFORMS.map((p) => (
@@ -2141,7 +2146,7 @@ export default function App() {
                       {r.meta?.from_hashtag && <span style={{ fontSize: 10, color: 'var(--ink-faint)' }}>#{r.meta.from_hashtag}</span>}
                       {r.meta?.started && <span style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>· running since {r.meta.started}</span>}
                       {r.meta?.ad_count > 1 && <span style={{ fontSize: 10, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '1px 6px', borderRadius: 10 }}>{r.meta.ad_count} ads use this creative</span>}
-                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>{socialPlatform === 'meta_ads' ? 'view creative ↗' : 'view profile ↗'}</a>}
+                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>{socialPlatform === 'meta_ads' ? 'view creative ↗' : socialPlatform === 'linkedin' ? 'view post ↗' : 'view profile ↗'}</a>}
                     </div>
                     {r.snippet && <div style={{ fontSize: 12, color: 'var(--ink)', marginTop: 6, lineHeight: 1.5 }}>{r.snippet}</div>}
                   </div>
