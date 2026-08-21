@@ -9,7 +9,7 @@ import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
   MessageSquare, Download, ShieldCheck, LogOut, UserCheck, Users, ExternalLink, HelpCircle,
-  Brain, Trash2
+  Brain, Trash2, Play
 } from 'lucide-react';
 
 marked.setOptions({ gfm: true, breaks: true });
@@ -569,6 +569,10 @@ export default function App() {
   const [socialCountry, setSocialCountry] = useState('in-en'); // ddgs region
   const [socialRecency, setSocialRecency] = useState('');       // ddgs timelimit: '' | d | w | m | y
   const [socialNiche, setSocialNiche] = useState('');           // niche (IG) / topic (LinkedIn) prepended to query
+  // Creative Studio
+  const [creativeFocus, setCreativeFocus] = useState('');
+  const [creativeBusy, setCreativeBusy] = useState(false);
+  const [creativeOutput, setCreativeOutput] = useState(null);
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -2194,6 +2198,82 @@ export default function App() {
     );
   };
 
+  // ================= CREATIVE STUDIO =================
+  const generateCreative = async (focusOverride) => {
+    setCreativeBusy(true); setError('');
+    try {
+      const gtm = projectStages?.gtm || {};
+      const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 800) : '';
+      const res = await fetch('/api/creative', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          market: state ? `${state}, ${country}` : country,
+          objective: objective || projectStages.setup?.objective || '',
+          narrative,
+          focus: (focusOverride ?? creativeFocus) || '',
+          model: selectedModel,
+        }),
+      });
+      const j = await res.json();
+      if (j?.ok) setCreativeOutput(j.creative); else setError('Creative generation failed: ' + (j?.error || 'unknown'));
+    } catch (e) { setError('Creative error: ' + e.message); } finally { setCreativeBusy(false); }
+  };
+  const renderCreative = () => {
+    const B = { primary: '#009B60', accent: '#2ECC71', secondary: '#1D6ADB', alert: '#E74C3C', surface: '#F4F5F7', text: '#000000' };
+    const c = creativeOutput || {};
+    const Field = ({ label, children }) => (
+      <div style={{ marginBottom: 6 }}><div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--ink-soft)' }}>{label}</div><div style={{ fontSize: 12.5, lineHeight: 1.5 }}>{children}</div></div>
+    );
+    const Visual = ({ v }) => v ? <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4, fontStyle: 'italic' }}>🎨 Visual: {v} <span style={{ fontSize: 9.5, background: 'var(--grey-soft)', padding: '1px 5px', borderRadius: 8 }}>image in Phase C</span></div> : null;
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
+          <h3 style={{ margin: 0, color: B.primary }}>Creative Studio</h3>
+          <span style={{ fontSize: 12, background: '#E5EDED', color: B.primary, padding: '2px 9px', borderRadius: 20 }}>Goa DRS · brand-locked</span>
+        </div>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>One click turns the plan into launch-ready, on-brand copy for every channel. Visuals (AI imagery + templates) come in Phase C.</p>
+        {/* brand strip */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14, fontSize: 11.5, color: 'var(--ink-soft)' }}>
+          {Object.entries(B).map(([k, v]) => <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 13, height: 13, borderRadius: 3, background: v, border: '1px solid var(--line)' }} />{k}</span>)}
+          <span>· Font <b style={{ fontFamily: 'Poppins, sans-serif' }}>Poppins</b> · "Real change starts with you."</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          <input value={creativeFocus} onChange={(e) => setCreativeFocus(e.target.value)} placeholder='Optional campaign focus — e.g. "tourist beach clean-up drive" or "kirana onboarding"' style={{ flex: 1, minWidth: 300, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} />
+          <button className="btn" onClick={() => generateCreative()} disabled={creativeBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: B.primary, borderColor: B.primary }}>{creativeBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block', borderTopColor: '#fff' }} /> Generating…</> : <><Sparkles size={15} /> {creativeOutput ? 'Regenerate' : 'Generate'} all-channel copy</>}</button>
+        </div>
+        {!creativeOutput && !creativeBusy && <p className="sub" style={{ fontSize: 12 }}>Click Generate (or hit <b>Execute</b> on the Planning tab) to produce Meta, Google, LinkedIn, WhatsApp &amp; Email copy — brand-locked, spec-correct, with a visual brief per asset.</p>}
+        {creativeOutput && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 12 }}>
+            {c.meta_ads && (
+              <div className="card"><h4 style={{ margin: '0 0 8px', color: B.secondary }}>Meta Ads</h4>
+                {c.meta_ads.feed && <div style={{ marginBottom: 10 }}><div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Feed 1:1</div><Field label="Primary text">{c.meta_ads.feed.primaryText}</Field><Field label="Headline">{c.meta_ads.feed.headline}</Field><Field label="Description">{c.meta_ads.feed.description}</Field><Field label="CTA">{c.meta_ads.feed.cta}</Field><Visual v={c.meta_ads.feed.visualBrief} /></div>}
+                {c.meta_ads.story && <div><div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Story 9:16</div><Field label="Primary text">{c.meta_ads.story.primaryText}</Field><Field label="Headline">{c.meta_ads.story.headline}</Field><Field label="CTA">{c.meta_ads.story.cta}</Field><Visual v={c.meta_ads.story.visualBrief} /></div>}
+              </div>
+            )}
+            {c.google_ads && (
+              <div className="card"><h4 style={{ margin: '0 0 8px', color: B.secondary }}>Google Ads</h4>
+                {c.google_ads.search && <div style={{ marginBottom: 10 }}><div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Search</div><Field label="Headlines">{(c.google_ads.search.headlines || []).map((h, i) => <div key={i}>• {h}</div>)}</Field><Field label="Descriptions">{(c.google_ads.search.descriptions || []).map((d, i) => <div key={i}>• {d}</div>)}</Field></div>}
+                {c.google_ads.display && <div><div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Responsive Display</div><Field label="Short headline">{c.google_ads.display.shortHeadline}</Field><Field label="Long headline">{c.google_ads.display.longHeadline}</Field><Field label="Description">{c.google_ads.display.description}</Field><Visual v={c.google_ads.display.visualBrief} /></div>}
+              </div>
+            )}
+            {c.linkedin && (
+              <div className="card"><h4 style={{ margin: '0 0 8px', color: B.secondary }}>LinkedIn</h4>
+                {c.linkedin.post && <div style={{ marginBottom: 10 }}><div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Organic post</div><Field label="Text">{c.linkedin.post.text}</Field><Field label="Hashtags">{(c.linkedin.post.hashtags || []).join('  ')}</Field></div>}
+                {c.linkedin.ad && <div><div style={{ fontWeight: 600, fontSize: 12, marginBottom: 4 }}>Single-image ad</div><Field label="Intro">{c.linkedin.ad.introText}</Field><Field label="Headline">{c.linkedin.ad.headline}</Field><Field label="CTA">{c.linkedin.ad.cta}</Field><Visual v={c.linkedin.ad.visualBrief} /></div>}
+              </div>
+            )}
+            {c.whatsapp && (
+              <div className="card"><h4 style={{ margin: '0 0 8px', color: B.secondary }}>WhatsApp</h4><Field label="Message">{c.whatsapp.message}</Field><Field label="CTA">{c.whatsapp.cta}</Field><Visual v={c.whatsapp.visualBrief} /></div>
+            )}
+            {c.email && (
+              <div className="card"><h4 style={{ margin: '0 0 8px', color: B.secondary }}>Email</h4><Field label="Subject">{c.email.subject}</Field><Field label="Preheader">{c.email.preheader}</Field><Field label="Body">{String(c.email.body || '').split('\n').map((p, i) => <p key={i} style={{ margin: '0 0 6px' }}>{p}</p>)}</Field><Field label="CTA">{c.email.cta}</Field><Visual v={c.email.visualBrief} /></div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Runs a data-collection tool Binny requested, updating that chat message's
   // toolResult live (spinner → results) — reuses the same job queue as the tabs.
   const runChatTool = async (tool, msgId) => {
@@ -2612,6 +2692,16 @@ export default function App() {
                   <span>Orchestrator</span>
                 </div>
 
+                {/* CREATIVE STUDIO — plan → launch-ready on-brand copy + creatives */}
+                <div
+                  className={`menu-item ${activeTab === 'creative' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
+                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
+                  onClick={() => isSetupDone && setActiveTab('creative')}
+                >
+                  <span className="badge-icon">CS</span>
+                  <span>Creative Studio</span>
+                </div>
+
                 {/* TOUCHPOINT COLLECTOR — general scraper workspace (always accessible) */}
                 <div
                   className={`menu-item ${activeTab === 'collector' ? 'active' : ''}`}
@@ -2672,7 +2762,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : activeTab === 'collector' ? 'Touchpoint Collector' : activeTab === 'social' ? 'Social Intelligence' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : activeTab === 'collector' ? 'Touchpoint Collector' : activeTab === 'social' ? 'Social Intelligence' : activeTab === 'creative' ? 'Creative Studio' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -2762,7 +2852,17 @@ export default function App() {
                 </div>
               )}
             </div>
-            {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && activeTab !== 'gtm' && (
+            {activeTab === 'planning' && (
+              <button
+                className="copilot-toggle-btn"
+                style={{ background: '#009B60', borderColor: '#009B60', color: '#fff' }}
+                title="Turn this plan into launch-ready, on-brand creative"
+                onClick={() => { setActiveTab('creative'); if (!creativeOutput && !creativeBusy) generateCreative(); }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Play size={14} /> Execute</span>
+              </button>
+            )}
+            {activeTab !== 'history' && activeTab !== 1 && activeTab !== 'orchestrator' && activeTab !== 'gtm' && activeTab !== 'creative' && (
               <button
                 className={`copilot-toggle-btn ${loading[activeStageNum] ? 'danger' : ''}`}
                 style={loading[activeStageNum] ? {background: '#dc2626', borderColor: '#b91c1c', color: '#fff'} : { background: 'var(--grey-soft)', border: '1px solid var(--line)' }}
@@ -2790,6 +2890,7 @@ export default function App() {
           {activeTab === 'gtm' && renderGtm()}
           {activeTab === 'collector' && renderCollector()}
           {activeTab === 'social' && renderSocial()}
+          {activeTab === 'creative' && renderCreative()}
 
           {activeTab === 'brain' && isAdmin && (() => {
             const s = brainStatus;
