@@ -566,6 +566,9 @@ export default function App() {
   const [socialJob, setSocialJob] = useState(null); // { status, count, offline }
   const [socialRows, setSocialRows] = useState(null);
   const [socialLibrary, setSocialLibrary] = useState([]);
+  const [socialCountry, setSocialCountry] = useState('in-en'); // ddgs region
+  const [socialRecency, setSocialRecency] = useState('');       // ddgs timelimit: '' | d | w | m | y
+  const [socialNiche, setSocialNiche] = useState('');           // niche (IG) / topic (LinkedIn) prepended to query
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1809,14 +1812,19 @@ export default function App() {
   // Social Intelligence — collect from a social platform (reuses the job queue).
   const runSocial = async () => {
     const q = socialQuery.trim();
-    if (!q) return;
+    const isDiscovery = socialPlatform === 'instagram' || socialPlatform === 'linkedin';
+    if (!q && !(isDiscovery && socialNiche)) return;
     setSocialRows(null); setSocialJob({ status: 'pending', count: 0, offline: false }); setError('');
-    // Discovery platforms use a targeted site:-search; Meta Ad Library uses the raw query.
-    const query = socialPlatform === 'instagram' ? `site:instagram.com ${q}`
-      : socialPlatform === 'linkedin' ? `(site:linkedin.com/posts OR site:linkedin.com/pulse) ${q}`
+    // Discovery platforms compose a targeted site:-search (niche/topic + text);
+    // Meta Ad Library uses the raw query. Country + recency are REAL search filters.
+    const terms = [isDiscovery ? socialNiche : '', q].filter(Boolean).join(' ');
+    const query = socialPlatform === 'instagram' ? `site:instagram.com ${terms}`
+      : socialPlatform === 'linkedin' ? `(site:linkedin.com/posts OR site:linkedin.com/pulse) ${terms}`
         : q;
+    const region = isDiscovery ? socialCountry : null;
+    const timelimit = isDiscovery ? (socialRecency || null) : null;
     try {
-      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', platform: socialPlatform, query, country }) });
+      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', platform: socialPlatform, query, country, region, timelimit }) });
       const ej = await enq.json();
       if (!ej?.ok) { setError(ej?.error || 'Could not queue'); setSocialJob(null); return; }
       for (let i = 0; i < 60; i++) {
@@ -2122,9 +2130,25 @@ export default function App() {
         <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginBottom: 8 }}>{active.hint}</div>
         {active.ready ? (
           <>
+            {(socialPlatform === 'instagram' || socialPlatform === 'linkedin') && (() => {
+              const COUNTRIES = [['in-en', 'India'], ['wt-wt', 'Global'], ['pl-pl', 'Poland'], ['gb-en', 'UK'], ['us-en', 'US'], ['de-de', 'Germany'], ['au-en', 'Australia'], ['sg-en', 'Singapore']];
+              const RECENCY = [['', 'Any time'], ['d', 'Past 24h'], ['w', 'Past week'], ['m', 'Past month'], ['y', 'Past year']];
+              const NICHES = ['sustainability', 'environment', 'climate', 'lifestyle', 'food', 'fashion', 'fitness', 'activism', 'local culture', 'travel'];
+              const TOPICS = ['deposit return system', 'plastic waste', 'EPR', 'recycling policy', 'circular economy', 'packaging waste', 'waste management'];
+              const opts = socialPlatform === 'linkedin' ? TOPICS : NICHES;
+              const nLabel = socialPlatform === 'linkedin' ? 'Topic' : 'Niche';
+              const selStyle = { fontSize: 12.5, padding: '7px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' };
+              return (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                  <select value={socialCountry} onChange={(e) => setSocialCountry(e.target.value)} style={selStyle} title="Country">{COUNTRIES.map(([v, l]) => <option key={v} value={v}>🌍 {l}</option>)}</select>
+                  <select value={socialRecency} onChange={(e) => setSocialRecency(e.target.value)} style={selStyle} title="Recency">{RECENCY.map(([v, l]) => <option key={v} value={v}>🕑 {l}</option>)}</select>
+                  <select value={socialNiche} onChange={(e) => setSocialNiche(e.target.value)} style={selStyle} title={nLabel}><option value="">{nLabel}: any</option>{opts.map((o) => <option key={o} value={o}>{o}</option>)}</select>
+                </div>
+              );
+            })()}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
               <input value={socialQuery} onChange={(e) => setSocialQuery(e.target.value)} placeholder={placeholder} style={{ flex: 1, minWidth: 280, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 14 }} onKeyDown={(e) => { if (e.key === 'Enter' && !busy) runSocial(); }} />
-              <button className="btn" onClick={runSocial} disabled={!!busy || !socialQuery.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{busy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Collecting…</> : <><Sparkles size={15} /> Collect</>}</button>
+              <button className="btn" onClick={runSocial} disabled={!!busy || (!socialQuery.trim() && !((socialPlatform === 'instagram' || socialPlatform === 'linkedin') && socialNiche))} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{busy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Collecting…</> : <><Sparkles size={15} /> Collect</>}</button>
             </div>
             {j && (
               <div style={{ marginBottom: 14, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, background: j.offline ? '#FAEEDA' : 'var(--accent-soft)', color: j.offline ? '#854F0B' : 'var(--accent)', padding: '9px 12px', borderRadius: 8 }}>

@@ -16,7 +16,7 @@ export async function POST(req) {
     const { action } = body;
 
     if (action === 'enqueue') {
-      const { platform = 'google', city, category, state = null, country = 'India', total = 40, query = null, projectId = null } = body;
+      const { platform = 'google', city, category, state = null, country = 'India', total = 40, query = null, region = null, timelimit = null, projectId = null } = body;
       // Social jobs are keyed by platform + query (city/category are placeholders
       // to satisfy NOT NULL); google jobs need a real city + category.
       const jCity = city || (platform !== 'google' ? (country || '-') : null);
@@ -32,7 +32,7 @@ export async function POST(req) {
       if (existing && existing.length) return NextResponse.json({ ok: true, jobId: existing[0].id, reused: true, status: existing[0].status });
       const { data, error } = await supabaseAdmin
         .from('scrape_jobs')
-        .insert({ platform, city: jCity, category: jCat, state, country, total, query, project_id: projectId, status: 'pending' })
+        .insert({ platform, city: jCity, category: jCat, state, country, total, query, region, timelimit, project_id: projectId, status: 'pending' })
         .select('id').single();
       if (error) throw error;
       return NextResponse.json({ ok: true, jobId: data.id, status: 'pending' });
