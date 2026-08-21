@@ -557,6 +557,7 @@ export default function App() {
   const [extractCity, setExtractCity] = useState('');
   const [extractBusy, setExtractBusy] = useState('');
   const [extractResults, setExtractResults] = useState(null); // { city, byCat: {cat: rows}, notes: [] }
+  const [mapsJob, setMapsJob] = useState(null); // { status, count, category, label, offline }
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1760,7 +1761,7 @@ export default function App() {
   const runExtract = async () => {
     const { city, category } = parseExtractQuery(extractCity);
     if (!city) return;
-    setExtractResults(null); setError('');
+    setExtractResults(null); setMapsJob(null); setError('');
     const ALL = [['fuel', 'Fuel'], ['school', 'Schools'], ['mall', 'Malls'], ['hotel', 'Hotels'], ['retail', 'Retail/Supermarkets'], ['horeca', 'HoReCa'], ['cinema', 'Cinemas'], ['liquor', 'Liquor'], ['mrf', 'Scrap/MRF']];
     const LABELS = Object.fromEntries(ALL);
     // If a category was named in the query, fetch just that (1 call, no rate-limit); else all.
@@ -1779,6 +1780,29 @@ export default function App() {
       if (i < cats.length - 1) await new Promise((r) => setTimeout(r, 1200)); // throttle public Overpass
     }
     setExtractBusy('');
+    // If a specific category was asked for, also collect dense data behind the
+    // scenes (the user never sees "scraper" — just live progress → more results).
+    if (category) collectFromMaps(city, category, LABELS[category] || category);
+  };
+  // Enqueue a background collection job and stream results in as they land.
+  const collectFromMaps = async (city, category, label) => {
+    try {
+      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', city, category, state, country }) });
+      const ej = await enq.json();
+      if (!ej?.ok) return;
+      setMapsJob({ status: 'pending', count: 0, category, label, offline: false });
+      for (let i = 0; i < 45; i++) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const st = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', jobId: ej.jobId }) });
+        const sj = await st.json();
+        if (!sj?.ok || !sj.job) continue;
+        const rows = sj.rows || [];
+        if (rows.length) setExtractResults((prev) => prev ? { ...prev, byCat: { ...prev.byCat, [category]: { label, rows } } } : { city, byCat: { [category]: { label, rows } }, notes: [] });
+        const offline = sj.job.status === 'pending' && (sj.waitedMs || 0) > 25000;
+        setMapsJob({ status: sj.job.status, count: rows.length, category, label, offline });
+        if (sj.job.status === 'done' || sj.job.status === 'failed') break;
+      }
+    } catch { /* leave last state */ }
   };
   const generateGtmNarrative = async () => {
     setGtmBusy(true); setError('');
@@ -1928,6 +1952,17 @@ export default function App() {
                 <input value={extractCity} onChange={(e) => setExtractCity(e.target.value)} placeholder='e.g. "Shimla" or "restaurants in Shimla"' style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, minWidth: 240 }} onKeyDown={(e) => { if (e.key === 'Enter' && !extractBusy) runExtract(); }} />
                 <button className="btn" onClick={runExtract} disabled={!!extractBusy || !extractCity.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{extractBusy ? <><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> {extractBusy}…</> : <><Sparkles size={15} /> Extract</>}</button>
               </div>
+              {mapsJob && (
+                <div style={{ marginTop: 10, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, background: mapsJob.offline ? '#FAEEDA' : 'var(--accent-soft)', color: mapsJob.offline ? '#854F0B' : 'var(--accent)', padding: '7px 10px', borderRadius: 8 }}>
+                  {mapsJob.offline
+                    ? '⚠️ Live collector is not running — start the collector agent on your machine to gather this data.'
+                    : mapsJob.status === 'done'
+                      ? `✓ Collection complete — ${mapsJob.count} ${mapsJob.label} gathered.`
+                      : mapsJob.status === 'failed'
+                        ? '⚠️ Collection failed — check the collector agent.'
+                        : <><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> Collecting {mapsJob.label}…{mapsJob.count ? ` ${mapsJob.count} so far` : ''}</>}
+                </div>
+              )}
               {extractResults && (
                 <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {Object.entries(extractResults.byCat).map(([k, c]) => (

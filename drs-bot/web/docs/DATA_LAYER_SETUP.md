@@ -80,6 +80,35 @@ rejects a religion breakdown that is identical across every district (the
 state-aggregate-copied-down bug). A flagged run still writes clean rows but marks
 `ingest_runs.status = 'flagged'` for review.
 
+## On-demand dense collection (the "collect from the bot" feature)
+
+OpenStreetMap is thin for informal retail (liquor/kirana/scrap). For dense data,
+the bot can request a collection **without the user knowing where it comes from**:
+the bot writes a job; a small agent on your laptop runs the Google-Maps scraper
+and streams results back into the bot.
+
+**Setup (once):**
+1. Run [`db/002_scrape_jobs.sql`](../db/002_scrape_jobs.sql) in the Supabase SQL editor (creates the job queue).
+2. On your laptop, in the `gmaps-scraper` folder, create a `.env`:
+   ```
+   SUPABASE_URL=https://<project>.supabase.co
+   SUPABASE_SERVICE_KEY=sb_secret_...        # the secret / service-role key
+   ```
+3. Start the agent and leave it running:
+   ```bash
+   python runner.py
+   ```
+
+**How it flows:** bot user types e.g. "liquor shops in Coimbatore" → the bot shows
+instant OpenStreetMap results, then a live "Collecting…" status while the laptop
+agent scrapes → results stream in and merge. The user never sees the machinery.
+
+**Note:** the agent must be running for jobs to complete. If it's off, the bot
+shows "Live collector is not running — start the collector agent"; the job waits
+in the queue and completes when the agent is back online. Runs on your laptop's
+residential IP (free, avoids blocking). Google-Maps scraping is against Google's
+ToS (gray area); the clean paid alternative is the Google Places API.
+
 ## Cost note
 Everything here runs on **free tiers only** — Supabase (existing), open data
 sources (no key), the bot's existing Render web service, and free GitHub Actions.
