@@ -2131,13 +2131,13 @@ export default function App() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
                 {socialRows.map((r, i) => (
                   <div key={i} className="card">
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                       <strong style={{ fontSize: 13.5 }}>{r.name || r.handle || 'Advertiser'}</strong>
-                      {r.meta?.started && <span style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>· since {r.meta.started}</span>}
-                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>view ↗</a>}
+                      {r.meta?.started && <span style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>· running since {r.meta.started}</span>}
+                      {r.meta?.ad_count > 1 && <span style={{ fontSize: 10, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '1px 6px', borderRadius: 10 }}>{r.meta.ad_count} ads use this creative</span>}
+                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>view creative ↗</a>}
                     </div>
-                    {r.snippet && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4, lineHeight: 1.5 }}>{r.snippet}</div>}
-                    {r.meta?.platforms && <div style={{ fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 4 }}>{r.meta.platforms}</div>}
+                    {r.snippet && <div style={{ fontSize: 12, color: 'var(--ink)', marginTop: 6, lineHeight: 1.5 }}>{r.snippet}</div>}
                   </div>
                 ))}
               </div>
