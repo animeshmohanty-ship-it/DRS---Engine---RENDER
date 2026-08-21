@@ -138,6 +138,43 @@ export async function getTouchpointStats({ country = 'India', state } = {}) {
   return { byCategory, library, total: library.reduce((s, x) => s + x.count, 0) };
 }
 
+// ---- Social records (ads / profiles / pages / posts / people) ---------------
+export async function upsertSocialRecords(rows) {
+  if (!supabaseAdmin || !rows?.length) return { written: 0 };
+  let written = 0;
+  for (let i = 0; i < rows.length; i += 200) {
+    const batch = rows.slice(i, i + 200);
+    const { error, count } = await supabaseAdmin
+      .from('social_records')
+      .upsert(batch, { onConflict: 'platform,url', count: 'exact' });
+    if (error) throw error;
+    written += count ?? batch.length;
+  }
+  return { written };
+}
+
+export async function getSocialRecords({ platform, query } = {}) {
+  if (!supabaseAdmin) return [];
+  let q = supabaseAdmin.from('social_records').select('*').order('fetched_at', { ascending: false });
+  if (platform) q = q.eq('platform', platform);
+  if (query) q = q.eq('query', query);
+  const { data } = await q.limit(2000);
+  return data || [];
+}
+
+export async function getSocialLibrary() {
+  if (!supabaseAdmin) return [];
+  const { data } = await supabaseAdmin.from('social_records').select('platform,query,kind').limit(20000);
+  const rows = data || [];
+  const map = {};
+  for (const r of rows) {
+    const key = `${r.platform}||${r.query || ''}`;
+    if (!map[key]) map[key] = { platform: r.platform, query: r.query || '', count: 0 };
+    map[key].count++;
+  }
+  return Object.values(map).sort((a, b) => b.count - a.count);
+}
+
 // ---- Prompt seed: verified districts as GROUND TRUTH for the LLM -------------
 // Turns verified rows into an authoritative block the reasoning prompts consume,
 // so priority/snapshot/economic/narrative reason over REAL figures and cite them.

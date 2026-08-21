@@ -560,6 +560,12 @@ export default function App() {
   const [collectorRows, setCollectorRows] = useState(null); // collected outlets for the last query
   const [collectorLibrary, setCollectorLibrary] = useState([]); // [{city,category,count,state}]
   const [collectedCounts, setCollectedCounts] = useState({}); // {category: n} for the current state (Targeted view)
+  // Social Intelligence tab
+  const [socialPlatform, setSocialPlatform] = useState('meta_ads');
+  const [socialQuery, setSocialQuery] = useState('');
+  const [socialJob, setSocialJob] = useState(null); // { status, count, offline }
+  const [socialRows, setSocialRows] = useState(null);
+  const [socialLibrary, setSocialLibrary] = useState([]);
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1800,9 +1806,37 @@ export default function App() {
       const j = await r.json(); if (j?.ok) setCollectedCounts(j.byCategory || {});
     } catch { /* ignore */ }
   };
+  // Social Intelligence — collect from a social platform (reuses the job queue).
+  const runSocial = async () => {
+    const q = socialQuery.trim();
+    if (!q) return;
+    setSocialRows(null); setSocialJob({ status: 'pending', count: 0, offline: false }); setError('');
+    try {
+      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', platform: socialPlatform, query: q, country }) });
+      const ej = await enq.json();
+      if (!ej?.ok) { setError(ej?.error || 'Could not queue'); setSocialJob(null); return; }
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const st = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', jobId: ej.jobId }) });
+        const sj = await st.json();
+        if (!sj?.ok || !sj.job) continue;
+        setSocialRows(sj.rows || []);
+        const offline = sj.job.status === 'pending' && (sj.waitedMs || 0) > 25000;
+        setSocialJob({ status: sj.job.status, count: (sj.rows || []).length, offline });
+        if (sj.job.status === 'done' || sj.job.status === 'failed') { loadSocialLibrary(); break; }
+      }
+    } catch (e) { setError('Collection error: ' + e.message); }
+  };
+  const loadSocialLibrary = async () => {
+    try {
+      const r = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'social_library' }) });
+      const j = await r.json(); if (j?.ok) setSocialLibrary(j.library || []);
+    } catch { /* ignore */ }
+  };
   useEffect(() => {
     if (activeTab === 'gtm' && gtmPhase === 'targeted') fetchCollectedCounts();
     if (activeTab === 'collector') loadLibrary();
+    if (activeTab === 'social') loadSocialLibrary();
   }, [activeTab, gtmPhase, state]);
   const generateGtmNarrative = async () => {
     setGtmBusy(true); setError('');
@@ -2044,6 +2078,80 @@ export default function App() {
           {collectorLibrary.length === 0 ? <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: 0 }}>Nothing collected yet — run a query above.</p> : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8 }}>
               {collectorLibrary.map((l, i) => (<div key={i} style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: '8px 11px' }}><div style={{ fontSize: 12.5, fontWeight: 600 }}>{l.city} · {l.category}</div><div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{l.count} outlets{l.state ? ` · ${l.state}` : ''}</div></div>))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSocial = () => {
+    const j = socialJob;
+    const busy = j && ['pending', 'running'].includes(j.status);
+    const PLATFORMS = [
+      { key: 'meta_ads', label: 'Meta Ad Library', hint: 'Competitor ads (FB + Instagram)', ready: true },
+      { key: 'instagram', label: 'Instagram', hint: 'Influencers & profiles', ready: false },
+      { key: 'linkedin', label: 'LinkedIn', hint: 'Decision-makers & orgs', ready: false },
+      { key: 'twitter', label: 'Twitter / X', hint: 'Conversation & sentiment', ready: false },
+    ];
+    const active = PLATFORMS.find((p) => p.key === socialPlatform) || PLATFORMS[0];
+    const placeholder = socialPlatform === 'meta_ads' ? 'Advertiser or keyword — e.g. "Coca-Cola", "recycling", "Bisleri"' : 'Search…';
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
+          <h3 style={{ margin: 0, color: 'var(--accent)' }}>Social Intelligence</h3>
+          <span style={{ fontSize: 12, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 9px', borderRadius: 20 }}>competitor ads · influencers · stakeholders · sentiment</span>
+        </div>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 14 }}>Gather intelligence from social platforms. Phase 1: Meta Ad Library — see the live ads competitors are running on Facebook &amp; Instagram (public, no login).</p>
+        {/* platform selector */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+          {PLATFORMS.map((p) => (
+            <span key={p.key} onClick={() => p.ready && setSocialPlatform(p.key)} title={p.hint}
+              style={{ cursor: p.ready ? 'pointer' : 'not-allowed', opacity: p.ready ? 1 : 0.5, fontSize: 12.5, fontWeight: socialPlatform === p.key ? 600 : 500, background: socialPlatform === p.key ? 'var(--accent)' : 'var(--grey-soft)', color: socialPlatform === p.key ? '#fff' : 'var(--ink-soft)', padding: '6px 13px', borderRadius: 8 }}>
+              {p.label}{!p.ready && ' · soon'}
+            </span>
+          ))}
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginBottom: 8 }}>{active.hint}</div>
+        {active.ready ? (
+          <>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+              <input value={socialQuery} onChange={(e) => setSocialQuery(e.target.value)} placeholder={placeholder} style={{ flex: 1, minWidth: 280, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 14 }} onKeyDown={(e) => { if (e.key === 'Enter' && !busy) runSocial(); }} />
+              <button className="btn" onClick={runSocial} disabled={!!busy || !socialQuery.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{busy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Collecting…</> : <><Sparkles size={15} /> Collect</>}</button>
+            </div>
+            {j && (
+              <div style={{ marginBottom: 14, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, background: j.offline ? '#FAEEDA' : 'var(--accent-soft)', color: j.offline ? '#854F0B' : 'var(--accent)', padding: '9px 12px', borderRadius: 8 }}>
+                {j.offline ? '⚠️ Collector agent is not running. Start it (python runner.py) and this resumes automatically.'
+                  : j.status === 'done' ? `✓ Done — ${j.count} results.`
+                    : j.status === 'failed' ? '⚠️ Collection failed — check the collector agent window.'
+                      : <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Collecting… {j.count ? `${j.count} so far` : 'starting'}</>}
+              </div>
+            )}
+            {Array.isArray(socialRows) && socialRows.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+                {socialRows.map((r, i) => (
+                  <div key={i} className="card">
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                      <strong style={{ fontSize: 13.5 }}>{r.name || r.handle || 'Advertiser'}</strong>
+                      {r.meta?.started && <span style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>· since {r.meta.started}</span>}
+                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>view ↗</a>}
+                    </div>
+                    {r.snippet && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 4, lineHeight: 1.5 }}>{r.snippet}</div>}
+                    {r.meta?.platforms && <div style={{ fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 4 }}>{r.meta.platforms}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="card" style={{ borderStyle: 'dashed' }}><p style={{ fontSize: 13, color: 'var(--ink-soft)', margin: 0 }}><b>{active.label}</b> — coming in a later phase. {active.hint}.</p></div>
+        )}
+        {/* library */}
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}><h4 style={{ margin: 0 }}>Collected so far</h4><button onClick={loadSocialLibrary} style={{ marginLeft: 'auto', fontSize: 11, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}>Refresh</button></div>
+          {socialLibrary.length === 0 ? <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: 0 }}>Nothing collected yet.</p> : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8 }}>
+              {socialLibrary.map((l, i) => (<div key={i} style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: '8px 11px' }}><div style={{ fontSize: 12.5, fontWeight: 600 }}>{l.platform}</div><div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{l.query ? `"${l.query}" · ` : ''}{l.count} records</div></div>))}
             </div>
           )}
         </div>
@@ -2411,13 +2519,22 @@ export default function App() {
                   <span>Orchestrator</span>
                 </div>
 
-                {/* TOUCHPOINT COLLECTOR — general scraper workspace, last tab (always accessible) */}
+                {/* TOUCHPOINT COLLECTOR — general scraper workspace (always accessible) */}
                 <div
                   className={`menu-item ${activeTab === 'collector' ? 'active' : ''}`}
                   onClick={() => setActiveTab('collector')}
                 >
                   <span className="badge-icon">TC</span>
                   <span>Touchpoint Collector</span>
+                </div>
+
+                {/* SOCIAL INTELLIGENCE — social platform intel (always accessible) */}
+                <div
+                  className={`menu-item ${activeTab === 'social' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('social')}
+                >
+                  <span className="badge-icon">SM</span>
+                  <span>Social Intelligence</span>
                 </div>
 
                 {/* Stages 7-15 removed from the active flow for now (code + render blocks retained;
@@ -2462,7 +2579,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : activeTab === 'collector' ? 'Touchpoint Collector' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : activeTab === 'collector' ? 'Touchpoint Collector' : activeTab === 'social' ? 'Social Intelligence' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -2579,6 +2696,7 @@ export default function App() {
           {/* HISTORY TAB */}
           {activeTab === 'gtm' && renderGtm()}
           {activeTab === 'collector' && renderCollector()}
+          {activeTab === 'social' && renderSocial()}
 
           {activeTab === 'brain' && isAdmin && (() => {
             const s = brainStatus;

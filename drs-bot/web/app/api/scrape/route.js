@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../lib/brain/supabaseAdmin.js';
-import { getTouchpoints, getTouchpointStats, dataLayerReady } from '../../../lib/datalayer/db.js';
+import { getTouchpoints, getTouchpointStats, getSocialRecords, getSocialLibrary, dataLayerReady } from '../../../lib/datalayer/db.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,18 +16,23 @@ export async function POST(req) {
     const { action } = body;
 
     if (action === 'enqueue') {
-      const { city, category, state = null, country = 'India', total = 40, query = null, projectId = null } = body;
-      if (!city || !category) return NextResponse.json({ ok: false, error: 'city and category required' }, { status: 400 });
-      // Reuse a job already pending/running for the same target (avoid duplicates).
-      const { data: existing } = await supabaseAdmin
-        .from('scrape_jobs').select('id, status')
-        .eq('country', country).eq('city', city).eq('category', category)
-        .in('status', ['pending', 'running'])
-        .order('requested_at', { ascending: false }).limit(1);
+      const { platform = 'google', city, category, state = null, country = 'India', total = 40, query = null, projectId = null } = body;
+      // Social jobs are keyed by platform + query (city/category are placeholders
+      // to satisfy NOT NULL); google jobs need a real city + category.
+      const jCity = city || (platform !== 'google' ? (country || '-') : null);
+      const jCat = category || (platform !== 'google' ? platform : null);
+      if (!jCity || !jCat) return NextResponse.json({ ok: false, error: 'city and category required' }, { status: 400 });
+      if (platform !== 'google' && !query) return NextResponse.json({ ok: false, error: 'query required' }, { status: 400 });
+      // Reuse a job already pending/running for the same target.
+      let dupe = supabaseAdmin.from('scrape_jobs').select('id, status')
+        .eq('platform', platform).eq('country', country)
+        .in('status', ['pending', 'running']).order('requested_at', { ascending: false }).limit(1);
+      dupe = platform === 'google' ? dupe.eq('city', jCity).eq('category', jCat) : dupe.eq('query', query);
+      const { data: existing } = await dupe;
       if (existing && existing.length) return NextResponse.json({ ok: true, jobId: existing[0].id, reused: true, status: existing[0].status });
       const { data, error } = await supabaseAdmin
         .from('scrape_jobs')
-        .insert({ city, category, state, country, total, query, project_id: projectId, status: 'pending' })
+        .insert({ platform, city: jCity, category: jCat, state, country, total, query, project_id: projectId, status: 'pending' })
         .select('id').single();
       if (error) throw error;
       return NextResponse.json({ ok: true, jobId: data.id, status: 'pending' });
@@ -45,6 +50,11 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, byCategory: stats.byCategory });
     }
 
+    if (action === 'social_library') {
+      const library = await getSocialLibrary();
+      return NextResponse.json({ ok: true, library });
+    }
+
     if (action === 'status') {
       const { jobId } = body;
       if (!jobId) return NextResponse.json({ ok: false, error: 'jobId required' }, { status: 400 });
@@ -52,7 +62,9 @@ export async function POST(req) {
       if (error) throw error;
       let rows = [];
       if (job && (job.status === 'done' || job.status === 'running')) {
-        rows = await getTouchpoints({ country: job.country, city: job.city, category: job.category });
+        rows = job.platform && job.platform !== 'google'
+          ? await getSocialRecords({ platform: job.platform, query: job.query })
+          : await getTouchpoints({ country: job.country, city: job.city, category: job.category });
       }
       // How long since requested — lets the UI warn if the runner isn't online.
       const waitedMs = job ? Date.now() - new Date(job.requested_at).getTime() : 0;
