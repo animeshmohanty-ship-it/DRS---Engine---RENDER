@@ -2090,7 +2090,7 @@ export default function App() {
     const busy = j && ['pending', 'running'].includes(j.status);
     const PLATFORMS = [
       { key: 'meta_ads', label: 'Meta Ad Library', hint: 'Competitor ads (FB + Instagram)', ready: true },
-      { key: 'instagram', label: 'Instagram', hint: 'Influencers & profiles', ready: true },
+      { key: 'instagram', label: 'Instagram', hint: 'Influencers & profiles (needs burner login)', ready: false },
       { key: 'linkedin', label: 'LinkedIn', hint: 'Decision-makers & orgs', ready: false },
       { key: 'twitter', label: 'Twitter / X', hint: 'Conversation & sentiment', ready: false },
     ];
