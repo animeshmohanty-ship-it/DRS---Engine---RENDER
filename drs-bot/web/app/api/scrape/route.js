@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../../../lib/brain/supabaseAdmin.js';
-import { getTouchpoints, dataLayerReady } from '../../../lib/datalayer/db.js';
+import { getTouchpoints, getTouchpointStats, dataLayerReady } from '../../../lib/datalayer/db.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export async function POST(req) {
     const { action } = body;
 
     if (action === 'enqueue') {
-      const { city, category, state = null, country = 'India', total = 40, projectId = null } = body;
+      const { city, category, state = null, country = 'India', total = 40, query = null, projectId = null } = body;
       if (!city || !category) return NextResponse.json({ ok: false, error: 'city and category required' }, { status: 400 });
       // Reuse a job already pending/running for the same target (avoid duplicates).
       const { data: existing } = await supabaseAdmin
@@ -27,10 +27,22 @@ export async function POST(req) {
       if (existing && existing.length) return NextResponse.json({ ok: true, jobId: existing[0].id, reused: true, status: existing[0].status });
       const { data, error } = await supabaseAdmin
         .from('scrape_jobs')
-        .insert({ city, category, state, country, total, project_id: projectId, status: 'pending' })
+        .insert({ city, category, state, country, total, query, project_id: projectId, status: 'pending' })
         .select('id').single();
       if (error) throw error;
       return NextResponse.json({ ok: true, jobId: data.id, status: 'pending' });
+    }
+
+    if (action === 'library') {
+      const { country = 'India', state = null } = body;
+      const stats = await getTouchpointStats({ country, state });
+      return NextResponse.json({ ok: true, ...stats });
+    }
+
+    if (action === 'counts') {
+      const { country = 'India', state = null } = body;
+      const stats = await getTouchpointStats({ country, state });
+      return NextResponse.json({ ok: true, byCategory: stats.byCategory });
     }
 
     if (action === 'status') {

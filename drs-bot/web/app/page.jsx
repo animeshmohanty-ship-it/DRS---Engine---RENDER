@@ -554,10 +554,12 @@ export default function App() {
   const [gtmBusy, setGtmBusy] = useState(false);
   const [gtmStage, setGtmStage] = useState('');
   const [gtmScenarioOverride, setGtmScenarioOverride] = useState('');
-  const [extractCity, setExtractCity] = useState('');
-  const [extractBusy, setExtractBusy] = useState('');
-  const [extractResults, setExtractResults] = useState(null); // { city, byCat: {cat: rows}, notes: [] }
-  const [mapsJob, setMapsJob] = useState(null); // { status, count, category, label, offline }
+  // Touchpoint Collector (dedicated scraper tab) + Targeted-numbers state
+  const [collectorQuery, setCollectorQuery] = useState('');
+  const [collectorJob, setCollectorJob] = useState(null); // { status, count, label, offline }
+  const [collectorRows, setCollectorRows] = useState(null); // collected outlets for the last query
+  const [collectorLibrary, setCollectorLibrary] = useState([]); // [{city,category,count,state}]
+  const [collectedCounts, setCollectedCounts] = useState({}); // {category: n} for the current state (Targeted view)
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -1758,52 +1760,50 @@ export default function App() {
     return { city, category };
   };
   // Live touchpoint extractor (free — OpenStreetMap via /api/extract, no worker).
-  const runExtract = async () => {
-    const { city, category } = parseExtractQuery(extractCity);
-    if (!city) return;
-    setExtractResults(null); setMapsJob(null); setError('');
-    const ALL = [['fuel', 'Fuel'], ['school', 'Schools'], ['mall', 'Malls'], ['hotel', 'Hotels'], ['retail', 'Retail/Supermarkets'], ['horeca', 'HoReCa'], ['cinema', 'Cinemas'], ['liquor', 'Liquor'], ['mrf', 'Scrap/MRF']];
-    const LABELS = Object.fromEntries(ALL);
-    // If a category was named in the query, fetch just that (1 call, no rate-limit); else all.
-    const cats = category ? [[category, LABELS[category] || category]] : ALL;
-    const byCat = {}; const notes = [];
-    for (let i = 0; i < cats.length; i++) {
-      const [key, label] = cats[i];
-      setExtractBusy(`${label} · ${city}`);
-      try {
-        const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ city, category: key, state, country }) });
-        const j = await res.json();
-        if (j?.ok) { byCat[key] = { label, rows: j.rows || [] }; if (j.note) notes.push(`${label}: ${j.note}`); }
-        else if (j?.error) notes.push(`${label}: ${j.error}`);
-      } catch { /* skip category on error */ }
-      setExtractResults({ city, byCat: { ...byCat }, notes: [...notes] });
-      if (i < cats.length - 1) await new Promise((r) => setTimeout(r, 1200)); // throttle public Overpass
-    }
-    setExtractBusy('');
-    // If a specific category was asked for, also collect dense data behind the
-    // scenes (the user never sees "scraper" — just live progress → more results).
-    if (category) collectFromMaps(city, category, LABELS[category] || category);
-  };
-  // Enqueue a background collection job and stream results in as they land.
-  const collectFromMaps = async (city, category, label) => {
+  // Touchpoint Collector — general scraper. Parse the query, enqueue a job, poll.
+  const runCollect = async () => {
+    const raw = collectorQuery.trim();
+    if (!raw) return;
+    const parsed = parseExtractQuery(raw);
+    const city = parsed.city || raw;
+    // category: named DRS category if detected, else a slug from the leading words
+    const cat = parsed.category
+      || (raw.match(/^\s*(?:top\s+\d+\s+|best\s+|all\s+)?([a-z][a-z /&-]*?)\s+(?:in|at|near|for)\b/i)?.[1]?.trim().replace(/\s+/g, '-').toLowerCase())
+      || 'general';
+    setCollectorRows(null); setCollectorJob({ status: 'pending', count: 0, label: cat, offline: false }); setError('');
     try {
-      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', city, category, state, country }) });
+      const enq = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'enqueue', city, category: cat, query: raw, state, country, total: 40 }) });
       const ej = await enq.json();
-      if (!ej?.ok) return;
-      setMapsJob({ status: 'pending', count: 0, category, label, offline: false });
-      for (let i = 0; i < 45; i++) {
+      if (!ej?.ok) { setError(ej?.error || 'Could not queue collection'); setCollectorJob(null); return; }
+      for (let i = 0; i < 60; i++) {
         await new Promise((r) => setTimeout(r, 4000));
         const st = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', jobId: ej.jobId }) });
         const sj = await st.json();
         if (!sj?.ok || !sj.job) continue;
-        const rows = sj.rows || [];
-        if (rows.length) setExtractResults((prev) => prev ? { ...prev, byCat: { ...prev.byCat, [category]: { label, rows } } } : { city, byCat: { [category]: { label, rows } }, notes: [] });
+        setCollectorRows(sj.rows || []);
         const offline = sj.job.status === 'pending' && (sj.waitedMs || 0) > 25000;
-        setMapsJob({ status: sj.job.status, count: rows.length, category, label, offline });
-        if (sj.job.status === 'done' || sj.job.status === 'failed') break;
+        setCollectorJob({ status: sj.job.status, count: (sj.rows || []).length, label: cat, offline });
+        if (sj.job.status === 'done' || sj.job.status === 'failed') { loadLibrary(); break; }
       }
-    } catch { /* leave last state */ }
+    } catch (e) { setError('Collection error: ' + e.message); }
   };
+  const loadLibrary = async () => {
+    try {
+      const r = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'library', country }) });
+      const j = await r.json(); if (j?.ok) setCollectorLibrary(j.library || []);
+    } catch { /* ignore */ }
+  };
+  const fetchCollectedCounts = async () => {
+    if (!state) { setCollectedCounts({}); return; }
+    try {
+      const r = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'counts', country, state }) });
+      const j = await r.json(); if (j?.ok) setCollectedCounts(j.byCategory || {});
+    } catch { /* ignore */ }
+  };
+  useEffect(() => {
+    if (activeTab === 'gtm' && gtmPhase === 'targeted') fetchCollectedCounts();
+    if (activeTab === 'collector') loadLibrary();
+  }, [activeTab, gtmPhase, state]);
   const generateGtmNarrative = async () => {
     setGtmBusy(true); setError('');
     const gtm = { ...((projectStagesRef.current || {}).gtm || {}) };
@@ -1939,53 +1939,31 @@ export default function App() {
           </div>
         )}
 
-        {/* PHASE 2 · TARGETED RESEARCH */}
+        {/* PHASE 2 · TARGETED RESEARCH — the NUMBERS: estimated market total + real collected */}
         {gtmPhase === 'targeted' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {/* Live Data Extractor — real named touchpoints from OpenStreetMap (free) */}
-            <div className="card" style={{ borderColor: 'var(--accent)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h4 style={{ margin: 0, color: 'var(--accent)' }}>🛰️ Data Extractor</h4>
-                <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Real named touchpoints from OpenStreetMap — live, free.</span>
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                <input value={extractCity} onChange={(e) => setExtractCity(e.target.value)} placeholder='e.g. "Shimla" or "restaurants in Shimla"' style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, minWidth: 240 }} onKeyDown={(e) => { if (e.key === 'Enter' && !extractBusy) runExtract(); }} />
-                <button className="btn" onClick={runExtract} disabled={!!extractBusy || !extractCity.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{extractBusy ? <><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> {extractBusy}…</> : <><Sparkles size={15} /> Extract</>}</button>
-              </div>
-              {mapsJob && (
-                <div style={{ marginTop: 10, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, background: mapsJob.offline ? '#FAEEDA' : 'var(--accent-soft)', color: mapsJob.offline ? '#854F0B' : 'var(--accent)', padding: '7px 10px', borderRadius: 8 }}>
-                  {mapsJob.offline
-                    ? '⚠️ Live collector is not running — start the collector agent on your machine to gather this data.'
-                    : mapsJob.status === 'done'
-                      ? `✓ Collection complete — ${mapsJob.count} ${mapsJob.label} gathered.`
-                      : mapsJob.status === 'failed'
-                        ? '⚠️ Collection failed — check the collector agent.'
-                        : <><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> Collecting {mapsJob.label}…{mapsJob.count ? ` ${mapsJob.count} so far` : ''}</>}
-                </div>
-              )}
-              {extractResults && (
-                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {Object.entries(extractResults.byCat).map(([k, c]) => (
-                    <div key={k}>
-                      <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 3 }}>{c.label} <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· {c.rows.length} found</span></div>
-                      {c.rows.slice(0, 8).map((r, i) => (<div key={i} style={{ fontSize: 12, padding: '1px 0', color: 'var(--ink-soft)' }}>• <b style={{ color: 'var(--ink)' }}>{r.name}</b>{r.address ? ` · ${r.address}` : ''}{r.phone ? ` · ${r.phone}` : ''} <span style={{ fontSize: 9.5, background: '#E6F1FB', color: '#185FA5', padding: '0 5px', borderRadius: 8 }}>{r.source}</span></div>))}
-                      {c.rows.length > 8 && <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>…{c.rows.length - 8} more</div>}
-                      {!c.rows.length && <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>none in OpenStreetMap — run local collector to fill</div>}
-                    </div>
-                  ))}
-                  {extractResults.notes.length > 0 && (
-                    <div style={{ fontSize: 10.5, color: '#854F0B', background: '#FAEEDA', padding: '6px 9px', borderRadius: 8 }}>{extractResults.notes.map((n, i) => <div key={i}>{n}</div>)}</div>
-                  )}
-                </div>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmTargeted} disabled={gtmBusy}><Sparkles size={15} /> {gtm.targeted ? 'Refresh' : 'Generate'} Touchpoint Numbers</button>
+              <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Estimated market totals + your real collected outlets, per category.</span>
+              <button onClick={() => setActiveTab('collector')} style={{ marginLeft: 'auto', fontSize: 12, background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontWeight: 600 }}>Collect real outlets → Touchpoint Collector</button>
             </div>
-            <div><button className="btn" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={generateGtmTargeted} disabled={gtmBusy}><Sparkles size={15} /> {gtm.targeted ? 'Refresh' : 'Generate'} Touchpoints (LLM estimate)</button> <span style={{ fontSize: 11, color: 'var(--ink-soft)', marginLeft: 8 }}>Density estimates where live extract is thin.</span></div>
-            {gtm.targeted && Object.entries(gtm.targeted).map(([k, t]) => (
-              <div key={k} className="card"><h4 style={{ margin: '0 0 6px' }}>{t.label} {gtmConf(t.confidence)} <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· est. {t.estimatedCount ?? '—'}</span></h4>
-                {t.densityNote && <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginBottom: 6 }}>{t.densityNote}</div>}
-                {Array.isArray(t.examples) && t.examples.map((e, i) => (<div key={i} style={{ fontSize: 12, padding: '2px 0' }}>• <b>{e.name}</b>{e.area ? ` · ${e.area}` : ''}{e.note ? ` · ${e.note}` : ''}</div>))}
+            {gtm.targeted && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 12 }}>
+                {Object.entries(gtm.targeted).map(([k, t]) => {
+                  const collected = collectedCounts[k] || 0;
+                  return (
+                    <div key={k} className="card"><h4 style={{ margin: '0 0 10px' }}>{t.label} {gtmConf(t.confidence)}</h4>
+                      <div style={{ display: 'flex', gap: 18 }}>
+                        <div><div style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>Estimated total</div><div style={{ fontSize: 19, fontWeight: 700 }}>{t.estimatedCount ?? '—'}</div></div>
+                        <div><div style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>Collected (real)</div><div style={{ fontSize: 19, fontWeight: 700, color: collected ? 'var(--accent)' : 'var(--ink-soft)' }}>{collected || '—'}</div></div>
+                      </div>
+                      {t.densityNote && <div style={{ fontSize: 11.5, color: 'var(--ink-soft)', marginTop: 8, lineHeight: 1.5 }}>{t.densityNote}</div>}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+            {!gtm.targeted && <p className="sub" style={{ fontSize: 12 }}>Generate to see estimated market totals per touchpoint category. Collect the real named outlets (name · phone · rating) in the <b>Touchpoint Collector</b> tab — the collected counts appear here automatically.</p>}
             <div className="card" style={{ borderStyle: 'dashed', borderColor: '#6D5AE0' }}><div style={{ fontSize: 12 }}><b>Retailer pain points</b> — field research. <span style={{ fontSize: 10, background: '#EDEBFB', color: '#4A3C9E', padding: '1px 6px', borderRadius: 10 }}>🧑 Orchestrator</span></div></div>
           </div>
         )}
@@ -2011,6 +1989,64 @@ export default function App() {
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  const exportCollectorCsv = () => {
+    const rows = collectorRows || [];
+    if (!rows.length) return;
+    const cols = ['name', 'address', 'phone', 'rating', 'category', 'city'];
+    const esc = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const csv = [cols.join(',')].concat(rows.map((r) => cols.map((c) => esc(r[c])).join(','))).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a'); a.href = url; a.download = `touchpoints_${(collectorQuery || 'export').replace(/[^a-z0-9]+/gi, '_')}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+  const renderCollector = () => {
+    const j = collectorJob;
+    const busy = j && ['pending', 'running'].includes(j.status);
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
+          <h3 style={{ margin: 0, color: 'var(--accent)' }}>Touchpoint Collector</h3>
+          <span style={{ fontSize: 12, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 9px', borderRadius: 20 }}>real named outlets · phone · rating</span>
+        </div>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 14 }}>Collect real business data for any category, anywhere. Type what you want — e.g. "liquor shops in Coimbatore", "scrap dealers in Chennai", "electronics stores in Assam".</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <input value={collectorQuery} onChange={(e) => setCollectorQuery(e.target.value)} placeholder='e.g. "liquor shops in Coimbatore"' style={{ flex: 1, minWidth: 280, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 14 }} onKeyDown={(e) => { if (e.key === 'Enter' && !busy) runCollect(); }} />
+          <button className="btn" onClick={runCollect} disabled={!!busy || !collectorQuery.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{busy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Collecting…</> : <><Sparkles size={15} /> Collect</>}</button>
+        </div>
+        {j && (
+          <div style={{ marginBottom: 14, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, background: j.offline ? '#FAEEDA' : 'var(--accent-soft)', color: j.offline ? '#854F0B' : 'var(--accent)', padding: '9px 12px', borderRadius: 8 }}>
+            {j.offline ? '⚠️ Collector agent is not running on your machine. Start it (python runner.py) and this resumes automatically.'
+              : j.status === 'done' ? `✓ Done — ${j.count} outlets collected.`
+                : j.status === 'failed' ? '⚠️ Collection failed — check the collector agent window.'
+                  : <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Collecting… {j.count ? `${j.count} so far` : 'starting'}</>}
+          </div>
+        )}
+        {Array.isArray(collectorRows) && collectorRows.length > 0 && (
+          <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 16 }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <strong>Collected outlets</strong> <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>({collectorRows.length})</span>
+              <button onClick={exportCollectorCsv} style={{ marginLeft: 'auto', fontSize: 12, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', cursor: 'pointer' }}>⬇ Export CSV</button>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 620 }}>
+                <thead><tr style={{ textAlign: 'left', color: 'var(--ink-soft)', borderBottom: '1px solid var(--line)' }}><th style={{ padding: '7px 12px' }}>Name</th><th style={{ padding: '7px 12px' }}>Address</th><th style={{ padding: '7px 12px' }}>Phone</th><th style={{ padding: '7px 12px' }}>Rating</th></tr></thead>
+                <tbody>{collectorRows.map((r, i) => (<tr key={i} style={{ borderBottom: '1px solid var(--line)' }}><td style={{ padding: '7px 12px', fontWeight: 600 }}>{r.name}</td><td style={{ padding: '7px 12px', color: 'var(--ink-soft)' }}>{r.address || '—'}</td><td style={{ padding: '7px 12px' }}>{r.phone || '—'}</td><td style={{ padding: '7px 12px' }}>{r.rating ?? '—'}</td></tr>))}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}><h4 style={{ margin: 0 }}>Collection Library</h4><span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>everything collected so far</span><button onClick={loadLibrary} style={{ marginLeft: 'auto', fontSize: 11, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer' }}>Refresh</button></div>
+          {collectorLibrary.length === 0 ? <p style={{ fontSize: 12, color: 'var(--ink-soft)', margin: 0 }}>Nothing collected yet — run a query above.</p> : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8 }}>
+              {collectorLibrary.map((l, i) => (<div key={i} style={{ background: 'var(--grey-soft)', borderRadius: 8, padding: '8px 11px' }}><div style={{ fontSize: 12.5, fontWeight: 600 }}>{l.city} · {l.category}</div><div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{l.count} outlets{l.state ? ` · ${l.state}` : ''}</div></div>))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -2375,6 +2411,15 @@ export default function App() {
                   <span>Orchestrator</span>
                 </div>
 
+                {/* TOUCHPOINT COLLECTOR — general scraper workspace, last tab (always accessible) */}
+                <div
+                  className={`menu-item ${activeTab === 'collector' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('collector')}
+                >
+                  <span className="badge-icon">TC</span>
+                  <span>Touchpoint Collector</span>
+                </div>
+
                 {/* Stages 7-15 removed from the active flow for now (code + render blocks retained;
                     Narrative & BTL folded into Planning; revisit rest for Orchestration/Execution/Monitoring). */}
               </>
@@ -2417,7 +2462,7 @@ export default function App() {
       <div className="workspace">
         <div className="workspace-header">
           <h2>
-            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
+            {activeTab === 'gtm' ? 'GTM Blueprint' : activeTab === 'brain' ? 'DRS Brain' : activeTab === 'help' ? 'Help & Playbook' : activeTab === 'admin' ? 'Admin Dashboard' : activeTab === 'history' ? 'Project History' : activeTab === 'research' ? 'Strategic Intelligence' : activeTab === 'preplanning' ? 'Pre-planning · Campaign Brief' : activeTab === 'planning' ? 'Planning · Campaign Plan' : activeTab === 'orchestrator' ? 'Orchestrator · Task Assignment' : activeTab === 'collector' ? 'Touchpoint Collector' : `Stage ${activeTab} · ${STAGES.find(s => s.num === activeTab)?.name}`}
           </h2>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {projectId && (
@@ -2533,6 +2578,7 @@ export default function App() {
 
           {/* HISTORY TAB */}
           {activeTab === 'gtm' && renderGtm()}
+          {activeTab === 'collector' && renderCollector()}
 
           {activeTab === 'brain' && isAdmin && (() => {
             const s = brainStatus;

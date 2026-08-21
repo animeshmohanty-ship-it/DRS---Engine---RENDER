@@ -108,13 +108,34 @@ export async function upsertTouchpoints(rows) {
   return { written };
 }
 
-export async function getTouchpoints({ country = 'India', city, category } = {}) {
+export async function getTouchpoints({ country = 'India', state, city, category } = {}) {
   if (!supabaseAdmin) return [];
   let q = supabaseAdmin.from('geo_touchpoints').select('*').eq('country', country);
+  if (state) q = q.eq('state', state);
   if (city) q = q.eq('city', city);
   if (category) q = q.eq('category', category);
-  const { data } = await q.limit(2000);
+  const { data } = await q.limit(4000);
   return data || [];
+}
+
+// Collection stats: per-category counts (optionally for a state) + a library of
+// what's been collected, grouped by city + category. Grouping is done in JS
+// (dataset is small — scraper output only).
+export async function getTouchpointStats({ country = 'India', state } = {}) {
+  if (!supabaseAdmin) return { byCategory: {}, library: [], total: 0 };
+  const { data } = await supabaseAdmin
+    .from('geo_touchpoints').select('city,category,state,source').eq('country', country).limit(20000);
+  const rows = data || [];
+  const byCategory = {}; const libMap = {};
+  for (const r of rows) {
+    if (state && r.state !== state) continue;
+    byCategory[r.category] = (byCategory[r.category] || 0) + 1;
+    const key = `${r.city}||${r.category}`;
+    if (!libMap[key]) libMap[key] = { city: r.city, category: r.category, state: r.state || null, count: 0 };
+    libMap[key].count++;
+  }
+  const library = Object.values(libMap).sort((a, b) => b.count - a.count);
+  return { byCategory, library, total: library.reduce((s, x) => s + x.count, 0) };
 }
 
 // ---- Prompt seed: verified districts as GROUND TRUTH for the LLM -------------
