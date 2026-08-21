@@ -2090,12 +2090,14 @@ export default function App() {
     const busy = j && ['pending', 'running'].includes(j.status);
     const PLATFORMS = [
       { key: 'meta_ads', label: 'Meta Ad Library', hint: 'Competitor ads (FB + Instagram)', ready: true },
-      { key: 'instagram', label: 'Instagram', hint: 'Influencers & profiles', ready: false },
+      { key: 'instagram', label: 'Instagram', hint: 'Influencers & profiles', ready: true },
       { key: 'linkedin', label: 'LinkedIn', hint: 'Decision-makers & orgs', ready: false },
       { key: 'twitter', label: 'Twitter / X', hint: 'Conversation & sentiment', ready: false },
     ];
     const active = PLATFORMS.find((p) => p.key === socialPlatform) || PLATFORMS[0];
-    const placeholder = socialPlatform === 'meta_ads' ? 'Advertiser or keyword — e.g. "Coca-Cola", "recycling", "Bisleri"' : 'Search…';
+    const placeholder = socialPlatform === 'meta_ads' ? 'Advertiser or keyword — e.g. "Coca-Cola", "recycling", "Bisleri"'
+      : socialPlatform === 'instagram' ? 'Hashtag like "recycling" — or a profile "@handle"'
+        : 'Search…';
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
@@ -2133,9 +2135,13 @@ export default function App() {
                   <div key={i} className="card">
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
                       <strong style={{ fontSize: 13.5 }}>{r.name || r.handle || 'Advertiser'}</strong>
+                      {r.handle && r.handle !== r.name && <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>{r.handle}</span>}
+                      {r.meta?.verified && <span style={{ fontSize: 10 }}>✔️</span>}
+                      {r.meta?.followers != null && <span style={{ fontSize: 10.5, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '1px 6px', borderRadius: 10 }}>{Number(r.meta.followers).toLocaleString('en-IN')} followers</span>}
+                      {r.meta?.from_hashtag && <span style={{ fontSize: 10, color: 'var(--ink-faint)' }}>#{r.meta.from_hashtag}</span>}
                       {r.meta?.started && <span style={{ fontSize: 10.5, color: 'var(--ink-soft)' }}>· running since {r.meta.started}</span>}
                       {r.meta?.ad_count > 1 && <span style={{ fontSize: 10, background: 'var(--accent-soft)', color: 'var(--accent)', padding: '1px 6px', borderRadius: 10 }}>{r.meta.ad_count} ads use this creative</span>}
-                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>view creative ↗</a>}
+                      {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--accent)' }}>{socialPlatform === 'meta_ads' ? 'view creative ↗' : 'view profile ↗'}</a>}
                     </div>
                     {r.snippet && <div style={{ fontSize: 12, color: 'var(--ink)', marginTop: 6, lineHeight: 1.5 }}>{r.snippet}</div>}
                   </div>
