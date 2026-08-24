@@ -2279,6 +2279,19 @@ export default function App() {
   const runChatTool = async (tool, msgId) => {
     const patch = (p) => setCopilotMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, toolResult: { ...(m.toolResult || {}), ...p } } : m)));
     try {
+      // INSTANT: verified district data — no queue, reads straight from the data layer.
+      if (tool.tool === 'data') {
+        const st = (tool.state || state || '').trim();
+        patch({ status: 'pending', kind: 'data', label: st, count: 0 });
+        const res = await fetch('/api/geodata', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resource: 'districts', country, state: st }) }).then((r) => r.json()).catch(() => null);
+        if (!res?.ok) { patch({ status: 'error', msg: res?.error || 'No verified data for that state.' }); return; }
+        const rows = (res.rows || []).map((d) => ({
+          name: d.district,
+          snippet: `pop ${Number(d.population || 0).toLocaleString('en-IN')} · literacy ${d.literacy_pct ?? '—'}% · urban ${d.urban_pct ?? '—'}%` + (Array.isArray(d.religions) && d.religions.length ? ` · ${d.religions.map((r) => `${r.name} ${r.pct}%`).join(', ')}` : ''),
+        }));
+        patch({ status: rows.length ? 'done' : 'error', kind: 'data', label: st, count: rows.length, rows, msg: rows.length ? undefined : 'No verified data for that state.' });
+        return;
+      }
       let enqBody, kind, label;
       if (tool.tool === 'touchpoints') {
         const city = (tool.city || '').trim();
