@@ -2322,12 +2322,25 @@ export default function App() {
     try {
       const activeStageKey = activeTab === 'history' ? 'setup' : activeTab === 'orchestrator' ? 'stage17' : `stage${activeStageNum}`;
       const tabParam = activeTab === 'preplanning' ? 'preplanning' : activeTab === 'planning' ? 'planning' : activeTab === 'orchestrator' ? 'orchestrator' : activeTab === 'research' ? `research:${researchTab}` : (STAGES.find(s => s.num === activeTab)?.name || 'Setup');
+      // Full-project bundle so Binny always has complete context (every stage), not just the open tab.
+      const clip = (o, n) => { try { return o ? JSON.stringify(o).slice(0, n) : ''; } catch { return ''; } };
+      const projectBundle = {
+        setup: { country, state, implementationModel: model, operationsStatus, materials: selectedMaterials, objective: objective || projectStages.setup?.objective },
+        marketIntel: clip(projectStages.stage3, 2500),
+        stakeholders: clip(projectStages.stage4, 2500),
+        competitors: clip(projectStages.stage5, 2000),
+        resistance: clip(projectStages.stage6, 2000),
+        gtm: clip(projectStages.gtm, 4500),
+        campaignBrief: clip(projectStages.stage16, 3000),
+        campaignPlan: clip(projectStages.stage17, 4500),
+      };
       const res = await fetch('/api/copilot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tab: tabParam,
           stateData: projectStages[activeStageKey] || { country, state, model, selectedMaterials, objective },
+          projectBundle,
           query: userMsg.text,
           history: copilotMessages.slice(-6),
           model: selectedModel,

@@ -6,12 +6,13 @@ import * as claude from '../../../lib/llm/claude.js';
 import { getProvider } from '../../../lib/llm/provider.js';
 import { buildKnowledgeBlock } from '../../../lib/prompts.js';
 import { recallBlock, ingest, brainReady } from '../../../lib/brain/brain.js';
+import { BRAND_KIT } from '../../../lib/creative/brandKit.js';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    const { tab, stateData, query, history = [], model: selectedModel, knowledge = [], projectId = null } = await req.json();
+    const { tab, stateData, projectBundle = null, query, history = [], model: selectedModel, knowledge = [], projectId = null } = await req.json();
 
     if (!query) {
       return NextResponse.json({ ok: false, error: 'Query is required' }, { status: 400 });
@@ -77,6 +78,25 @@ Guidance:
 - One tool block per reply. Keep the chat line short — the live results appear below it automatically.
 STRICT FORMAT: valid JSON, double quotes only, no trailing commas, close with ::end:: on its own line.`;
 
+    const writingModule = `
+
+WORLD-CLASS WRITING — you are ALSO a 30-year PR Director and a senior Content Strategist for ${BRAND_KIT.name}.
+When the user asks you to WRITE anything (press release, op-ed/byline, blog/thought-leadership, media pitch, email, WhatsApp campaign, LinkedIn/social long-form), switch into expert mode and follow the matching craft below.
+ALWAYS:
+- BRAND VOICE (non-negotiable): ${BRAND_KIT.tone} Tagline: "${BRAND_KIT.tagline}". About: ${BRAND_KIT.about}
+- GROUND IN TRUTH: pull every fact, statistic, name and date from the FULL PROJECT SNAPSHOT + the Brain + live grounded search. NEVER invent statistics. If a quote from a named person is needed and you don't have a real one, write it as [DRAFT QUOTE — approve/replace] attributed to the correct role (e.g. "a Goa DRS spokesperson").
+- Output clean, FINAL, publish-ready prose — no meta-commentary, no "here's a draft:". Match length and register to the format.
+
+FORMAT PLAYBOOKS:
+1) PRESS RELEASE — "FOR IMMEDIATE RELEASE"; a specific, newsworthy HEADLINE (+ optional subhead); dateline "CITY, State — Date"; an inverted-pyramid LEDE (who/what/when/where/why in 1-2 sentences); 2-4 body paragraphs (most important first, real data + context); at least ONE attributed QUOTE from a named spokesperson/role; an "About ${BRAND_KIT.name}" boilerplate; a media-contact line; end with "###". AP style, factual, zero hype.
+2) OP-ED / BYLINE — 600-800 words, first person, authored by a named leader; sharp hook; ONE clear argument/POV; real evidence; briefly acknowledge the counter-view; forward-looking call to action. Human and persuasive, not corporate.
+3) BLOG / THOUGHT-LEADERSHIP — 700-1200 words; magnetic title + hook; scannable subheads; a genuine insight or framework (not fluff); examples/data; practical takeaways; soft CTA; SEO-aware (natural keywords).
+4) MEDIA PITCH — a short EMAIL to a journalist: compelling subject line; 1-2 sentence hook tied to a NEWS ANGLE / why-now; what you offer (data, exclusive, interview, visuals); ONE clear ask; under 150 words; personal — never dump a full release.
+5) EMAIL (campaign/newsletter) — subject (≤55 chars, benefit-led) + preheader (≤90); warm greeting; scannable body (short paras/bullets); ONE primary CTA; optional PS. Audience-facing, not a media pitch.
+6) WHATSAPP CAMPAIGN — very short (1-3 lines); personal; value-first ("get your deposit back"); tasteful emoji; ONE clear action; no ALL-CAPS or spammy tone; respect opt-in courtesy.
+7) SOCIAL LONG-FORM (LinkedIn) — a killer first line that stands alone as the hook; 1-2 sentence paragraphs; a story or insight; a clear takeaway + CTA; 3-5 relevant hashtags.
+If the format is ambiguous, ask once; otherwise pick the best fit and write it well.`;
+
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const systemPrompt = `You are the context-aware AI Copilot for the Recykal DRS (Deposit Return System) Roadmap Engine.
 You are helping the DRS Pod Leader who is currently viewing the "${tab}" tab.
@@ -84,9 +104,11 @@ ${toolsBlock}
 
 TIME AWARENESS (critical): Today's date is ${today}. Reason relative to this date. Any event/launch/regulation dated before today has ALREADY happened — never describe a past event as upcoming. If a market's DRS has already launched, discuss the current post-launch reality (adoption, competition, optimization), not pre-launch prep. Verify current status via grounded search rather than relying on outdated training-era assumptions.
 ${coAuthorBlock}
+${writingModule}
 
 PROJECT CONTEXT & CURRENT TAB DATA:
 ${JSON.stringify(stateData, null, 2)}
+${projectBundle ? `\nFULL PROJECT SNAPSHOT (every stage — use this so you ALWAYS have the complete project in mind, not just the current tab):\n${JSON.stringify(projectBundle).slice(0, 24000)}` : ''}
 ${buildKnowledgeBlock({ knowledge })}
 
 CHAT HISTORY:
@@ -126,7 +148,7 @@ FORMATTING (important — your replies render as rich markdown):
 - Present ANY comparison, breakdown, list of figures, stakeholders, options, or multi-attribute data as a GitHub-flavored MARKDOWN TABLE with clear column headers. Do not describe tabular data in prose.
 - Use ## / ### headings to structure longer answers, bullet or numbered lists for steps, **bold** for key terms, and \`code\` for exact values/IDs.
 - Keep it clean and scannable — lead with the answer, then the supporting detail. No walls of text.
-Provide your response in clean, well-structured markdown.${await recallBlock(query, { projectId }).catch(() => '')}`;
+Provide your response in clean, well-structured markdown.${await recallBlock(query, { projectId, k: 18 }).catch(() => '')}`;
 
     const { text, sources } = await activeLlm.generateGrounded(
       systemPrompt,
