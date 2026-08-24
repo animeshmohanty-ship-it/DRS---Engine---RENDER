@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
-    const { tab, stateData, projectBundle = null, query, history = [], model: selectedModel, knowledge = [], projectId = null } = await req.json();
+    const { tab, stateData, projectBundle = null, query, history = [], model: selectedModel, knowledge = [], projectId = null, image = null } = await req.json();
 
     if (!query) {
       return NextResponse.json({ ok: false, error: 'Query is required' }, { status: 400 });
@@ -37,6 +37,10 @@ export async function POST(req) {
     } else if (modelLower.startsWith('llama') || modelLower.startsWith('groq') || modelLower === 'groq') {
       activeLlm = groq;
     }
+
+    // Vision: if an image is attached, force the multimodal Gemini path (only it
+    // is wired for image input) regardless of the selected text model.
+    if (image && image.data) { activeLlm = gemini; geminiModelOverride = null; vertexModelOverride = null; }
 
     // Unified model override — works for any active provider
     const activeModelOverride = vertexModelOverride || geminiModelOverride || null;
@@ -72,8 +76,10 @@ When the user asks to FIND / COLLECT / SCRAPE / LIST real touchpoints or social 
 ::tool:: {"tool":"touchpoints","city":"<city>","category":"<liquor|horeca|retail|mrf|school|mall|fuel|cinema|hotel>"} ::end::
 ::tool:: {"tool":"social","platform":"<meta_ads|instagram|linkedin>","query":"<terms>","country":"<in-en|wt-wt|pl-pl|gb-en|us-en>"} ::end::
 ::tool:: {"tool":"data","state":"<Indian state>"} ::end::
+::tool:: {"tool":"creative","focus":"<campaign focus, optional>"} ::end::
 Guidance:
 - data: INSTANTLY show verified district data (population, religion split, literacy, urban%) for an Indian state — use it for "compare / show / list districts", "priority cities", "religion split", or any demographic question about a state. No wait time.
+- creative: generate launch-ready, on-brand copy for ALL channels (Meta, Google, LinkedIn, WhatsApp, Email) in the Creative Studio. Use when the user asks to "create ads / creatives / all-channel copy / launch content". Pass the specific angle as "focus" if given.
 - touchpoints = real named outlets in ONE city via maps. Map the user's words to the closest category in the list.
 - social platform "meta_ads" = competitor ADS (query = a brand/keyword, e.g. "tomra"); "instagram" = find INFLUENCERS/creators (query = location + theme, e.g. "sustainability Chennai"); "linkedin" = find public POSTS on a topic (query = topic + place, e.g. "deposit return system Poland"). Default country "in-en" (India) unless the user names another place.
 - Emit a tool block ONLY when the user clearly wants real collected data. For explanation/analysis/drafting, answer normally with NO tool block.
@@ -162,12 +168,11 @@ FORMATTING (important — your replies render as rich markdown):
 - Keep it clean and scannable — lead with the answer, then the supporting detail. No walls of text.
 Provide your response in clean, well-structured markdown.${await recallBlock(query, { projectId, k: 18 }).catch(() => '')}`;
 
-    const { text, sources } = await activeLlm.generateGrounded(
-      systemPrompt,
-      activeModelOverride
-        ? { customModel: activeModelOverride, grounding: true, jsonMode: false }
-        : { grounding: true, jsonMode: false }
-    );
+    const genOpts = activeModelOverride
+      ? { customModel: activeModelOverride, grounding: true, jsonMode: false }
+      : { grounding: true, jsonMode: false };
+    if (image && image.data) { genOpts.image = image; genOpts.grounding = false; } // vision + grounding can't combine
+    const { text, sources } = await activeLlm.generateGrounded(systemPrompt, genOpts);
 
     // Auto-learn: capture the exchange into the Brain's experience layer
     // (fire-and-forget; never blocks or breaks the reply).

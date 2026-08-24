@@ -37,9 +37,12 @@ async function fetchWithRetry(url, options, maxRetries = 3) {
 }
 
 // Grounded generation. Returns { text, sources:[{title,uri}] }.
-export async function generateGrounded(prompt, { temperature = 0.2, customModel = null, grounding = false } = {}) {
+export async function generateGrounded(prompt, { temperature = 0.2, customModel = null, grounding = false, image = null } = {}) {
+  // image: { mimeType, data (base64, no data: prefix) } — enables vision.
+  const parts = [{ text: prompt }];
+  if (image && image.data) parts.push({ inline_data: { mime_type: image.mimeType || 'image/png', data: image.data } });
   const body = {
-    contents: [{ parts: [{ text: prompt }] }],
+    contents: [{ parts }],
     generationConfig: { temperature },
   };
   if (grounding) {

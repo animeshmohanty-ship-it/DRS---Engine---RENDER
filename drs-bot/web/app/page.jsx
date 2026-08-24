@@ -379,6 +379,7 @@ export default function App() {
   
   // Copilot Panel State
   const [copilotQuery, setCopilotQuery] = useState('');
+  const [copilotImage, setCopilotImage] = useState(null); // { mimeType, data(base64), preview }
   const [copilotMessages, setCopilotMessages] = useState([
     { sender: 'assistant', text: 'Hi! I am your DRS Copilot. I can help analyze figures, draft MoUs/notifications, or resolve blockers for the current stage.' }
   ]);
@@ -2279,6 +2280,28 @@ export default function App() {
   const runChatTool = async (tool, msgId) => {
     const patch = (p) => setCopilotMessages((prev) => prev.map((m) => (m.id === msgId ? { ...m, toolResult: { ...(m.toolResult || {}), ...p } } : m)));
     try {
+      // INSTANT: generate all-channel creative copy (Creative Studio) from chat.
+      if (tool.tool === 'creative') {
+        patch({ status: 'pending', kind: 'creative', label: tool.focus || 'all channels', count: 0 });
+        const gtm = projectStages?.gtm || {};
+        const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 800) : '';
+        const res = await fetch('/api/creative', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ market: state ? `${state}, ${country}` : country, objective: objective || projectStages.setup?.objective || '', narrative, focus: tool.focus || '', model: selectedModel }),
+        }).then((r) => r.json()).catch(() => null);
+        if (!res?.ok) { patch({ status: 'error', msg: res?.error || 'Creative generation failed.' }); return; }
+        setCreativeOutput(res.creative);
+        const c = res.creative || {};
+        const rows = [
+          c.meta_ads?.feed && { name: 'Meta (feed)', snippet: `${c.meta_ads.feed.headline} — ${c.meta_ads.feed.primaryText}` },
+          c.whatsapp && { name: 'WhatsApp', snippet: c.whatsapp.message },
+          c.email && { name: 'Email', snippet: c.email.subject },
+          c.linkedin?.post && { name: 'LinkedIn', snippet: String(c.linkedin.post.text || '').slice(0, 140) },
+          c.google_ads?.search && { name: 'Google', snippet: (c.google_ads.search.headlines || []).join(' · ') },
+        ].filter(Boolean);
+        patch({ status: 'done', kind: 'creative', label: 'all channels', count: rows.length, rows, note: 'Full set is in the Creative Studio tab.' });
+        return;
+      }
       // INSTANT: verified district data — no queue, reads straight from the data layer.
       if (tool.tool === 'data') {
         const st = (tool.state || state || '').trim();
@@ -2326,10 +2349,11 @@ export default function App() {
   };
 
   const handleCopilotSend = async () => {
-    if (!copilotQuery.trim()) return;
-    const userMsg = { sender: 'user', text: copilotQuery };
+    if (!copilotQuery.trim() && !copilotImage) return;
+    const img = copilotImage;
+    const userMsg = { sender: 'user', text: copilotQuery || (img ? '(image attached)' : ''), image: img?.preview };
     setCopilotMessages(prev => [...prev, userMsg]);
-    setCopilotQuery('');
+    setCopilotQuery(''); setCopilotImage(null);
     setCopilotLoading(true);
 
     try {
@@ -2358,7 +2382,8 @@ export default function App() {
           history: copilotMessages.slice(-6),
           model: selectedModel,
           knowledge: projectStages.knowledge || [],
-          projectId: projectId || null
+          projectId: projectId || null,
+          image: img ? { mimeType: img.mimeType, data: img.data } : null
         })
       });
       const data = await res.json();
@@ -5885,6 +5910,7 @@ export default function App() {
             }
             return (
               <div key={i} className={`chat-message ${msg.sender === 'user' ? 'user' : 'assistant'}`}>
+                {msg.image && <img src={msg.image} alt="attached" style={{ maxWidth: '160px', borderRadius: 8, marginBottom: 6, border: '1px solid var(--line)' }} />}
                 <div className="md-body" style={{ lineHeight: 1.5, wordBreak: 'break-word' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
                 {msg.tool && msg.toolResult && (() => {
                   const t = msg.toolResult;
@@ -5908,6 +5934,7 @@ export default function App() {
                         </div>
                       ))}
                       {rows.length > 10 && <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>…{rows.length - 10} more</div>}
+                      {t.note && <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 6 }}>{t.note}{t.kind === 'creative' && <a onClick={() => setActiveTab('creative')} style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: 6 }}>Open Creative Studio →</a>}</div>}
                     </div>
                   );
                 })()}
@@ -5981,9 +6008,25 @@ export default function App() {
           {renderKnowledgePanel(true)}
         </div>
 
+        {copilotImage && (
+          <div style={{ padding: '0 16px 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src={copilotImage.preview} alt="attached" style={{ height: 40, borderRadius: 6, border: '1px solid var(--line)' }} />
+            <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>image attached</span>
+            <button onClick={() => setCopilotImage(null)} style={{ fontSize: 11, background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}>remove</button>
+          </div>
+        )}
         <div className="copilot-input" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button 
-            className={`btn ${isListening ? 'listening-pulsate' : ''}`} 
+          <label className="btn" title="Attach an image (e.g. a competitor ad or creative)" style={{ padding: '10px', background: 'var(--grey-soft)', color: 'var(--ink)', border: '1px solid var(--line)', cursor: 'pointer', display: 'inline-flex' }}>
+            <ExternalLink size={18} style={{ transform: 'rotate(45deg)' }} />
+            <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+              const f = e.target.files?.[0]; if (!f) return;
+              const r = new FileReader();
+              r.onload = () => { const s = String(r.result || ''); setCopilotImage({ mimeType: f.type || 'image/png', data: s.split(',')[1] || '', preview: s }); };
+              r.readAsDataURL(f); e.target.value = '';
+            }} />
+          </label>
+          <button
+            className={`btn ${isListening ? 'listening-pulsate' : ''}`}
             style={{ 
               padding: '10px', 
               background: isListening ? '#d92d20' : 'var(--grey-soft)', 
