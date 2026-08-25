@@ -2249,7 +2249,7 @@ export default function App() {
     } catch (e) { setError('Creative error: ' + e.message); } finally { setCreativeBusy(false); }
   };
   const renderCreative = () => {
-    const B = { primary: '#009B60', accent: '#2ECC71', secondary: '#1D6ADB', alert: '#E74C3C', surface: '#F4F5F7', text: '#000000' };
+    const B = { primary: '#005DFF', accent: '#1DC797', secondary: '#6E5CFA', alert: '#E74C3C', surface: '#F4F5F7', text: '#000000' };
     const c = creativeOutput || {};
     const Field = ({ label, children }) => (
       <div style={{ marginBottom: 6 }}><div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--ink-soft)' }}>{label}</div><div style={{ fontSize: 12.5, lineHeight: 1.5 }}>{children}</div></div>
@@ -2261,33 +2261,39 @@ export default function App() {
       try {
         const { toPng } = await import('html-to-image');
         const url = await toPng(node, { pixelRatio: 3.5, cacheBust: true });
-        const a = document.createElement('a'); a.href = url; a.download = `goa-drs-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`; a.click();
+        const a = document.createElement('a'); a.href = url; a.download = `recykal-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`; a.click();
       } catch (e) { setError('PNG export failed: ' + e.message); }
     };
+    const cMarket = state ? `${state}, ${country}` : country;
     // Generate an AI background for a creative (falls back to gradient on failure).
+    // Ambient scene only — never invents hardware (enforced server-side too).
     const genCreativeImage = async (id, brief, aspectRatio = '1:1') => {
       setCreativeImages((prev) => ({ ...prev, [id]: { loading: true } }));
       try {
-        const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: brief || 'Goa deposit refund scheme, recycling, clean beaches', aspectRatio }) }).then((r) => r.json()).catch(() => null);
+        const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: brief || `people returning empty beverage bottles and cans in ${cMarket}, clean street`, aspectRatio, market: cMarket }) }).then((r) => r.json()).catch(() => null);
         if (res?.ok && res.dataUrl) setCreativeImages((prev) => ({ ...prev, [id]: { url: res.dataUrl } }));
         else setCreativeImages((prev) => ({ ...prev, [id]: { error: res?.error || 'failed' } }));
       } catch (e) { setCreativeImages((prev) => ({ ...prev, [id]: { error: e.message } })); }
+    };
+    // Use a REAL uploaded product/RVM photo directly as the background (no AI).
+    const uploadProductPhoto = (id, file) => {
+      if (!file) return;
+      const r = new FileReader();
+      r.onload = () => setCreativeImages((prev) => ({ ...prev, [id]: { url: r.result, uploaded: true } }));
+      r.readAsDataURL(file);
     };
     // A branded, on-brand ad creative rendered as real HTML → downloadable PNG.
     const CreativeCard = ({ id, w, h, grad, label, headline, sub, cta, brief }) => {
       const imgState = creativeImages[id] || {};
       const bg = imgState.url
-        ? { backgroundImage: `linear-gradient(180deg, rgba(0,90,74,.35), rgba(10,40,60,.72)), url(${imgState.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+        ? { backgroundImage: `linear-gradient(180deg, rgba(4,18,48,.32), rgba(4,14,40,.74)), url(${imgState.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
         : { background: grad };
       return (
       <div>
         <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginBottom: 4 }}>{label}</div>
         <div ref={(el) => { creativeRefs.current[id] = el; }} style={{ width: w, height: h, ...bg, borderRadius: 14, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, sans-serif', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 22, boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 40, height: 40, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-              <img src="/goa-drs-logo.png" alt="" style={{ width: 30, height: 30, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.02em' }}>GOA DRS</span>
+            <img src="/logo-white.png" alt="Recykal" crossOrigin="anonymous" style={{ height: 26, width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 1px 4px rgba(0,0,0,.25))' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
           </div>
           <div>
             <div style={{ fontSize: w > 300 ? 30 : 24, fontWeight: 800, lineHeight: 1.1, marginBottom: 8, textShadow: '0 1px 8px rgba(0,0,0,.15)' }}>{headline}</div>
@@ -2295,13 +2301,16 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {cta && <span style={{ background: '#fff', color: B.primary, fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 30 }}>{cta}</span>}
-            <span style={{ fontSize: 11, fontWeight: 500, opacity: .9 }}>goadrs.com</span>
+            <span style={{ fontSize: 11, fontWeight: 500, opacity: .9 }}>recykal.com</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-          <button onClick={() => genCreativeImage(id, brief, w === h ? '1:1' : h > w ? '9:16' : '16:9')} disabled={imgState.loading} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>{imgState.loading ? '🖼️ generating…' : imgState.url ? '🖼️ regenerate' : '🖼️ AI background'}</button>
+          <button onClick={() => genCreativeImage(id, brief, w === h ? '1:1' : h > w ? '9:16' : '16:9')} disabled={imgState.loading} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>{imgState.loading ? '🖼️ generating…' : imgState.url && !imgState.uploaded ? '🖼️ regenerate' : '🖼️ AI scene'}</button>
+          <label style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }} title="Use a real product / RVM photo as the background">📷 Real photo<input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { uploadProductPhoto(id, e.target.files?.[0]); e.target.value = ''; }} /></label>
+          {imgState.url && <button onClick={() => setCreativeImages((prev) => { const n = { ...prev }; delete n[id]; return n; })} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>✕ clear</button>}
           <button onClick={() => downloadCreative(id, label)} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>⬇ PNG</button>
         </div>
+        {imgState.uploaded && <div style={{ fontSize: 10, color: 'var(--ink-soft)', marginTop: 3 }}>using your uploaded photo</div>}
         {imgState.error && <div style={{ fontSize: 10, color: '#854F0B', marginTop: 3 }}>image gen unavailable — using gradient</div>}
       </div>
       );
@@ -2311,13 +2320,13 @@ export default function App() {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
           <h3 style={{ margin: 0, color: B.primary }}>Creative Studio</h3>
-          <span style={{ fontSize: 12, background: '#E5EDED', color: B.primary, padding: '2px 9px', borderRadius: 20 }}>Goa DRS · brand-locked</span>
+          <span style={{ fontSize: 12, background: '#E6EFFF', color: B.primary, padding: '2px 9px', borderRadius: 20 }}>Recykal · brand-locked</span>
         </div>
         <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>Generate any asset on demand, or hit <b>Create</b> on a plan row. Content + on-brand creative, brand-locked, ready to download.</p>
         {/* brand strip */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14, fontSize: 11.5, color: 'var(--ink-soft)' }}>
           {Object.entries(B).map(([k, v]) => <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 13, height: 13, borderRadius: 3, background: v, border: '1px solid var(--line)' }} />{k}</span>)}
-          <span>· Font <b style={{ fontFamily: 'Poppins, sans-serif' }}>Poppins</b> · "Real change starts with you."</span>
+          <span>· Font <b style={{ fontFamily: 'Poppins, sans-serif' }}>Poppins</b> · "Sustainable Circularity"</span>
         </div>
         {/* INDEPENDENT CREATE — any asset, any format, any time */}
         <div className="card" style={{ marginBottom: 14 }}>
@@ -2388,7 +2397,7 @@ export default function App() {
         {creativeOutput && (
           <div style={{ marginTop: 18 }}>
             <h4 style={{ margin: '0 0 4px' }}>Ad Creatives <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· brand-locked · download as PNG</span></h4>
-            <p style={{ fontSize: 11, color: 'var(--ink-soft)', margin: '0 0 10px' }}>Rendered with your logo, Poppins &amp; brand colors. Save the logo to <code>public/goa-drs-logo.png</code> and it appears automatically. (AI photo backgrounds = next step; these use on-brand gradients.)</p>
+            <p style={{ fontSize: 11, color: 'var(--ink-soft)', margin: '0 0 10px' }}>Rendered with the Recykal master logo, Poppins &amp; brand colors. Use <b>AI scene</b> for an on-brand background (never invents machines) or <b>Real photo</b> to drop in an actual product/RVM shot.</p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {c.meta_ads?.feed && <CreativeCard id="mfeed" w={300} h={300} grad={GRADS[0]} label="Meta Feed 1:1" headline={c.meta_ads.feed.headline} sub={c.meta_ads.feed.primaryText} cta={c.meta_ads.feed.cta} brief={c.meta_ads.feed.visualBrief} />}
               {c.meta_ads?.story && <CreativeCard id="mstory" w={260} h={462} grad={GRADS[1]} label="Meta Story 9:16" headline={c.meta_ads.story.headline} sub={c.meta_ads.story.primaryText} cta={c.meta_ads.story.cta} brief={c.meta_ads.story.visualBrief} />}

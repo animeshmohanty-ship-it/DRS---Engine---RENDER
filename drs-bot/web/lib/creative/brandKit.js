@@ -1,25 +1,26 @@
-// Goa DRS Brand Kit — extracted from the official Brand Guidelines.
-// Single source of truth for creative copy tone + template styling.
-// (Logo files get uploaded later for Phase C visual rendering.)
+// Recykal MASTER BRAND kit — the single brand that appears on every creative,
+// for any state/market. Colors + typeface are from Recykal's official brand
+// guidelines (deck slide 19). Recykal is the operator; individual programmes
+// (e.g. the live Goa DRS) sit UNDER this master brand.
 export const BRAND_KIT = {
-  name: 'Goa DRS',
-  fullName: 'Goa Deposit Refund Scheme',
-  site: 'goadrs.com',
-  tagline: 'Real change starts with you.', // placeholder — confirm exact wording
-  about: 'Goa\'s Deposit Refund Scheme (DRS): return your beverage containers and get your deposit back. The infinity mark = circularity — everything consumed is returned. Mission: drive behaviour change at scale to keep Goa clean.',
+  name: 'Recykal',
+  fullName: 'Recykal',
+  site: 'recykal.com',
+  tagline: 'Sustainable Circularity',
+  about: 'Recykal is India\'s circular-economy technology platform. It designs and runs Deposit Refund Scheme (DRS) programmes — you return your beverage containers and get your deposit back — starting with the live Goa DRS and scaling the model to other states. The mark reads as circularity: everything consumed is returned.',
   colors: {
-    primary: '#009B60',   // Verdant Teal
-    accent: '#2ECC71',    // Action Green
-    secondary: '#1D6ADB', // Goa Azure
+    primary: '#005DFF',   // Recykal Bright Blue (brand primary)
+    accent: '#1DC797',     // Recykal Bright Green
+    secondary: '#6E5CFA', // Recykal Purple
     alert: '#E74C3C',     // Alert Red
     surface: '#F4F5F7',   // Neutral Grey
     text: '#000000',      // Text / Black
   },
-  // tint scales (from the guidelines) for template flexibility
+  // tint scales for template flexibility (approx. brand-hue steps)
   tints: {
-    primary: { 70: '#4CB284', 50: '#80C6A7', 30: '#B2CACA', 10: '#E5EDED' },
-    accent: { 70: '#5CD68E', 50: '#96E3B2', 30: '#CFF2D9', 10: '#F2FCF6' },
-    secondary: { 70: '#4D87FF', 50: '#80A9FF', 30: '#B3CBFF', 10: '#E6EFFF' },
+    primary: { 70: '#4D87FF', 50: '#80AEFF', 30: '#B3CEFF', 10: '#E6EFFF' },
+    accent: { 70: '#5AD6B4', 50: '#8EE3CB', 30: '#C2F1E5', 10: '#EAFBF6' },
+    secondary: { 70: '#9B8DFC', 50: '#B7AEFD', 30: '#D4CEFE', 10: '#EFECFF' },
     alert: { 70: '#F06B5E', 50: '#F49C95', 30: '#F8C0BC', 10: '#FDEDED' },
   },
   font: {
@@ -27,8 +28,10 @@ export const BRAND_KIT = {
     weights: [300, 400, 500, 600, 700],
     googleUrl: 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
   },
-  tone: 'Simple, direct, and action-oriented. Turn personal responsibility into collective ownership ("you" → "we"). Warm, inclusive, and positive — speaks to both residents and tourists. Clean/circular/sustainable framing. Never preachy, never guilt-trippy; make returning containers feel easy, rewarding, and part of Goa\'s identity.',
-  logo: { light: null, dark: null }, // populated when the user uploads SVG/PNG
+  tone: 'Simple, direct, and action-oriented. Turn personal responsibility into collective ownership ("you" → "we"). Warm, inclusive, positive. Clean/circular/sustainable framing. Never preachy, never guilt-trippy; make returning containers feel easy, rewarding, and part of local identity. Adapt the place reference to the campaign market — never hardcode Goa unless the market IS Goa.',
+  // Official master-brand logo lockups (in /public). White for dark/photo
+  // backgrounds, dark for light backgrounds.
+  logo: { white: '/logo-white.png', dark: '/logo-dark.png', mark: '/recykal-mark.png' },
 };
 
 // Channel spec library — real platform limits, used to constrain copy generation.
