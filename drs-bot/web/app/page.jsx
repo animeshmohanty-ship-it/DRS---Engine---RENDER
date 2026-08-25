@@ -574,6 +574,7 @@ export default function App() {
   const [creativeFocus, setCreativeFocus] = useState('');
   const [creativeBusy, setCreativeBusy] = useState(false);
   const [creativeOutput, setCreativeOutput] = useState(null);
+  const creativeRefs = useRef({});
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -2225,7 +2226,40 @@ export default function App() {
     const Field = ({ label, children }) => (
       <div style={{ marginBottom: 6 }}><div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.05em', color: 'var(--ink-soft)' }}>{label}</div><div style={{ fontSize: 12.5, lineHeight: 1.5 }}>{children}</div></div>
     );
-    const Visual = ({ v }) => v ? <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4, fontStyle: 'italic' }}>🎨 Visual: {v} <span style={{ fontSize: 9.5, background: 'var(--grey-soft)', padding: '1px 5px', borderRadius: 8 }}>image in Phase C</span></div> : null;
+    const Visual = ({ v }) => v ? <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 4, fontStyle: 'italic' }}>🎨 Visual: {v}</div> : null;
+
+    const downloadCreative = async (id, label) => {
+      const node = creativeRefs.current[id]; if (!node) return;
+      try {
+        const { toPng } = await import('html-to-image');
+        const url = await toPng(node, { pixelRatio: 3.5, cacheBust: true });
+        const a = document.createElement('a'); a.href = url; a.download = `goa-drs-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`; a.click();
+      } catch (e) { setError('PNG export failed: ' + e.message); }
+    };
+    // A branded, on-brand ad creative rendered as real HTML → downloadable PNG.
+    const CreativeCard = ({ id, w, h, grad, label, headline, sub, cta }) => (
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginBottom: 4 }}>{label}</div>
+        <div ref={(el) => { creativeRefs.current[id] = el; }} style={{ width: w, height: h, background: grad, borderRadius: 14, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, sans-serif', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 22, boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 40, height: 40, background: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+              <img src="/goa-drs-logo.png" alt="" style={{ width: 30, height: 30, objectFit: 'contain' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '.02em' }}>GOA DRS</span>
+          </div>
+          <div>
+            <div style={{ fontSize: w > 300 ? 30 : 24, fontWeight: 800, lineHeight: 1.1, marginBottom: 8, textShadow: '0 1px 8px rgba(0,0,0,.15)' }}>{headline}</div>
+            {sub && <div style={{ fontSize: 13, fontWeight: 400, lineHeight: 1.4, opacity: .95 }}>{sub}</div>}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {cta && <span style={{ background: '#fff', color: B.primary, fontSize: 13, fontWeight: 700, padding: '8px 16px', borderRadius: 30 }}>{cta}</span>}
+            <span style={{ fontSize: 11, fontWeight: 500, opacity: .9 }}>goadrs.com</span>
+          </div>
+        </div>
+        <button onClick={() => downloadCreative(id, label)} style={{ marginTop: 6, fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>⬇ Download PNG</button>
+      </div>
+    );
+    const GRADS = [`linear-gradient(135deg, ${B.primary}, ${B.secondary})`, `linear-gradient(135deg, ${B.secondary}, ${B.accent})`, `linear-gradient(160deg, ${B.primary}, #0A5A4A)`, `linear-gradient(135deg, ${B.accent}, ${B.primary})`];
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
@@ -2269,6 +2303,18 @@ export default function App() {
             {c.email && (
               <div className="card"><h4 style={{ margin: '0 0 8px', color: B.secondary }}>Email</h4><Field label="Subject">{c.email.subject}</Field><Field label="Preheader">{c.email.preheader}</Field><Field label="Body">{String(c.email.body || '').split('\n').map((p, i) => <p key={i} style={{ margin: '0 0 6px' }}>{p}</p>)}</Field><Field label="CTA">{c.email.cta}</Field><Visual v={c.email.visualBrief} /></div>
             )}
+          </div>
+        )}
+        {creativeOutput && (
+          <div style={{ marginTop: 18 }}>
+            <h4 style={{ margin: '0 0 4px' }}>Ad Creatives <span style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 400 }}>· brand-locked · download as PNG</span></h4>
+            <p style={{ fontSize: 11, color: 'var(--ink-soft)', margin: '0 0 10px' }}>Rendered with your logo, Poppins &amp; brand colors. Save the logo to <code>public/goa-drs-logo.png</code> and it appears automatically. (AI photo backgrounds = next step; these use on-brand gradients.)</p>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              {c.meta_ads?.feed && <CreativeCard id="mfeed" w={300} h={300} grad={GRADS[0]} label="Meta Feed 1:1" headline={c.meta_ads.feed.headline} sub={c.meta_ads.feed.primaryText} cta={c.meta_ads.feed.cta} />}
+              {c.meta_ads?.story && <CreativeCard id="mstory" w={260} h={462} grad={GRADS[1]} label="Meta Story 9:16" headline={c.meta_ads.story.headline} sub={c.meta_ads.story.primaryText} cta={c.meta_ads.story.cta} />}
+              {c.linkedin?.ad && <CreativeCard id="li" w={360} h={200} grad={GRADS[2]} label="LinkedIn" headline={c.linkedin.ad.headline} sub={c.linkedin.ad.introText} cta={c.linkedin.ad.cta} />}
+              {c.google_ads?.display && <CreativeCard id="gd" w={300} h={250} grad={GRADS[3]} label="Google Display" headline={c.google_ads.display.longHeadline || c.google_ads.display.shortHeadline} sub={c.google_ads.display.description} cta="Learn more" />}
+            </div>
           </div>
         )}
       </div>
