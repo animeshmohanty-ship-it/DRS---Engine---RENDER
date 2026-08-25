@@ -2259,10 +2259,10 @@ export default function App() {
       } catch (e) { setError('PNG export failed: ' + e.message); }
     };
     // Generate an AI background for a creative (falls back to gradient on failure).
-    const genCreativeImage = async (id, brief) => {
+    const genCreativeImage = async (id, brief, aspectRatio = '1:1') => {
       setCreativeImages((prev) => ({ ...prev, [id]: { loading: true } }));
       try {
-        const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: brief || 'Goa deposit refund scheme, recycling, clean beaches' }) }).then((r) => r.json()).catch(() => null);
+        const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: brief || 'Goa deposit refund scheme, recycling, clean beaches', aspectRatio }) }).then((r) => r.json()).catch(() => null);
         if (res?.ok && res.dataUrl) setCreativeImages((prev) => ({ ...prev, [id]: { url: res.dataUrl } }));
         else setCreativeImages((prev) => ({ ...prev, [id]: { error: res?.error || 'failed' } }));
       } catch (e) { setCreativeImages((prev) => ({ ...prev, [id]: { error: e.message } })); }
@@ -2293,7 +2293,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
-          <button onClick={() => genCreativeImage(id, brief)} disabled={imgState.loading} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>{imgState.loading ? '🖼️ generating…' : imgState.url ? '🖼️ regenerate' : '🖼️ AI background'}</button>
+          <button onClick={() => genCreativeImage(id, brief, w === h ? '1:1' : h > w ? '9:16' : '16:9')} disabled={imgState.loading} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>{imgState.loading ? '🖼️ generating…' : imgState.url ? '🖼️ regenerate' : '🖼️ AI background'}</button>
           <button onClick={() => downloadCreative(id, label)} style={{ fontSize: 11.5, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer' }}>⬇ PNG</button>
         </div>
         {imgState.error && <div style={{ fontSize: 10, color: '#854F0B', marginTop: 3 }}>image gen unavailable — using gradient</div>}

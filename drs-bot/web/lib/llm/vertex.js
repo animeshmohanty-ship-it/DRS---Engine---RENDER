@@ -95,4 +95,35 @@ export async function generateGrounded(prompt, { temperature = 0.1, customModel 
   return { text, sources };
 }
 
+// Image generation via Vertex Imagen. Returns { dataUrl }.
+// Imagen models live in regional endpoints (not 'global'), so use a dedicated
+// image location (VERTEX_IMAGE_LOCATION, default us-central1).
+export async function generateImage(prompt, { aspectRatio = '1:1', customModel = null } = {}) {
+  resolveCredentials();
+  const project = process.env.GCP_PROJECT_ID;
+  if (!project) throw new Error('GCP_PROJECT_ID is not set');
+  const location = process.env.VERTEX_IMAGE_LOCATION || process.env.GCP_LOCATION || 'global';
+  const model = customModel || process.env.VERTEX_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const ai = new GoogleGenAI({ vertexai: true, project, location });
+  console.log(`[VertexAI] Image model: ${model} @ ${location} | ratio ${aspectRatio}`);
+
+  // Imagen models use the images API; Gemini image models use generateContent.
+  if (/imagen/i.test(model)) {
+    const response = await ai.models.generateImages({ model, prompt, config: { numberOfImages: 1, aspectRatio } });
+    const img = response?.generatedImages?.[0]?.image;
+    if (!img?.imageBytes) throw new Error('[VertexAI] No image from ' + model);
+    return { dataUrl: `data:${img.mimeType || 'image/png'};base64,${img.imageBytes}` };
+  }
+  const response = await ai.models.generateContent({
+    model,
+    contents: `${prompt} (composition: ${aspectRatio} aspect ratio)`,
+    config: { responseModalities: ['TEXT', 'IMAGE'] },
+  });
+  const parts = response?.candidates?.[0]?.content?.parts || [];
+  const p = parts.find((x) => (x.inlineData && x.inlineData.data) || (x.inline_data && x.inline_data.data));
+  const inline = p && (p.inlineData || p.inline_data);
+  if (!inline || !inline.data) throw new Error('[VertexAI] No image returned by ' + model);
+  return { dataUrl: `data:${inline.mimeType || inline.mime_type || 'image/png'};base64,${inline.data}` };
+}
+
 export const name = 'gemini-vertex';
