@@ -36,6 +36,27 @@ async function fetchWithRetry(url, options, maxRetries = 3) {
   return fetch(url, options);
 }
 
+// Image generation → returns { dataUrl }. Uses an image-capable Gemini model
+// (override with IMAGE_MODEL). Throws if the key/model has no image access — the
+// caller falls back to a brand gradient so creatives never break.
+export async function generateImage(prompt, { customModel = null } = {}) {
+  const m = customModel || process.env.IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { responseModalities: ['TEXT', 'IMAGE'] },
+  };
+  const res = await fetchWithRetry(`${BASE}/${m}:generateContent?key=${apiKey()}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!res.ok) { const d = await res.text(); throw new Error(`Gemini image ${res.status}: ${d.slice(0, 300)}`); }
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  const p = parts.find((x) => (x.inline_data && x.inline_data.data) || (x.inlineData && x.inlineData.data));
+  const inline = p && (p.inline_data || p.inlineData);
+  if (!inline || !inline.data) throw new Error('No image returned by the model');
+  return { dataUrl: `data:${inline.mime_type || inline.mimeType || 'image/png'};base64,${inline.data}` };
+}
+
 // Grounded generation. Returns { text, sources:[{title,uri}] }.
 export async function generateGrounded(prompt, { temperature = 0.2, customModel = null, grounding = false, image = null } = {}) {
   // image: { mimeType, data (base64, no data: prefix) } — enables vision.
