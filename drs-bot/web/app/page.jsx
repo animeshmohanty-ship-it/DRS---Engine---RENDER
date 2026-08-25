@@ -2206,11 +2206,9 @@ export default function App() {
   };
 
   // ================= CREATIVE STUDIO =================
-  // Generate ONE asset (from a plan row's Create button, or independent create).
-  const generateAsset = async (spec) => {
-    setActiveTab('creative');
-    const id = 'a' + Date.now() + Math.floor(Math.random() * 1000);
-    setCreativeAssets((prev) => [{ id, loading: true, ...spec }, ...prev]);
+  // Run generation for one asset id, updating it in place (used by new create + retry).
+  const runAssetGen = async (id, spec) => {
+    setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: true, error: undefined } : a)));
     try {
       const gtm = projectStages?.gtm || {};
       const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 600) : '';
@@ -2218,11 +2216,19 @@ export default function App() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channel: spec.channel || '', format: spec.format || '', hook: spec.hook || '', objective: spec.objective || '', market: state ? `${state}, ${country}` : country, narrative, model: selectedModel }),
       }).then((r) => r.json()).catch(() => null);
-      setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...(res?.ok ? res.asset : { error: res?.error || 'Generation failed' }) } : a)));
+      setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...(res?.ok ? res.asset : { error: res?.error || 'Generation failed — please retry.' }) } : a)));
     } catch (e) {
       setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, error: e.message } : a)));
     }
   };
+  // Generate ONE asset (from a plan row's Create button, or independent create).
+  const generateAsset = async (spec) => {
+    setActiveTab('creative');
+    const id = 'a' + Date.now() + Math.floor(Math.random() * 1000);
+    setCreativeAssets((prev) => [{ id, loading: true, ...spec }, ...prev]);
+    runAssetGen(id, spec);
+  };
+  const retryAsset = (a) => runAssetGen(a.id, { channel: a.channel, format: a.format, hook: a.hook, objective: a.objective });
   const generateCreative = async (focusOverride) => {
     setCreativeBusy(true); setError('');
     try {
@@ -2333,7 +2339,7 @@ export default function App() {
                   {a.hook && <span style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>{a.hook}</span>}
                 </div>
                 {a.loading ? <div style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 6, alignItems: 'center' }}><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> Writing…</div>
-                  : a.error ? <div style={{ fontSize: 12, color: '#854F0B' }}>⚠️ {a.error}</div>
+                  : a.error ? <div style={{ fontSize: 12, color: '#854F0B', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>⚠️ {a.error}</span><button onClick={() => retryAsset(a)} style={{ fontSize: 11, fontWeight: 600, background: B.primary, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}><RefreshCw size={12} /> Retry</button></div>
                     : (<>
                       {a.content && <div className="md-body" style={{ fontSize: 13, lineHeight: 1.55 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(a.content) }} />}
                       <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>

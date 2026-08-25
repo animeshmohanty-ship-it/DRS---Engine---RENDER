@@ -33,9 +33,12 @@ export async function POST(req) {
     // SINGLE-ASSET mode (per plan row / independent create) — has a format/hook.
     if (format || hook) {
       const prompt = buildCreativeAssetPrompt({ channel, format, hook, objective, market, narrative });
-      const { text } = await llm.generateGrounded(prompt, opts);
-      const asset = parseJSON(text);
-      if (!asset) return NextResponse.json({ ok: false, error: 'Could not parse asset', rawText: (text || '').slice(0, 400) });
+      let asset = null, lastText = '';
+      for (let i = 0; i < 2 && !asset; i++) {
+        try { const { text } = await llm.generateGrounded(prompt, opts); lastText = text || ''; asset = parseJSON(lastText); }
+        catch (e) { lastText = e.message; }
+      }
+      if (!asset) return NextResponse.json({ ok: false, error: 'Could not generate this asset — please retry.', rawText: lastText.slice(0, 400) });
       return NextResponse.json({ ok: true, asset });
     }
 
