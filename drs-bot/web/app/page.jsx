@@ -574,6 +574,10 @@ export default function App() {
   const [creativeFocus, setCreativeFocus] = useState('');
   const [creativeBusy, setCreativeBusy] = useState(false);
   const [creativeOutput, setCreativeOutput] = useState(null);
+  const [creativeAssets, setCreativeAssets] = useState([]); // per-row / independent generated assets
+  const [assetChannel, setAssetChannel] = useState('linkedin');
+  const [assetFormat, setAssetFormat] = useState('social');
+  const [assetHook, setAssetHook] = useState('');
   const creativeRefs = useRef({});
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
@@ -2201,6 +2205,23 @@ export default function App() {
   };
 
   // ================= CREATIVE STUDIO =================
+  // Generate ONE asset (from a plan row's Create button, or independent create).
+  const generateAsset = async (spec) => {
+    setActiveTab('creative');
+    const id = 'a' + Date.now() + Math.floor(Math.random() * 1000);
+    setCreativeAssets((prev) => [{ id, loading: true, ...spec }, ...prev]);
+    try {
+      const gtm = projectStages?.gtm || {};
+      const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 600) : '';
+      const res = await fetch('/api/creative', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: spec.channel || '', format: spec.format || '', hook: spec.hook || '', objective: spec.objective || '', market: state ? `${state}, ${country}` : country, narrative, model: selectedModel }),
+      }).then((r) => r.json()).catch(() => null);
+      setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...(res?.ok ? res.asset : { error: res?.error || 'Generation failed' }) } : a)));
+    } catch (e) {
+      setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, error: e.message } : a)));
+    }
+  };
   const generateCreative = async (focusOverride) => {
     setCreativeBusy(true); setError('');
     try {
@@ -2266,15 +2287,48 @@ export default function App() {
           <h3 style={{ margin: 0, color: B.primary }}>Creative Studio</h3>
           <span style={{ fontSize: 12, background: '#E5EDED', color: B.primary, padding: '2px 9px', borderRadius: 20 }}>Goa DRS · brand-locked</span>
         </div>
-        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>One click turns the plan into launch-ready, on-brand copy for every channel. Visuals (AI imagery + templates) come in Phase C.</p>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>Generate any asset on demand, or hit <b>Create</b> on a plan row. Content + on-brand creative, brand-locked, ready to download.</p>
         {/* brand strip */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14, fontSize: 11.5, color: 'var(--ink-soft)' }}>
           {Object.entries(B).map(([k, v]) => <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 13, height: 13, borderRadius: 3, background: v, border: '1px solid var(--line)' }} />{k}</span>)}
           <span>· Font <b style={{ fontFamily: 'Poppins, sans-serif' }}>Poppins</b> · "Real change starts with you."</span>
         </div>
+        {/* INDEPENDENT CREATE — any asset, any format, any time */}
+        <div className="card" style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8 }}>✨ Create any asset</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select value={assetChannel} onChange={(e) => setAssetChannel(e.target.value)} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}>{['PR', 'LinkedIn', 'Meta', 'Google', 'Email', 'WhatsApp', 'BTL', 'Social'].map((x) => <option key={x} value={x.toLowerCase()}>{x}</option>)}</select>
+            <select value={assetFormat} onChange={(e) => setAssetFormat(e.target.value)} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}>{['op-ed', 'press release', 'blog', 'media pitch', 'email', 'whatsapp', 'booth', 'social'].map((x) => <option key={x} value={x}>{x}</option>)}</select>
+            <input value={assetHook} onChange={(e) => setAssetHook(e.target.value)} placeholder="Hook / brief — what is this about?" style={{ flex: 1, minWidth: 220, padding: '8px 11px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} onKeyDown={(e) => { if (e.key === 'Enter' && assetHook.trim()) generateAsset({ channel: assetChannel, format: assetFormat, hook: assetHook, objective: '' }); }} />
+            <button className="btn" onClick={() => generateAsset({ channel: assetChannel, format: assetFormat, hook: assetHook, objective: '' })} disabled={!assetHook.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: B.primary, borderColor: B.primary }}><Sparkles size={15} /> Create</button>
+          </div>
+        </div>
+        {/* GENERATED ASSETS (from plan rows + independent) */}
+        {creativeAssets.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+            {creativeAssets.map((a) => (
+              <div key={a.id} className="card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 10.5, background: '#E5EDED', color: B.primary, padding: '2px 8px', borderRadius: 10, fontWeight: 600, textTransform: 'uppercase' }}>{a.channel} · {a.format}</span>
+                  {a.hook && <span style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>{a.hook}</span>}
+                </div>
+                {a.loading ? <div style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 6, alignItems: 'center' }}><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> Writing…</div>
+                  : a.error ? <div style={{ fontSize: 12, color: '#854F0B' }}>⚠️ {a.error}</div>
+                    : (<>
+                      {a.content && <div className="md-body" style={{ fontSize: 13, lineHeight: 1.55 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(a.content) }} />}
+                      <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                        <button onClick={() => { try { navigator.clipboard?.writeText(a.content || ''); } catch { } }} style={{ fontSize: 11, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', cursor: 'pointer' }}>Copy text</button>
+                        {a.hasVisual && a.headline && <CreativeCard id={a.id} w={300} h={300} grad={GRADS[0]} label="Creative" headline={a.headline} sub={a.sub} cta={a.cta} />}
+                      </div>
+                    </>)}
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Quick all-channel pack */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-          <input value={creativeFocus} onChange={(e) => setCreativeFocus(e.target.value)} placeholder='Optional campaign focus — e.g. "tourist beach clean-up drive" or "kirana onboarding"' style={{ flex: 1, minWidth: 300, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} />
-          <button className="btn" onClick={() => generateCreative()} disabled={creativeBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: B.primary, borderColor: B.primary }}>{creativeBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block', borderTopColor: '#fff' }} /> Generating…</> : <><Sparkles size={15} /> {creativeOutput ? 'Regenerate' : 'Generate'} all-channel copy</>}</button>
+          <input value={creativeFocus} onChange={(e) => setCreativeFocus(e.target.value)} placeholder='Or generate a full all-channel pack — optional focus, e.g. "tourist beach clean-up drive"' style={{ flex: 1, minWidth: 300, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} />
+          <button className="btn" onClick={() => generateCreative()} disabled={creativeBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{creativeBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Generating…</> : <><Sparkles size={15} /> {creativeOutput ? 'Regenerate' : 'All-channel'} pack</>}</button>
         </div>
         {!creativeOutput && !creativeBusy && <p className="sub" style={{ fontSize: 12 }}>Click Generate (or hit <b>Execute</b> on the Planning tab) to produce Meta, Google, LinkedIn, WhatsApp &amp; Email copy — brand-locked, spec-correct, with a visual brief per asset.</p>}
         {creativeOutput && (
@@ -4263,6 +4317,7 @@ export default function App() {
                                     <th>Hook</th>
                                     <th>Objective</th>
                                     <th>Executor</th>
+                                    <th>Create</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -4274,6 +4329,7 @@ export default function App() {
                                       <td>{t.hook}</td>
                                       <td className="muted">{t.objective}</td>
                                       <td><span className={`phase ${String(t.executor).includes('human') ? 'p3' : 'p2'}`}>{t.executor}</span></td>
+                                      <td><button onClick={() => generateAsset({ channel: t.channel, format: t.format, hook: t.hook, objective: t.objective })} style={{ fontSize: 11, fontWeight: 600, background: '#009B60', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }} title="Generate this asset in Creative Studio">✨ Create</button></td>
                                     </tr>
                                   ))}
                                 </tbody>
