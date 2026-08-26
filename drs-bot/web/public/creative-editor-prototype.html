@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recykal Creative Editor — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#005DFF; --green:#1DC797; --purple:#6E5CFA; --ink:#0b1220; --soft:#5b6675;
+    --line:#e5e8ee; --bg:#f6f7fb; --card:#fff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Poppins,system-ui,sans-serif;background:var(--bg);color:var(--ink);}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 20px 60px;}
+  h1{font-size:19px;margin:0 0 2px;}
+  .sub{color:var(--soft);font-size:13px;margin:0 0 18px;}
+  .stage{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;}
+  .canvasCol{flex:1;min-width:340px;display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .panel{width:290px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 3px rgba(10,20,40,.05);}
+  .panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);margin:0 0 10px;}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .row .lab{font-size:11.5px;color:var(--soft);width:100%;margin-bottom:2px;}
+  .btn{font-size:12px;padding:6px 10px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;color:var(--ink);}
+  .btn:hover{border-color:var(--blue);}
+  .btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .sw{width:24px;height:24px;border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;}
+  .sw.sel{box-shadow:0 0 0 2px var(--ink);}
+  input[type=range]{width:100%;}
+  /* CARD */
+  .cardShell{padding:0;}
+  .card{position:relative;overflow:hidden;border-radius:16px;font-family:Poppins,sans-serif;color:#fff;
+    background:linear-gradient(135deg,var(--blue),var(--purple));box-shadow:0 8px 30px rgba(10,20,40,.18);user-select:none;}
+  .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,18,48,.15),rgba(4,14,40,.55));pointer-events:none;}
+  .el{position:absolute;cursor:grab;padding:2px 4px;border-radius:6px;outline:2px solid transparent;transition:outline-color .1s;}
+  .el:hover{outline-color:rgba(255,255,255,.5);}
+  .el.sel{outline-color:#fff;cursor:grab;}
+  .el.editing{cursor:text;outline-color:var(--green);}
+  .el[contenteditable=true]{cursor:text;}
+  .handle{position:absolute;right:-7px;bottom:-7px;width:14px;height:14px;background:#fff;border:2px solid var(--blue);border-radius:50%;cursor:nwse-resize;display:none;}
+  .el.sel .handle{display:block;}
+  .logo{height:26px;width:auto;filter:drop-shadow(0 1px 4px rgba(0,0,0,.25));pointer-events:none;}
+  .cta{background:#fff;color:var(--blue);font-weight:700;padding:9px 18px;border-radius:30px;display:inline-block;}
+  .url{font-size:12px;font-weight:500;opacity:.9;}
+  /* floating toolbar */
+  .tb{position:fixed;z-index:50;background:#101827;color:#fff;border-radius:10px;padding:6px;display:none;gap:4px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.3);}
+  .tb.show{display:flex;}
+  .tb button{background:transparent;border:0;color:#fff;font-size:13px;padding:5px 8px;border-radius:6px;cursor:pointer;font-family:inherit;}
+  .tb button:hover{background:#26324a;}
+  .tb .sep{width:1px;height:20px;background:#33415c;margin:0 2px;}
+  .tb .csw{width:18px;height:18px;border-radius:4px;border:1px solid #33415c;cursor:pointer;}
+  .hint{font-size:11.5px;color:var(--soft);text-align:center;max-width:360px;line-height:1.5;}
+  .tag{display:inline-block;background:#E6EFFF;color:var(--blue);font-size:11px;padding:2px 9px;border-radius:20px;margin-left:6px;vertical-align:middle;}
+  .note{font-size:11px;color:var(--soft);margin-top:6px;line-height:1.45;}
+  .ratioPrev{width:34px;height:34px;border:1px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;}
+  .ratioPrev i{background:var(--blue);border-radius:2px;display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Recykal Creative Editor <span class="tag">prototype · brand-locked</span></h1>
+  <p class="sub">Click any element to select. Drag to move. Double-click text to edit. Everything stays on-brand (Poppins + Recykal palette). This is a feel-test before I wire it into Creative Studio.</p>
+
+  <div class="stage">
+    <div class="canvasCol">
+      <div class="cardShell">
+        <div class="card" id="card" style="width:360px;height:360px;padding:24px;">
+          <div class="ov" id="ov"></div>
+          <div class="el" data-id="logo" style="left:24px;top:24px;"><img src="/logo-white.png" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'▚ recykal',style:'font-weight:800;font-size:18px'}))" class="logo" alt="Recykal"><span class="handle"></span></div>
+          <div class="el txt" data-id="headline" contenteditable="false" style="left:24px;top:170px;width:250px;font-size:30px;font-weight:800;line-height:1.1;">Return &amp; Earn<span class="handle"></span></div>
+          <div class="el txt" data-id="sub" contenteditable="false" style="left:24px;top:240px;width:250px;font-size:14px;font-weight:400;opacity:.95;">Bring back your empty bottles at any outlet — get your ₹10 deposit back.<span class="handle"></span></div>
+          <div class="el" data-id="cta" style="left:24px;bottom:26px;"><span class="cta txt" contenteditable="false">Find a drop-off</span><span class="handle"></span></div>
+          <div class="el txt url" data-id="url" contenteditable="false" style="right:24px;bottom:30px;">recykal.com<span class="handle"></span></div>
+        </div>
+      </div>
+      <div class="hint">Try it: drag the headline, double-click to retype it, select the CTA and change its color, drag the ○ handle to resize text, or swap the background on the right.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Background</h3>
+      <div class="row">
+        <button class="btn active" data-bg="grad" onclick="setBg('grad',this)">Gradient</button>
+        <button class="btn" data-bg="solid" onclick="setBg('solid',this)">Solid</button>
+        <button class="btn" data-bg="ai" onclick="setBg('ai',this)">AI scene*</button>
+        <button class="btn" data-bg="photo" onclick="setBg('photo',this)">Real photo*</button>
+      </div>
+      <div class="row" id="palRow">
+        <div class="lab">Brand color</div>
+        <div class="sw sel" style="background:#005DFF" onclick="setBrand('#005DFF',this)"></div>
+        <div class="sw" style="background:#1DC797" onclick="setBrand('#1DC797',this)"></div>
+        <div class="sw" style="background:#6E5CFA" onclick="setBrand('#6E5CFA',this)"></div>
+        <div class="sw" style="background:#141414" onclick="setBrand('#141414',this)"></div>
+      </div>
+      <div class="row">
+        <div class="lab">Overlay darkness (keeps text readable)</div>
+        <input type="range" min="0" max="80" value="35" oninput="setOverlay(this.value)">
+      </div>
+
+      <h3 style="margin-top:6px;">Format / ratio</h3>
+      <div class="row">
+        <button class="btn active" onclick="setRatio(360,360,this)"><div class="ratioPrev"><i style="width:16px;height:16px"></i></div></button>
+        <button class="btn" onclick="setRatio(280,498,this)"><div class="ratioPrev"><i style="width:11px;height:19px"></i></div></button>
+        <button class="btn" onclick="setRatio(440,248,this)"><div class="ratioPrev"><i style="width:19px;height:11px"></i></div></button>
+        <span class="note">1:1 feed · 9:16 story · 16:9 display</span>
+      </div>
+
+      <h3 style="margin-top:6px;">AI rewrite (selected text)</h3>
+      <div class="row">
+        <button class="btn" onclick="fakeRewrite('shorter')">✂ Make it shorter</button>
+        <button class="btn" onclick="fakeRewrite('punchier')">⚡ Punchier</button>
+        <button class="btn" onclick="fakeRewrite('tamil')">🌐 In Tamil</button>
+        <div class="note">In the real app these call the bot to rewrite ONLY the selected field, keeping everything else.</div>
+      </div>
+
+      <h3 style="margin-top:6px;">Export</h3>
+      <div class="row">
+        <button class="btn" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="alert('In the real app this exports the edited card to a high-res PNG (html-to-image, already wired).')">⬇ Download PNG*</button>
+      </div>
+      <div class="note">* AI scene / real-photo upload / PNG export are already built in the studio — shown here as buttons so you can judge the full layout.</div>
+    </div>
+  </div>
+</div>
+
+<!-- floating per-element toolbar -->
+<div class="tb" id="tb">
+  <button onclick="chFont(4)" title="Bigger">A+</button>
+  <button onclick="chFont(-4)" title="Smaller">A−</button>
+  <div class="sep"></div>
+  <button onclick="chWeight()" title="Bold" style="font-weight:800">B</button>
+  <button onclick="chAlign()" title="Align" id="alignBtn">⇤</button>
+  <div class="sep"></div>
+  <span style="font-size:11px;opacity:.7;padding:0 2px">color</span>
+  <div class="csw" style="background:#fff" onclick="chColor('#fff')"></div>
+  <div class="csw" style="background:#005DFF" onclick="chColor('#005DFF')"></div>
+  <div class="csw" style="background:#1DC797" onclick="chColor('#1DC797')"></div>
+  <div class="csw" style="background:#6E5CFA" onclick="chColor('#6E5CFA')"></div>
+  <div class="csw" style="background:#141414" onclick="chColor('#141414')"></div>
+  <div class="sep"></div>
+  <button onclick="editSel()" title="Edit text">✎</button>
+  <button onclick="delSel()" title="Delete" style="color:#ff8b8b">🗑</button>
+</div>
+
+<script>
+const card=document.getElementById('card'), ov=document.getElementById('ov'), tb=document.getElementById('tb');
+let sel=null, brand='#005DFF', overlay=35, drag=null, resize=null;
+
+function grad(c){ // brand gradient from chosen color
+  const map={'#005DFF':'#6E5CFA','#1DC797':'#0E9E9E','#6E5CFA':'#005DFF','#141414':'#3a3a3a'};
+  return `linear-gradient(135deg, ${c}, ${map[c]||'#6E5CFA'})`;
+}
+function applyBg(type){
+  if(type==='grad') card.style.background=grad(brand);
+  else if(type==='solid') card.style.background=brand;
+  else if(type==='ai') card.style.background=`linear-gradient(135deg,#1DC797,#005DFF)`; // stand-in for a generated scene
+  else if(type==='photo') card.style.background='#2b3a4a';
+}
+let bgType='grad';
+function setBg(t,btn){ bgType=t; document.querySelectorAll('[data-bg]').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); applyBg(t); }
+function setBrand(c,el){ brand=c; document.querySelectorAll('#palRow .sw').forEach(s=>s.classList.remove('sel')); el.classList.add('sel'); applyBg(bgType); // recolor CTA text + url accents
+  card.querySelector('[data-id=cta] .cta').style.color=c; }
+function setOverlay(v){ overlay=v; ov.style.background=`linear-gradient(180deg,rgba(4,18,48,${v/220}),rgba(4,14,40,${v/100}))`; }
+function setRatio(w,h,btn){ card.style.width=w+'px'; card.style.height=h+'px'; document.querySelectorAll('.panel .btn').forEach(b=>{if(b.querySelector('.ratioPrev'))b.classList.remove('active')}); btn.classList.add('active'); hideTb(); }
+
+// selection
+function select(el){ if(sel)sel.classList.remove('sel'); sel=el; el.classList.add('sel'); showTb(); }
+function deselect(){ if(sel){sel.classList.remove('sel'); sel.setAttribute('contenteditable','false'); sel.classList.remove('editing');} sel=null; hideTb(); }
+function showTb(){ if(!sel)return; const r=sel.getBoundingClientRect(); tb.classList.add('show'); const tw=tb.offsetWidth; let x=r.left+r.width/2-tw/2; x=Math.max(8,Math.min(x,window.innerWidth-tw-8)); let y=r.top-tb.offsetHeight-8; if(y<8)y=r.bottom+8; tb.style.left=x+'px'; tb.style.top=y+'px'; const isTxt=sel.classList.contains('txt'); tb.querySelectorAll('button').forEach(b=>b.style.display=isTxt?'':'none'); tb.querySelector('button[onclick="editSel()"]').style.display=isTxt?'':'none'; tb.querySelector('button[onclick="delSel()"]').style.display=''; }
+function hideTb(){ tb.classList.remove('show'); }
+
+// toolbar actions
+function curText(){ return sel && (sel.classList.contains('cta')?sel:(sel.querySelector('.cta')||sel)); }
+function chFont(d){ if(!sel)return; const t=sel.querySelector('.cta')||sel; const cur=parseFloat(getComputedStyle(t).fontSize); t.style.fontSize=Math.max(9,cur+d)+'px'; showTb(); }
+function chWeight(){ if(!sel)return; const t=sel.querySelector('.cta')||sel; const w=getComputedStyle(t).fontWeight; t.style.fontWeight=(+w>=700)?'400':'800'; }
+function chAlign(){ if(!sel)return; const cur=sel.style.textAlign||'left'; const nx=cur==='left'?'center':cur==='center'?'right':'left'; sel.style.textAlign=nx; document.getElementById('alignBtn').textContent=nx==='left'?'⇤':nx==='center'?'≡':'⇥'; }
+function chColor(c){ if(!sel)return; const t=sel.querySelector('.cta'); if(t){t.style.background=c;t.style.color=(c==='#fff'?brand:'#fff');} else sel.style.color=c; }
+function editSel(){ if(!sel||!sel.classList.contains('txt'))return; const t=sel.querySelector('.cta')||sel; sel.setAttribute('contenteditable','true'); sel.classList.add('editing'); t.focus?.(); document.execCommand&&document.execCommand('selectAll',false,null); hideTb(); }
+function delSel(){ if(!sel)return; sel.remove(); deselect(); }
+function fakeRewrite(kind){ if(!sel||!sel.classList.contains('txt')){alert('Select a text element first, then rewrite it.');return;} const t=sel.querySelector('.cta')||sel; const id=sel.dataset.id; const samples={ shorter:{headline:'Return & Earn',sub:'Bottles back = deposit back.',cta:'Drop off',url:'recykal.com'}, punchier:{headline:'Bottles Back. Cash Back.',sub:'Every empty is worth ₹10. Bring them in.',cta:'Claim ₹10',url:'recykal.com'}, tamil:{headline:'பாட்டில்களைத் திருப்பி தாருங்கள்',sub:'உங்கள் ₹10 வைப்புத்தொகையை திரும்பப் பெறுங்கள்.',cta:'இங்கே கொடுங்கள்',url:'recykal.com'} }; const val=(samples[kind]||{})[id]; if(val){ // keep the handle span
+    const h=sel.querySelector('.handle'); if(sel.querySelector('.cta')) sel.querySelector('.cta').firstChild.nodeValue=val; else { sel.childNodes[0].nodeValue=val; } }
+}
+
+// drag + resize (pointer)
+card.addEventListener('pointerdown',e=>{
+  const handle=e.target.closest('.handle'); const el=e.target.closest('.el');
+  if(handle&&el){ resize={el,startX:e.clientX,startW:el.offsetWidth,startFs:parseFloat(getComputedStyle(el.querySelector('.cta')||el).fontSize)}; e.preventDefault(); return; }
+  if(el){ if(el.getAttribute('contenteditable')==='true') return; select(el);
+    const cr=card.getBoundingClientRect(); const er=el.getBoundingClientRect();
+    drag={el,dx:e.clientX-er.left,dy:e.clientY-er.top,cr}; el.style.cursor='grabbing'; e.preventDefault(); }
+  else { if(!e.target.closest('.tb')) deselect(); }
+});
+window.addEventListener('pointermove',e=>{
+  if(drag){ const {el,dx,dy,cr}=drag; let x=e.clientX-cr.left-dx, y=e.clientY-cr.top-dy; x=Math.max(0,Math.min(x,cr.width-el.offsetWidth)); y=Math.max(0,Math.min(y,cr.height-el.offsetHeight)); el.style.left=x+'px'; el.style.top=y+'px'; el.style.right='auto'; el.style.bottom='auto'; if(sel===el)showTb(); }
+  else if(resize){ const {el,startX,startW,startFs}=resize; const d=e.clientX-startX; const t=el.querySelector('.cta')||el; if(el.classList.contains('txt')||t){ t.style.fontSize=Math.max(9,startFs+d*0.25)+'px'; } if(el.style.width) el.style.width=Math.max(60,startW+d)+'px'; if(sel===el)showTb(); }
+});
+window.addEventListener('pointerup',()=>{ if(drag)drag.el.style.cursor='grab'; drag=null; resize=null; });
+
+// double-click to edit text
+card.addEventListener('dblclick',e=>{ const el=e.target.closest('.el'); if(el&&el.classList.contains('txt')){ select(el); editSel(); }});
+card.addEventListener('keydown',e=>{ if(e.key==='Enter'&&sel&&sel.getAttribute('contenteditable')==='true'&&!e.shiftKey){ e.preventDefault(); sel.setAttribute('contenteditable','false'); sel.classList.remove('editing'); showTb(); }});
+window.addEventListener('scroll',()=>{if(sel)showTb();});
+setOverlay(35);
+</script>
+</body>
+</html>
