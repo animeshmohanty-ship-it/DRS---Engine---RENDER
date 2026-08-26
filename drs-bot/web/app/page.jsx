@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase.js';
+import { loadCreatives, saveCreative, deleteCreative, uploadCreativeImage, newCreativeId } from '../lib/datalayer/creatives.js';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { AuthScreens } from './authScreens.jsx';
@@ -579,7 +580,74 @@ export default function App() {
   const [assetFormat, setAssetFormat] = useState('social');
   const [assetHook, setAssetHook] = useState('');
   const [creativeImages, setCreativeImages] = useState({}); // id -> { url | loading | error }
+  const [creativeSaveState, setCreativeSaveState] = useState('idle'); // idle | saving | saved
+  const [creativeLibLoading, setCreativeLibLoading] = useState(false);
   const creativeRefs = useRef({});
+  const creativeScope = projectId || 'GLOBAL'; // project-scoped, or independent
+  const creativeAssetsRef = useRef([]);
+  useEffect(() => { creativeAssetsRef.current = creativeAssets; }, [creativeAssets]);
+
+  // Map a persisted record <-> the in-memory asset shape the cards render.
+  const recordToAsset = (r) => ({
+    id: r.id, channel: r.channel, format: r.format, hook: r.hook, objective: r.objective,
+    title: r.title, content: r.content,
+    headline: r.doc?.headline, sub: r.doc?.sub, cta: r.doc?.cta,
+    hasVisual: r.doc?.hasVisual, visualBrief: r.doc?.visualBrief,
+    doc: r.doc || {}, savedAt: r.updated_at,
+  });
+  const assetToRecord = (a, imageUrl) => ({
+    id: a.id, kind: 'asset', channel: a.channel || '', format: a.format || '', hook: a.hook || '',
+    objective: a.objective || '', market: state ? `${state}, ${country}` : (country || 'India'),
+    title: a.title || a.hook || 'Untitled', content: a.content || '',
+    doc: { ...(a.doc || {}), headline: a.headline, sub: a.sub, cta: a.cta, hasVisual: a.hasVisual, visualBrief: a.visualBrief },
+    image_url: imageUrl !== undefined ? imageUrl : (a.doc?.image_url || null),
+    created_by: authUser?.id || null,
+  });
+  // Autosave one finished asset (optionally uploading a new background image first).
+  const persistAsset = async (a, explicitImage) => {
+    if (!a || a.loading || a.error) return;
+    try {
+      setCreativeSaveState('saving');
+      const dataUrl = explicitImage !== undefined ? explicitImage : creativeImages[a.id]?.url;
+      let imageUrl = a.doc?.image_url || null;
+      if (dataUrl) imageUrl = await uploadCreativeImage(a.id, dataUrl);
+      await saveCreative(creativeScope, assetToRecord(a, imageUrl));
+      setCreativeSaveState('saved');
+      setTimeout(() => setCreativeSaveState((s) => (s === 'saved' ? 'idle' : s)), 1600);
+    } catch { setCreativeSaveState('idle'); }
+  };
+  const persistAssetById = (id, explicitImage) => persistAsset(creativeAssetsRef.current.find((x) => x.id === id), explicitImage);
+  const removeCreative = async (id) => {
+    setCreativeAssets((prev) => prev.filter((a) => a.id !== id));
+    setCreativeImages((prev) => { const n = { ...prev }; delete n[id]; return n; });
+    await deleteCreative(creativeScope, id);
+  };
+
+  // Fetch a scope's saved creatives, mapped to the asset shape + seeded image map.
+  const loadedScopeRef = useRef(null);
+  const loadScope = async (scope) => {
+    const rows = await loadCreatives(scope);
+    const imgs = {};
+    rows.forEach((r) => { if (r.image_url) imgs[r.id] = { url: r.image_url, uploaded: true }; });
+    return { assets: rows.map(recordToAsset), imgs };
+  };
+  // Load the current scope's library when Creative Studio opens or the scope changes.
+  // Guarded so a fresh generate (which pre-marks the scope) isn't clobbered by a late load.
+  useEffect(() => {
+    if (activeTab !== 'creative') return;
+    if (loadedScopeRef.current === creativeScope) return;
+    loadedScopeRef.current = creativeScope;
+    let cancelled = false;
+    (async () => {
+      setCreativeLibLoading(true);
+      const { assets, imgs } = await loadScope(creativeScope);
+      if (cancelled) return;
+      setCreativeAssets(assets);
+      setCreativeImages(imgs);
+      setCreativeLibLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [activeTab, creativeScope]);
   const [welcomeDismissed, setWelcomeDismissed] = useState(true); // default hidden to avoid SSR flash
   useEffect(() => { try { setWelcomeDismissed(localStorage.getItem('drs_welcome_dismissed') === '1'); } catch {} }, []);
   const dismissWelcome = () => { setWelcomeDismissed(true); try { localStorage.setItem('drs_welcome_dismissed', '1'); } catch {} };
@@ -2217,6 +2285,7 @@ export default function App() {
         body: JSON.stringify({ channel: spec.channel || '', format: spec.format || '', hook: spec.hook || '', objective: spec.objective || '', market: state ? `${state}, ${country}` : country, narrative, model: selectedModel }),
       }).then((r) => r.json()).catch(() => null);
       setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...(res?.ok ? res.asset : { error: res?.error || 'Generation failed — please retry.' }) } : a)));
+      if (res?.ok) persistAsset({ id, channel: spec.channel, format: spec.format, hook: spec.hook, objective: spec.objective, ...res.asset });
     } catch (e) {
       setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, error: e.message } : a)));
     }
@@ -2225,7 +2294,18 @@ export default function App() {
   const generateAsset = async (spec) => {
     setActiveTab('creative');
     const id = 'a' + Date.now() + Math.floor(Math.random() * 1000);
-    setCreativeAssets((prev) => [{ id, loading: true, ...spec }, ...prev]);
+    // If this scope's library isn't loaded yet, load it FIRST so the new asset
+    // prepends onto the existing library instead of being wiped by a late load.
+    if (loadedScopeRef.current !== creativeScope) {
+      loadedScopeRef.current = creativeScope;
+      setCreativeLibLoading(true);
+      const { assets, imgs } = await loadScope(creativeScope);
+      setCreativeImages(imgs);
+      setCreativeAssets([{ id, loading: true, ...spec }, ...assets]);
+      setCreativeLibLoading(false);
+    } else {
+      setCreativeAssets((prev) => [{ id, loading: true, ...spec }, ...prev]);
+    }
     runAssetGen(id, spec);
   };
   const retryAsset = (a) => runAssetGen(a.id, { channel: a.channel, format: a.format, hook: a.hook, objective: a.objective });
@@ -2271,7 +2351,7 @@ export default function App() {
       setCreativeImages((prev) => ({ ...prev, [id]: { loading: true } }));
       try {
         const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: brief || `people returning empty beverage bottles and cans in ${cMarket}, clean street`, aspectRatio, market: cMarket }) }).then((r) => r.json()).catch(() => null);
-        if (res?.ok && res.dataUrl) setCreativeImages((prev) => ({ ...prev, [id]: { url: res.dataUrl } }));
+        if (res?.ok && res.dataUrl) { setCreativeImages((prev) => ({ ...prev, [id]: { url: res.dataUrl } })); persistAssetById(id, res.dataUrl); }
         else setCreativeImages((prev) => ({ ...prev, [id]: { error: res?.error || 'failed' } }));
       } catch (e) { setCreativeImages((prev) => ({ ...prev, [id]: { error: e.message } })); }
     };
@@ -2279,7 +2359,7 @@ export default function App() {
     const uploadProductPhoto = (id, file) => {
       if (!file) return;
       const r = new FileReader();
-      r.onload = () => setCreativeImages((prev) => ({ ...prev, [id]: { url: r.result, uploaded: true } }));
+      r.onload = () => { setCreativeImages((prev) => ({ ...prev, [id]: { url: r.result, uploaded: true } })); persistAssetById(id, r.result); };
       r.readAsDataURL(file);
     };
     // A branded, on-brand ad creative rendered as real HTML → downloadable PNG.
@@ -2321,8 +2401,15 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', marginBottom: 4 }}>
           <h3 style={{ margin: 0, color: B.primary }}>Creative Studio</h3>
           <span style={{ fontSize: 12, background: '#E6EFFF', color: B.primary, padding: '2px 9px', borderRadius: 20 }}>Recykal · brand-locked</span>
+          {/* SCOPE indicator — where these creatives live */}
+          <span title="Creatives are saved to this library" style={{ fontSize: 11.5, background: projectId ? '#EAFBF6' : '#F3F0FF', color: projectId ? '#0E9E7A' : B.secondary, padding: '3px 10px', borderRadius: 20, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            {projectId ? <>📁 {projectId}</> : <>🗂️ Independent · no project</>}
+          </span>
+          {/* SAVE state */}
+          {creativeSaveState === 'saving' && <span style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5 }}><span className="spinner" style={{ width: 11, height: 11, display: 'inline-block' }} /> Saving…</span>}
+          {creativeSaveState === 'saved' && <span style={{ fontSize: 11.5, color: B.accent, display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={13} /> Saved</span>}
         </div>
-        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>Generate any asset on demand, or hit <b>Create</b> on a plan row. Content + on-brand creative, brand-locked, ready to download.</p>
+        <p className="sub" style={{ marginTop: 2, marginBottom: 12 }}>{projectId ? <>Everything you create here is saved to <b>{projectId}</b> and comes back when you reopen this project.</> : <>You're in the <b>Independent</b> library (no project selected). Open a project to see that project's creatives instead.</>} Content + on-brand creative, brand-locked, autosaved.</p>
         {/* brand strip */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14, fontSize: 11.5, color: 'var(--ink-soft)' }}>
           {Object.entries(B).map(([k, v]) => <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 13, height: 13, borderRadius: 3, background: v, border: '1px solid var(--line)' }} />{k}</span>)}
@@ -2338,7 +2425,16 @@ export default function App() {
             <button className="btn" onClick={() => generateAsset({ channel: assetChannel, format: assetFormat, hook: assetHook, objective: '' })} disabled={!assetHook.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: B.primary, borderColor: B.primary }}><Sparkles size={15} /> Create</button>
           </div>
         </div>
-        {/* GENERATED ASSETS (from plan rows + independent) */}
+        {/* LIBRARY — everything saved in this scope (project or independent) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '.02em', color: 'var(--ink)' }}>YOUR CREATIVES {creativeAssets.length > 0 && <span style={{ color: 'var(--ink-soft)', fontWeight: 500 }}>({creativeAssets.length})</span>}</div>
+          {creativeLibLoading && <span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} />}
+        </div>
+        {!creativeLibLoading && creativeAssets.length === 0 && (
+          <div className="card" style={{ marginBottom: 16, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 12.5, padding: '20px 14px', borderStyle: 'dashed' }}>
+            No creatives yet in {projectId ? <b>{projectId}</b> : <b>your Independent library</b>}. Use <b>✨ Create any asset</b> above, or hit <b>Create</b> on a plan row.
+          </div>
+        )}
         {creativeAssets.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
             {creativeAssets.map((a) => (
@@ -2346,6 +2442,7 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 10.5, background: '#E5EDED', color: B.primary, padding: '2px 8px', borderRadius: 10, fontWeight: 600, textTransform: 'uppercase' }}>{a.channel} · {a.format}</span>
                   {a.hook && <span style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>{a.hook}</span>}
+                  <button onClick={() => removeCreative(a.id)} title="Delete this creative" style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: 'var(--ink-soft)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', padding: 3, borderRadius: 6 }}><Trash2 size={14} /></button>
                 </div>
                 {a.loading ? <div style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 6, alignItems: 'center' }}><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> Writing…</div>
                   : a.error ? <div style={{ fontSize: 12, color: '#854F0B', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>⚠️ {a.error}</span><button onClick={() => retryAsset(a)} style={{ fontSize: 11, fontWeight: 600, background: B.primary, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}><RefreshCw size={12} /> Retry</button></div>
@@ -2878,11 +2975,13 @@ export default function App() {
                   <span>Orchestrator</span>
                 </div>
 
-                {/* CREATIVE STUDIO — plan → launch-ready on-brand copy + creatives */}
+                {/* ---- TOOLS: scope-aware, usable with OR without a project ---- */}
+                <div style={{ padding: '12px 14px 6px', fontSize: '11px', fontWeight: 600, color: 'var(--ink-soft)', letterSpacing: '.02em' }}>TOOLS <span style={{ fontWeight: 400, opacity: .7 }}>· work with or without a project</span></div>
+
+                {/* CREATIVE STUDIO — always accessible; project-scoped or independent */}
                 <div
-                  className={`menu-item ${activeTab === 'creative' ? 'active' : ''} ${!isSetupDone ? 'disabled' : ''}`}
-                  style={{ opacity: isSetupDone ? 1 : 0.5, pointerEvents: isSetupDone ? 'auto' : 'none' }}
-                  onClick={() => isSetupDone && setActiveTab('creative')}
+                  className={`menu-item ${activeTab === 'creative' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('creative')}
                 >
                   <span className="badge-icon">CS</span>
                   <span>Creative Studio</span>
