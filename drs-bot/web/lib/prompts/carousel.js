@@ -3,6 +3,50 @@ import { BRAND_KIT } from '../creative/brandKit.js';
 // Plan a full DRS carousel. The model decides what goes on each slide (or obeys a
 // requested count), in the Recykal DRS design language. Output STRICT JSON.
 // Slide types map 1:1 to the renderers in carouselEditor.jsx.
+// Shared JSON shape used by both modes.
+const SHAPE = `Return EXACTLY this JSON shape:
+{
+  "title": "<short internal name>",
+  "slides": [
+    {"type":"cover","headline":"","keyword":"","sub":"","imageBrief":""},
+    {"type":"text_image","headline":"","keyword":"","body":"","callout":"","calloutStyle":"filled|outline","imageBrief":""},
+    {"type":"two_block","headTop":"","headBottom":"","keyword":"","body":"","callout":"","imageBrief":""},
+    {"type":"steps","headline":"","keyword":"","sub":"","steps":[{"text":"","keyword":""}],"imageBrief":""},
+    {"type":"sequence","headline":"","keyword":"","sub":"","seq":[{"label":""}],"callout":""},
+    {"type":"stat","value":"","unit":"","caption":"","headline":"","keyword":"","imageBrief":""},
+    {"type":"quote","quote":"","attribution":""},
+    {"type":"list","headline":"","keyword":"","bullets":["",""],"imageBrief":""},
+    {"type":"cta","headline":"","keyword":"","sub":"","ctaLabel":""}
+  ]
+}`;
+
+// Build a carousel from APPROVED COPY, verbatim — the model only structures it
+// (assigns type, splits headline/body, picks a green keyword, drafts an imageBrief).
+// It must NOT reword, add, or remove any of the user's copy.
+export function buildCarouselFromCopyPrompt({ approvedCopy = '', market = '' } = {}) {
+  const b = BRAND_KIT;
+  return `You are a layout designer for Recykal's Deposit Refund Scheme (DRS) carousels. Below is the FINAL APPROVED COPY, split into slide blocks. Lay it out — do NOT rewrite it. Output STRICT JSON only.
+
+APPROVED COPY (verbatim — one block per slide, in order):
+"""
+${String(approvedCopy).slice(0, 4000)}
+"""
+
+MARKET: ${market || 'India'}
+BRAND: ${b.about}
+
+RULES (critical):
+- Create ONE slide per block, IN THE GIVEN ORDER. Do not merge, split, add, drop, or reword blocks.
+- Use the EXACT words provided. You may only decide where a block's line(s) break between the headline and the body/sub fields — every word must still appear.
+- Choose a fitting slide type per block: the first block is usually "cover"; a closing/summary block can be "cta"; otherwise use "text_image" (or "two_block" if the block has a clear two-part statement). Keep it simple — don't force steps/stat/quote unless the block literally is a list/number/quote.
+- "keyword": pick ONE word or short phrase that ALREADY appears verbatim in that slide's headline (it renders green). If nothing fits, leave "keyword":"".
+- "imageBrief": write a short scene that matches THIS block's meaning (ambient lifestyle — a person returning/handing over/collecting empty bottles or cans in ${market || 'India'}; NO machines/kiosks/bins/hardware, NO text, NO logos).
+- Do NOT apply any length limit — keep the approved wording in full (the layout auto-fits it).
+
+${SHAPE}
+Populate each slide for its chosen type; omit fields a type doesn't use. Number of slides = number of blocks.`;
+}
+
 export function buildCarouselPrompt({ topic = '', slides = 6, market = '', narrative = '', platform = 'instagram' } = {}) {
   const b = BRAND_KIT;
   const n = Math.max(3, Math.min(10, Number(slides) || 6));

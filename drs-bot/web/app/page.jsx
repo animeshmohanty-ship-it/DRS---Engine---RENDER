@@ -585,6 +585,8 @@ export default function App() {
   const [carouselSlides, setCarouselSlides] = useState(6);
   const [carouselRatio, setCarouselRatio] = useState('1:1');
   const [carouselBusy, setCarouselBusy] = useState(false);
+  const [carouselMode, setCarouselMode] = useState('topic'); // 'topic' | 'copy'
+  const [carouselCopy, setCarouselCopy] = useState('');
   const [creativeImages, setCreativeImages] = useState({}); // id -> { url | loading | error }
   const [creativeSaveState, setCreativeSaveState] = useState('idle'); // idle | saving | saved
   const [creativeLibLoading, setCreativeLibLoading] = useState(false);
@@ -2327,31 +2329,34 @@ export default function App() {
   };
   const retryAsset = (a) => runAssetGen(a.id, { channel: a.channel, format: a.format, hook: a.hook, objective: a.objective });
   // Generate a full DRS carousel (multi-slide) and add it to the library.
-  const generateCarousel = async () => {
-    if (!carouselTopic.trim() || carouselBusy) return;
+  // Pass { approvedCopy } to lay out FINAL copy verbatim instead of AI-writing it.
+  const generateCarousel = async ({ approvedCopy = '' } = {}) => {
+    const fromCopy = !!approvedCopy.trim();
+    if ((!fromCopy && !carouselTopic.trim()) || carouselBusy) return;
     setActiveTab('creative');
     setCarouselBusy(true);
     const id = 'c' + Date.now() + Math.floor(Math.random() * 1000);
+    const hook = fromCopy ? (approvedCopy.trim().split('\n').find((l) => l.trim()) || 'Approved copy').slice(0, 60) : carouselTopic;
     // ensure the scope's library is loaded so the new carousel prepends onto it
     if (loadedScopeRef.current !== creativeScope) {
       loadedScopeRef.current = creativeScope;
       const { assets, imgs } = await loadScope(creativeScope);
       setCreativeImages(imgs);
-      setCreativeAssets([{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook: carouselTopic, loading: true }, ...assets]);
+      setCreativeAssets([{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook, loading: true }, ...assets]);
     } else {
-      setCreativeAssets((prev) => [{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook: carouselTopic, loading: true }, ...prev]);
+      setCreativeAssets((prev) => [{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook, loading: true }, ...prev]);
     }
     try {
       const gtm = projectStages?.gtm || {};
       const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 600) : '';
       const res = await fetch('/api/carousel', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: carouselTopic, slides: carouselSlides, market: state ? `${state}, ${country}` : (country || 'India'), narrative, model: selectedModel }),
+        body: JSON.stringify({ topic: carouselTopic, slides: carouselSlides, approvedCopy, market: state ? `${state}, ${country}` : (country || 'India'), narrative, model: selectedModel }),
       }).then((r) => r.json()).catch(() => null);
       if (res?.ok && res.carousel?.slides?.length) {
         const slides = res.carousel.slides.map((s, i) => ({ id: 's' + i + Math.random().toString(36).slice(2, 6), ...s }));
         const doc = { ratio: carouselRatio, slides, images: {} };
-        const merged = { id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook: carouselTopic, title: res.carousel.title || carouselTopic, doc };
+        const merged = { id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook, title: res.carousel.title || hook, doc };
         setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...merged } : a)));
         persistAsset(merged);
       } else {
@@ -2481,17 +2486,33 @@ export default function App() {
         {/* CAROUSEL MAKER — DRS green, multi-slide, AI-planned */}
         <div className="card" style={{ marginBottom: 14, border: '1px solid #049769' }}>
           <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>🎠 Carousel maker <span style={{ fontSize: 10.5, background: '#E7F6F0', color: '#049769', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>DRS · green</span></div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <input value={carouselTopic} onChange={(e) => setCarouselTopic(e.target.value)} placeholder="Topic / brief — what's the carousel about?" style={{ flex: 1, minWidth: 240, padding: '8px 11px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} onKeyDown={(e) => { if (e.key === 'Enter') generateCarousel(); }} />
-            <label style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>slides
-              <select value={carouselSlides} onChange={(e) => setCarouselSlides(Number(e.target.value))} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}>{[3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+          {/* mode toggle: AI topic vs paste approved copy */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            {[['topic', '✨ AI writes it'], ['copy', '📋 Paste approved copy']].map(([m, label]) => (
+              <button key={m} onClick={() => setCarouselMode(m)} style={{ fontSize: 12, padding: '5px 11px', borderRadius: 7, cursor: 'pointer', border: `1px solid ${carouselMode === m ? '#049769' : 'var(--line)'}`, background: carouselMode === m ? '#049769' : 'var(--bg)', color: carouselMode === m ? '#fff' : 'var(--ink)' }}>{label}</button>
+            ))}
+            <label style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5, marginLeft: 'auto' }}>ratio
+              <select value={carouselRatio} onChange={(e) => setCarouselRatio(e.target.value)} style={{ fontSize: 12.5, padding: '6px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}><option value="1:1">1:1 square</option><option value="4:5">4:5 portrait</option></select>
             </label>
-            <label style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>ratio
-              <select value={carouselRatio} onChange={(e) => setCarouselRatio(e.target.value)} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}><option value="1:1">1:1 square</option><option value="4:5">4:5 portrait</option></select>
-            </label>
-            <button className="btn" onClick={generateCarousel} disabled={!carouselTopic.trim() || carouselBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#049769', borderColor: '#049769' }}>{carouselBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Building…</> : <><Sparkles size={15} /> Generate carousel</>}</button>
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 6 }}>AI plans each slide (cover → content → CTA), then you add AI/real images per slide and export a PDF or PNGs.</div>
+          {carouselMode === 'topic' ? (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input value={carouselTopic} onChange={(e) => setCarouselTopic(e.target.value)} placeholder="Topic / brief — what's the carousel about?" style={{ flex: 1, minWidth: 240, padding: '8px 11px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} onKeyDown={(e) => { if (e.key === 'Enter') generateCarousel(); }} />
+              <label style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>slides
+                <select value={carouselSlides} onChange={(e) => setCarouselSlides(Number(e.target.value))} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}>{[3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+              </label>
+              <button className="btn" onClick={() => generateCarousel()} disabled={!carouselTopic.trim() || carouselBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#049769', borderColor: '#049769' }}>{carouselBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Building…</> : <><Sparkles size={15} /> Generate carousel</>}</button>
+            </div>
+          ) : (
+            <div>
+              <textarea value={carouselCopy} onChange={(e) => setCarouselCopy(e.target.value)} rows={8} placeholder={"Paste the final approved copy. One block per slide — separate slides with a blank line, or label them 'Slide 1', 'Slide 2', …\n\nSlide 1\nThe Hardest Part of Recycling May Not Be Recycling.\nIt may be getting the material back into the recovery system.\n\nSlide 2\n…"} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, lineHeight: 1.5, background: 'var(--bg)', color: 'var(--ink)', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                <button className="btn" onClick={() => generateCarousel({ approvedCopy: carouselCopy })} disabled={!carouselCopy.trim() || carouselBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#049769', borderColor: '#049769' }}>{carouselBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Building…</> : <><Sparkles size={15} /> Build carousel from this copy</>}</button>
+                <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Your exact words — kept verbatim, laid out on-brand.</span>
+              </div>
+            </div>
+          )}
+          <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 8 }}>{carouselMode === 'topic' ? 'AI plans each slide (cover → content → CTA).' : 'Each block becomes one slide, kept word-for-word.'} Then add AI/real images per slide and export a PDF or PNGs.</div>
         </div>
         {/* LIBRARY — everything saved in this scope (project or independent) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>

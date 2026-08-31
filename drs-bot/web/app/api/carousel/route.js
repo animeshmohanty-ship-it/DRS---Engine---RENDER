@@ -3,7 +3,7 @@ import * as gemini from '../../../lib/llm/gemini.js';
 import * as groq from '../../../lib/llm/groq.js';
 import * as vertex from '../../../lib/llm/vertex.js';
 import { getProvider } from '../../../lib/llm/provider.js';
-import { buildCarouselPrompt } from '../../../lib/prompts/carousel.js';
+import { buildCarouselPrompt, buildCarouselFromCopyPrompt } from '../../../lib/prompts/carousel.js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
@@ -19,7 +19,7 @@ function parseJSON(s) {
 // POST { topic, slides, market, narrative, model } -> { ok, carousel:{title, slides:[...]} }
 export async function POST(req) {
   try {
-    const { topic = '', slides = 6, market = '', narrative = '', platform = 'instagram', model: selectedModel } = await req.json();
+    const { topic = '', slides = 6, market = '', narrative = '', platform = 'instagram', approvedCopy = '', model: selectedModel } = await req.json();
 
     let llm = getProvider();
     const ml = (selectedModel || '').toLowerCase();
@@ -29,7 +29,9 @@ export async function POST(req) {
     else if (ml.startsWith('llama') || ml.startsWith('groq')) { llm = groq; }
     const opts = override ? { customModel: override, grounding: false, jsonMode: true } : { grounding: false, jsonMode: true };
 
-    const prompt = buildCarouselPrompt({ topic, slides, market, narrative, platform });
+    const prompt = approvedCopy && approvedCopy.trim()
+      ? buildCarouselFromCopyPrompt({ approvedCopy, market })
+      : buildCarouselPrompt({ topic, slides, market, narrative, platform });
     let carousel = null, lastText = '';
     for (let i = 0; i < 2 && !carousel; i++) {
       try {
