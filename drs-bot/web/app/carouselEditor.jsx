@@ -80,14 +80,15 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
       const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: slide.imageBrief || `people returning empty bottles in ${market || 'a clean market'}`, aspectRatio: doc.ratio === '4:5' ? '4:5' : '1:1', market }) }).then((r) => r.json()).catch(() => null);
       if (res?.ok && res.dataUrl) {
         const up = await fetch('/api/creative-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: `${id}_${slide.id}`, dataUrl: res.dataUrl }) }).then((r) => r.json()).catch(() => null);
-        setImage(slide.id, (up && up.ok && up.url) ? up.url : res.dataUrl);
+        // Same storage path each time → bust the cache so a regenerate actually shows.
+        setImage(slide.id, (up && up.ok && up.url) ? `${up.url}?v=${Date.now()}` : res.dataUrl);
       } else onError?.(res?.error || 'Image generation failed');
     } catch (e) { onError?.(e.message); }
     setBusy((b) => ({ ...b, [slide.id]: false }));
   };
   const uploadImage = (slide, file) => {
     if (!file) return; const r = new FileReader();
-    r.onload = async () => { const up = await fetch('/api/creative-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: `${id}_${slide.id}`, dataUrl: r.result }) }).then((x) => x.json()).catch(() => null); setImage(slide.id, (up && up.ok && up.url) ? up.url : r.result); };
+    r.onload = async () => { const up = await fetch('/api/creative-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: `${id}_${slide.id}`, dataUrl: r.result }) }).then((x) => x.json()).catch(() => null); setImage(slide.id, (up && up.ok && up.url) ? `${up.url}?v=${Date.now()}` : r.result); };
     r.readAsDataURL(file);
   };
 
