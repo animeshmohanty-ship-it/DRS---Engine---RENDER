@@ -21,7 +21,8 @@ async function enhancePrompt(brief, place) {
 
 Idea: "${brief}"
 
-The prompt must specify: a specific relatable person or people (age, everyday clothing appropriate to ${place}), a specific real everyday setting in ${place} (name the kind of place — a local kirana store, a busy market street, a home kitchen, a college campus, a beach cleanup, etc.), and a clear action involving returning/collecting empty plastic bottles or aluminium cans. Style cues: shot on a 35mm lens, natural daylight, candid documentary feel, shallow depth of field, warm optimistic mood, subtle teal/green tones in the surroundings, and generous clean empty space on one side for text overlay.
+The prompt must specify: a specific relatable person or people (age, everyday clothing appropriate to ${place}), a specific real everyday setting in ${place} (name the kind of place — a local kirana store, a busy market street, a home kitchen, a college campus, a beach cleanup, etc.), and a clear action involving returning/collecting empty plastic bottles or aluminium cans. Style cues: shot on a 35mm lens, natural daylight, candid documentary feel, warm optimistic mood, subtle teal/green tones in the surroundings.
+Composition rules (critical): a FULL-BLEED photograph that fills the ENTIRE frame edge to edge, uniformly sharp and evenly lit, subject well inside the frame. Absolutely NO blur, NO fade, NO vignette, NO white or soft borders, NO gradient edges, NO out-of-focus empty area, NO bokeh dead-zone on any side — the whole picture is a normal in-focus photo.
 Hard rules: NO reverse-vending machines, kiosks, bins, devices or hardware of any kind; NO text or typography in the image; NO logos or watermarks; single natural scene, not a collage.
 Return ONLY the final prompt, one or two sentences, no preamble.`;
   try {
@@ -58,7 +59,7 @@ export async function POST(req) {
     if (enhance) { const better = await enhancePrompt(clean, place); if (better) scene = sanitizeBrief(better); }
 
     // 2) technical wrapper (kept short so the enhanced scene leads)
-    const styled = `${scene} — photorealistic, high detail, natural lighting, editorial advertising quality. No text, no logos, no watermarks, no machines or kiosks.`;
+    const styled = `${scene} — photorealistic, high detail, natural lighting, editorial advertising quality, full-frame edge-to-edge composition with uniform sharpness. No text, no logos, no watermarks, no machines or kiosks, no blur, no fade, no vignette, no soft or white borders.`;
 
     // 3) model chain (Pro → Flash → AI-Studio)
     const { dataUrl, via, notes } = await generateWithChain(styled, aspectRatio);
