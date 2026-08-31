@@ -60,21 +60,20 @@ export async function deleteCreative(scope, id) {
   lsDelete(scope, id);
 }
 
-// Upload a data-URL / blob background to Storage; return a public URL.
-// Falls back to returning the original dataUrl if Storage isn't available.
+// Upload a data-URL background to Storage via the server route (service role,
+// bypasses Storage RLS); return a public URL. Falls back to the inline data URL
+// if the bucket/route isn't available, so the image is never lost.
 export async function uploadCreativeImage(id, dataUrl) {
   if (!dataUrl) return null;
   if (!/^data:/.test(dataUrl)) return dataUrl; // already a URL
   try {
-    const blob = await (await fetch(dataUrl)).blob();
-    const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
-    const path = `${id}.${ext}`;
-    const { error } = await supabase.storage.from(BUCKET).upload(path, blob, { upsert: true, contentType: blob.type });
-    if (error) throw error;
-    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-    return data?.publicUrl || dataUrl;
-  } catch (e) {
-    return dataUrl; // keep the base64 inline if the bucket isn't set up yet
+    const res = await fetch('/api/creative-upload', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, dataUrl }),
+    }).then((r) => r.json()).catch(() => null);
+    return (res && res.ok && res.url) ? res.url : dataUrl;
+  } catch {
+    return dataUrl; // keep the base64 inline if upload isn't available
   }
 }
 
