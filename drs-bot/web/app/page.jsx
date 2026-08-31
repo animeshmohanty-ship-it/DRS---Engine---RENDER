@@ -7,6 +7,7 @@ import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { AuthScreens } from './authScreens.jsx';
 import CreativeEditor from './creativeEditor.jsx';
+import CarouselEditor from './carouselEditor.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
@@ -580,6 +581,10 @@ export default function App() {
   const [assetChannel, setAssetChannel] = useState('linkedin');
   const [assetFormat, setAssetFormat] = useState('social');
   const [assetHook, setAssetHook] = useState('');
+  const [carouselTopic, setCarouselTopic] = useState('');
+  const [carouselSlides, setCarouselSlides] = useState(6);
+  const [carouselRatio, setCarouselRatio] = useState('1:1');
+  const [carouselBusy, setCarouselBusy] = useState(false);
   const [creativeImages, setCreativeImages] = useState({}); // id -> { url | loading | error }
   const [creativeSaveState, setCreativeSaveState] = useState('idle'); // idle | saving | saved
   const [creativeLibLoading, setCreativeLibLoading] = useState(false);
@@ -590,14 +595,14 @@ export default function App() {
 
   // Map a persisted record <-> the in-memory asset shape the cards render.
   const recordToAsset = (r) => ({
-    id: r.id, channel: r.channel, format: r.format, hook: r.hook, objective: r.objective,
+    id: r.id, kind: r.kind || 'asset', channel: r.channel, format: r.format, hook: r.hook, objective: r.objective,
     title: r.title, content: r.content,
     headline: r.doc?.headline, sub: r.doc?.sub, cta: r.doc?.cta,
     hasVisual: r.doc?.hasVisual, visualBrief: r.doc?.visualBrief,
     doc: r.doc || {}, savedAt: r.updated_at,
   });
   const assetToRecord = (a, imageUrl) => ({
-    id: a.id, kind: 'asset', channel: a.channel || '', format: a.format || '', hook: a.hook || '',
+    id: a.id, kind: a.kind || 'asset', channel: a.channel || '', format: a.format || '', hook: a.hook || '',
     objective: a.objective || '', market: state ? `${state}, ${country}` : (country || 'India'),
     title: a.title || a.hook || 'Untitled', content: a.content || '',
     doc: { ...(a.doc || {}), headline: a.headline, sub: a.sub, cta: a.cta, hasVisual: a.hasVisual, visualBrief: a.visualBrief },
@@ -2321,6 +2326,42 @@ export default function App() {
     runAssetGen(id, spec);
   };
   const retryAsset = (a) => runAssetGen(a.id, { channel: a.channel, format: a.format, hook: a.hook, objective: a.objective });
+  // Generate a full DRS carousel (multi-slide) and add it to the library.
+  const generateCarousel = async () => {
+    if (!carouselTopic.trim() || carouselBusy) return;
+    setActiveTab('creative');
+    setCarouselBusy(true);
+    const id = 'c' + Date.now() + Math.floor(Math.random() * 1000);
+    // ensure the scope's library is loaded so the new carousel prepends onto it
+    if (loadedScopeRef.current !== creativeScope) {
+      loadedScopeRef.current = creativeScope;
+      const { assets, imgs } = await loadScope(creativeScope);
+      setCreativeImages(imgs);
+      setCreativeAssets([{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook: carouselTopic, loading: true }, ...assets]);
+    } else {
+      setCreativeAssets((prev) => [{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook: carouselTopic, loading: true }, ...prev]);
+    }
+    try {
+      const gtm = projectStages?.gtm || {};
+      const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 600) : '';
+      const res = await fetch('/api/carousel', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: carouselTopic, slides: carouselSlides, market: state ? `${state}, ${country}` : (country || 'India'), narrative, model: selectedModel }),
+      }).then((r) => r.json()).catch(() => null);
+      if (res?.ok && res.carousel?.slides?.length) {
+        const slides = res.carousel.slides.map((s, i) => ({ id: 's' + i + Math.random().toString(36).slice(2, 6), ...s }));
+        const doc = { ratio: carouselRatio, slides, images: {} };
+        const merged = { id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook: carouselTopic, title: res.carousel.title || carouselTopic, doc };
+        setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...merged } : a)));
+        persistAsset(merged);
+      } else {
+        setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, error: res?.error || 'Carousel generation failed — please retry.' } : a)));
+      }
+    } catch (e) {
+      setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, error: e.message } : a)));
+    }
+    setCarouselBusy(false);
+  };
   const generateCreative = async (focusOverride) => {
     setCreativeBusy(true); setError('');
     try {
@@ -2437,6 +2478,21 @@ export default function App() {
             <button className="btn" onClick={() => generateAsset({ channel: assetChannel, format: assetFormat, hook: assetHook, objective: '' })} disabled={!assetHook.trim()} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: B.primary, borderColor: B.primary }}><Sparkles size={15} /> Create</button>
           </div>
         </div>
+        {/* CAROUSEL MAKER — DRS green, multi-slide, AI-planned */}
+        <div className="card" style={{ marginBottom: 14, borderColor: '#049769', borderWidth: 1 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>🎠 Carousel maker <span style={{ fontSize: 10.5, background: '#E7F6F0', color: '#049769', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>DRS · green</span></div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <input value={carouselTopic} onChange={(e) => setCarouselTopic(e.target.value)} placeholder="Topic / brief — what's the carousel about?" style={{ flex: 1, minWidth: 240, padding: '8px 11px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} onKeyDown={(e) => { if (e.key === 'Enter') generateCarousel(); }} />
+            <label style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>slides
+              <select value={carouselSlides} onChange={(e) => setCarouselSlides(Number(e.target.value))} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}>{[3, 4, 5, 6, 7, 8, 9, 10].map((n) => <option key={n} value={n}>{n}</option>)}</select>
+            </label>
+            <label style={{ fontSize: 11.5, color: 'var(--ink-soft)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>ratio
+              <select value={carouselRatio} onChange={(e) => setCarouselRatio(e.target.value)} style={{ fontSize: 12.5, padding: '8px 9px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)' }}><option value="1:1">1:1 square</option><option value="4:5">4:5 portrait</option></select>
+            </label>
+            <button className="btn" onClick={generateCarousel} disabled={!carouselTopic.trim() || carouselBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#049769', borderColor: '#049769' }}>{carouselBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Building…</> : <><Sparkles size={15} /> Generate carousel</>}</button>
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 6 }}>AI plans each slide (cover → content → CTA), then you add AI/real images per slide and export a PDF or PNGs.</div>
+        </div>
         {/* LIBRARY — everything saved in this scope (project or independent) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, letterSpacing: '.02em', color: 'var(--ink)' }}>YOUR CREATIVES {creativeAssets.length > 0 && <span style={{ color: 'var(--ink-soft)', fontWeight: 500 }}>({creativeAssets.length})</span>}</div>
@@ -2456,8 +2512,18 @@ export default function App() {
                   {a.hook && <span style={{ fontSize: 11.5, color: 'var(--ink-soft)' }}>{a.hook}</span>}
                   <button onClick={() => removeCreative(a.id)} title="Delete this creative" style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: 'var(--ink-soft)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', padding: 3, borderRadius: 6 }}><Trash2 size={14} /></button>
                 </div>
-                {a.loading ? <div style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 6, alignItems: 'center' }}><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> Writing…</div>
-                  : a.error ? <div style={{ fontSize: 12, color: '#854F0B', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>⚠️ {a.error}</span><button onClick={() => retryAsset(a)} style={{ fontSize: 11, fontWeight: 600, background: B.primary, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}><RefreshCw size={12} /> Retry</button></div>
+                {a.loading ? <div style={{ fontSize: 12, color: 'var(--ink-soft)', display: 'flex', gap: 6, alignItems: 'center' }}><span className="spinner" style={{ width: 12, height: 12, display: 'inline-block' }} /> {a.kind === 'carousel' ? 'Building carousel…' : 'Writing…'}</div>
+                  : a.error ? <div style={{ fontSize: 12, color: '#854F0B', display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>⚠️ {a.error}</span>{a.kind !== 'carousel' && <button onClick={() => retryAsset(a)} style={{ fontSize: 11, fontWeight: 600, background: B.primary, color: '#fff', border: 'none', borderRadius: 6, padding: '4px 11px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 5 }}><RefreshCw size={12} /> Retry</button>}</div>
+                    : a.kind === 'carousel' ? (
+                      <CarouselEditor
+                        id={a.id}
+                        market={state ? `${state}, ${country}` : (country || 'India')}
+                        model={selectedModel}
+                        doc={a.doc}
+                        onChange={(d) => handleDocChange(a.id, d)}
+                        onError={(m) => setError(m)}
+                      />
+                    )
                     : (<>
                       {a.content && <div className="md-body" style={{ fontSize: 13, lineHeight: 1.55 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(a.content) }} />}
                       <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
