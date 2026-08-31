@@ -23,6 +23,19 @@ function hlHead(text, keyword) {
 const mdGreen = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, `<b style="color:${GREEN}">$1</b>`);
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 
+// Stable (module-level) form field — defined outside render so inputs don't
+// remount on each keystroke (which would drop focus).
+const INP = { width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', boxSizing: 'border-box', marginTop: 2 };
+function Field({ label, value, onChange, area, rows = 2, placeholder }) {
+  return (
+    <label style={{ display: 'block', fontSize: 10, color: 'var(--ink-soft)', marginBottom: 6 }}>{label}
+      {area
+        ? <textarea value={value || ''} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} style={{ ...INP, resize: 'vertical' }} />
+        : <input value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={INP} />}
+    </label>
+  );
+}
+
 // Default element boxes per slide type — fractions of the card (x,y,w,h).
 // Content lives inside the safe band y∈[0.14,0.86]; header/footer own the rest.
 const LAYOUTS = {
@@ -69,15 +82,28 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
 
   const commit = useCallback((next) => { setDoc(next); onChange?.(next); }, [onChange]);
   const setSlide = (idx, patch) => commit({ ...doc, slides: doc.slides.map((s, i) => (i === idx ? { ...s, ...patch } : s)) });
+  const setSlideById = (sid, patch) => commit({ ...doc, slides: doc.slides.map((s) => (s.id === sid ? { ...s, ...patch } : s)) });
   const setImage = (sid, url) => commit({ ...doc, images: { ...doc.images, [sid]: url } });
   const setLayout = (idx, key, box) => { const s = doc.slides[idx]; const layout = { ...(s.layout || {}), [key]: box }; setSlide(idx, { layout }); };
 
   const [dw, dh] = doc.ratio === '4:5' ? [DISPLAY_W, Math.round(DISPLAY_W * 1.25)] : [DISPLAY_W, DISPLAY_W];
 
+  // Draft a smart image prompt from THIS slide's copy (user can edit it after).
+  const smartFill = async (slide) => {
+    setBusy((b) => ({ ...b, ['p_' + slide.id]: true }));
+    try {
+      const body = [slide.body, slide.sub, slide.callout, ...(slide.steps || []).map((s) => s.text), ...(slide.bullets || []), slide.quote].filter(Boolean).join(' ');
+      const res = await fetch('/api/image-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ headline: slide.headline || slide.headTop || '', body, market }) }).then((r) => r.json()).catch(() => null);
+      if (res?.ok && res.prompt) setSlideById(slide.id, { imagePrompt: res.prompt });
+      else onError?.(res?.error || 'Could not draft a prompt');
+    } catch (e) { onError?.(e.message); }
+    setBusy((b) => ({ ...b, ['p_' + slide.id]: false }));
+  };
   const genImage = async (slide) => {
     setBusy((b) => ({ ...b, [slide.id]: true }));
     try {
-      const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: slide.imageBrief || `people returning empty bottles in ${market || 'a clean market'}`, aspectRatio: doc.ratio === '4:5' ? '4:5' : '1:1', market }) }).then((r) => r.json()).catch(() => null);
+      const usePrompt = (slide.imagePrompt && slide.imagePrompt.trim()) || slide.imageBrief || `people returning empty bottles in ${market || 'a clean market'}`;
+      const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: usePrompt, aspectRatio: doc.ratio === '4:5' ? '4:5' : '1:1', market, enhance: !(slide.imagePrompt && slide.imagePrompt.trim()) }) }).then((r) => r.json()).catch(() => null);
       if (res?.ok && res.dataUrl) {
         const up = await fetch('/api/creative-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: `${id}_${slide.id}`, dataUrl: res.dataUrl }) }).then((r) => r.json()).catch(() => null);
         // Same storage path each time → bust the cache so a regenerate actually shows.
@@ -140,20 +166,51 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
 
       <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <Slide slide={slide} idx={cur} total={doc.slides.length} dw={dw} dh={dh} edit={edit} sel={sel} setSel={setSel} imgUrl={doc.images[slide?.id]} set={(patch) => setSlide(cur, patch)} setBox={(key, box) => setLayout(cur, key, box)} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 160 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>{slide?.type}</div>
-          {slideUsesImage(slide?.type) && <>
-            <button onClick={() => genImage(slide)} disabled={busy[slide.id]} style={btn}>{busy[slide.id] ? <><RefreshCw size={12} className="spin" /> generating…</> : doc.images[slide.id] ? '🖼️ regenerate scene' : '🖼️ AI scene'}</button>
-            <label style={btn}>📷 Real photo<input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { uploadImage(slide, e.target.files?.[0]); e.target.value = ''; }} /></label>
-            {doc.images[slide.id] && <button onClick={() => setImage(slide.id, null)} style={btn}>✕ clear image</button>}
-          </>}
-          <div style={{ height: 6 }} />
-          <button onClick={() => move(cur, -1)} disabled={cur === 0} style={btn}><ChevronLeft size={13} /> move left</button>
-          <button onClick={() => move(cur, 1)} disabled={cur === doc.slides.length - 1} style={btn}>move right <ChevronRight size={13} /></button>
-          <button onClick={() => resetLayout(cur)} style={btn}>↺ reset layout</button>
-          <button onClick={() => delSlide(cur)} disabled={doc.slides.length <= 1} style={{ ...btn, color: '#b45309' }}><Trash2 size={12} /> delete slide</button>
-          <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', lineHeight: 1.4, marginTop: 4 }}>{edit ? 'Double-click text to edit. Click an element then drag to move, or drag its ◢ corner to resize. Text auto-fits its box.' : 'Turn on Edit to move, resize & retype.'}</div>
-        </div>
+        {slide && (() => {
+          const S = (patch) => setSlide(cur, patch);
+          const F = Field;
+          const arr = (key, i, field) => (v) => S({ [key]: (slide[key] || []).map((it, j) => (j === i ? (field ? { ...it, [field]: v } : v) : it)) });
+          const t = slide.type;
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 240, maxHeight: dh + 40, overflowY: 'auto', paddingRight: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>{t} · content</div>
+              {/* per-slide EXACT copy fields */}
+              {t === 'two_block' ? <><F label="Heading (top)" value={slide.headTop} onChange={(v) => S({ headTop: v })} /><F label="Heading (bottom)" value={slide.headBottom} onChange={(v) => S({ headBottom: v })} /></>
+                : t !== 'quote' ? <F label="Headline" value={slide.headline} onChange={(v) => S({ headline: v })} /> : null}
+              {t !== 'quote' && t !== 'stat' && <F label="Green keyword (must be in headline)" value={slide.keyword} onChange={(v) => S({ keyword: v })} />}
+              {['cover', 'steps', 'sequence', 'cta'].includes(t) && <F label="Subtext" value={slide.sub} onChange={(v) => S({ sub: v })} area />}
+              {['text_image', 'two_block'].includes(t) && <F label="Body" value={slide.body} onChange={(v) => S({ body: v })} area />}
+              {['text_image', 'two_block', 'sequence'].includes(t) && <F label="Callout" value={slide.callout} onChange={(v) => S({ callout: v })} />}
+              {t === 'steps' && (slide.steps || []).map((st, i) => <F key={i} label={`Step ${i + 1}`} value={st.text} onChange={arr('steps', i, 'text')} />)}
+              {t === 'sequence' && (slide.seq || []).map((q, i) => <F key={i} label={`Label ${i + 1}`} value={q.label} onChange={arr('seq', i, 'label')} />)}
+              {t === 'list' && (slide.bullets || []).map((b, i) => <F key={i} label={`Bullet ${i + 1}`} value={b} onChange={arr('bullets', i)} />)}
+              {t === 'stat' && <><F label="Value" value={slide.value} onChange={(v) => S({ value: v })} /><F label="Unit" value={slide.unit} onChange={(v) => S({ unit: v })} /><F label="Caption" value={slide.caption} onChange={(v) => S({ caption: v })} area /></>}
+              {t === 'quote' && <><F label="Quote" value={slide.quote} onChange={(v) => S({ quote: v })} area /><F label="Attribution" value={slide.attribution} onChange={(v) => S({ attribution: v })} /></>}
+              {t === 'cta' && <F label="Button label" value={slide.ctaLabel} onChange={(v) => S({ ctaLabel: v })} />}
+
+              {/* IMAGE prompt + generation */}
+              {slideUsesImage(t) && <>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase', marginTop: 6 }}>image</div>
+                <label style={{ display: 'block', fontSize: 10, color: 'var(--ink-soft)' }}>Image prompt (edit before generating)
+                  <textarea value={slide.imagePrompt || slide.imageBrief || ''} onChange={(e) => S({ imagePrompt: e.target.value })} rows={4} placeholder="Describe the photo, or Smart-fill from the copy →" style={{ ...INP, resize: 'vertical' }} />
+                </label>
+                <button onClick={() => smartFill(slide)} disabled={busy['p_' + slide.id]} style={btn}>{busy['p_' + slide.id] ? <><RefreshCw size={12} className="spin" /> drafting…</> : '✨ Smart-fill from copy'}</button>
+                <button onClick={() => genImage(slide)} disabled={busy[slide.id]} style={on}>{busy[slide.id] ? <><RefreshCw size={12} className="spin" /> generating…</> : doc.images[slide.id] ? '🖼️ regenerate image' : '🖼️ Generate image'}</button>
+                <label style={btn}>📷 Real photo<input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { uploadImage(slide, e.target.files?.[0]); e.target.value = ''; }} /></label>
+                {doc.images[slide.id] && <button onClick={() => setImage(slide.id, null)} style={btn}>✕ clear image</button>}
+              </>}
+
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase', marginTop: 6 }}>slide</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => move(cur, -1)} disabled={cur === 0} style={{ ...btn, flex: 1 }}><ChevronLeft size={13} /></button>
+                <button onClick={() => move(cur, 1)} disabled={cur === doc.slides.length - 1} style={{ ...btn, flex: 1 }}><ChevronRight size={13} /></button>
+                <button onClick={() => resetLayout(cur)} title="reset layout" style={{ ...btn, flex: 1 }}>↺</button>
+                <button onClick={() => delSlide(cur)} disabled={doc.slides.length <= 1} style={{ ...btn, flex: 1, color: '#b45309' }}><Trash2 size={12} /></button>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--ink-soft)', lineHeight: 1.4 }}>Edit copy here (exact text used on the slide). On the slide, turn on Edit to drag/resize elements.</div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* hidden full-render stack for export */}
