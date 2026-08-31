@@ -6,6 +6,7 @@ import { loadCreatives, saveCreative, deleteCreative, uploadCreativeImage, newCr
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { AuthScreens } from './authScreens.jsx';
+import CreativeEditor from './creativeEditor.jsx';
 import {
   Maximize2, Minimize2, Volume2, VolumeX, MessagesSquare, ChevronDown,
   BookOpen, X, Copy, Check, Mic, RefreshCw, Sparkles, Plus, Square, Zap, FileText, Send,
@@ -617,6 +618,17 @@ export default function App() {
     } catch { setCreativeSaveState('idle'); }
   };
   const persistAssetById = (id, explicitImage) => persistAsset(creativeAssetsRef.current.find((x) => x.id === id), explicitImage);
+  // Visual-editor doc change → update the asset + debounced autosave.
+  const creativeSaveTimers = useRef({});
+  const handleDocChange = (id, docVal) => {
+    setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, doc: { ...(a.doc || {}), ...docVal } } : a)));
+    setCreativeSaveState('saving');
+    clearTimeout(creativeSaveTimers.current[id]);
+    creativeSaveTimers.current[id] = setTimeout(() => {
+      const a = creativeAssetsRef.current.find((x) => x.id === id);
+      if (a) persistAsset(a);
+    }, 800);
+  };
   const removeCreative = async (id) => {
     setCreativeAssets((prev) => prev.filter((a) => a.id !== id));
     setCreativeImages((prev) => { const n = { ...prev }; delete n[id]; return n; });
@@ -2450,8 +2462,22 @@ export default function App() {
                       {a.content && <div className="md-body" style={{ fontSize: 13, lineHeight: 1.55 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(a.content) }} />}
                       <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                         <button onClick={() => { try { navigator.clipboard?.writeText(a.content || ''); } catch { } }} style={{ fontSize: 11, background: 'var(--grey-soft)', border: '1px solid var(--line)', borderRadius: 8, padding: '5px 11px', cursor: 'pointer' }}>Copy text</button>
-                        {a.hasVisual && a.headline && <CreativeCard id={a.id} w={300} h={300} grad={GRADS[0]} label="Creative" headline={a.headline} sub={a.sub} cta={a.cta} brief={a.visualBrief} />}
                       </div>
+                      {a.hasVisual && a.headline && (
+                        <CreativeEditor
+                          id={a.id}
+                          doc={a.doc && a.doc.el ? a.doc : undefined}
+                          headline={a.headline} sub={a.sub} cta={a.cta}
+                          imageUrl={creativeImages[a.id]?.url}
+                          imgLoading={creativeImages[a.id]?.loading}
+                          filename={a.title || a.hook || 'creative'}
+                          onChange={(d) => handleDocChange(a.id, d)}
+                          onGenImage={(ratio) => genCreativeImage(a.id, a.visualBrief, ratio)}
+                          onUploadPhoto={(file) => uploadProductPhoto(a.id, file)}
+                          onClearImage={() => { setCreativeImages((prev) => { const n = { ...prev }; delete n[a.id]; return n; }); persistAssetById(a.id, null); }}
+                          onError={(m) => setError(m)}
+                        />
+                      )}
                     </>)}
               </div>
             ))}
