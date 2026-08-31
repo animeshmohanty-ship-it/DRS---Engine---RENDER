@@ -23,6 +23,11 @@ function hlHead(text, keyword) {
 const mdGreen = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, `<b style="color:${GREEN}">$1</b>`);
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 
+// Pick the closest standard image aspect ratio to a box's width/height, so a
+// generated photo fills the slide's image slot without awkward cropping.
+const ASPECTS = [['1:1', 1], ['5:4', 1.25], ['4:3', 1.3333], ['3:2', 1.5], ['16:9', 1.7778], ['4:5', 0.8], ['3:4', 0.75], ['2:3', 0.6667], ['9:16', 0.5625]];
+function nearestAspect(r) { let best = ASPECTS[0]; for (const a of ASPECTS) if (Math.abs(a[1] - r) < Math.abs(best[1] - r)) best = a; return best[0]; }
+
 // Crisp arrow (renders identically in editor + PDF, unlike the unicode →).
 const ArrowRt = ({ size = 16, color = '#fff' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
@@ -110,7 +115,10 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
     setBusy((b) => ({ ...b, [slide.id]: true }));
     try {
       const usePrompt = (slide.imagePrompt && slide.imagePrompt.trim()) || slide.imageBrief || `people returning empty bottles in ${market || 'a clean market'}`;
-      const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: usePrompt, aspectRatio: doc.ratio === '4:5' ? '4:5' : '1:1', market, enhance: !(slide.imagePrompt && slide.imagePrompt.trim()) }) }).then((r) => r.json()).catch(() => null);
+      // Match the generated photo to the slide's image-SLOT aspect ratio (not the whole slide).
+      const ib = (slide.layout && slide.layout.image) || (LAYOUTS[slide.type] && LAYOUTS[slide.type].image);
+      const aspectRatio = ib ? nearestAspect((ib[2] * dw) / (ib[3] * dh)) : (doc.ratio === '4:5' ? '4:5' : '1:1');
+      const res = await fetch('/api/creative-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: usePrompt, aspectRatio, market, enhance: !(slide.imagePrompt && slide.imagePrompt.trim()) }) }).then((r) => r.json()).catch(() => null);
       if (res?.ok && res.dataUrl) {
         const up = await fetch('/api/creative-upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: `${id}_${slide.id}`, dataUrl: res.dataUrl }) }).then((r) => r.json()).catch(() => null);
         // Same storage path each time → bust the cache so a regenerate actually shows.

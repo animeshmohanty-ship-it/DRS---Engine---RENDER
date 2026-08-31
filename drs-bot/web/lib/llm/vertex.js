@@ -114,10 +114,12 @@ export async function generateImage(prompt, { aspectRatio = '1:1', customModel =
     if (!img?.imageBytes) throw new Error('[VertexAI] No image from ' + model);
     return { dataUrl: `data:${img.mimeType || 'image/png'};base64,${img.imageBytes}` };
   }
+  // Pass aspectRatio as a real imageConfig (honored by Gemini 3 image models),
+  // and keep the text hint as a fallback for models that ignore imageConfig.
   const response = await ai.models.generateContent({
     model,
-    contents: `${prompt} (composition: ${aspectRatio} aspect ratio)`,
-    config: { responseModalities: ['TEXT', 'IMAGE'] },
+    contents: `${prompt} (composition: ${aspectRatio} aspect ratio, full-bleed edge to edge)`,
+    config: { responseModalities: ['TEXT', 'IMAGE'], imageConfig: { aspectRatio } },
   });
   const parts = response?.candidates?.[0]?.content?.parts || [];
   const p = parts.find((x) => (x.inlineData && x.inlineData.data) || (x.inline_data && x.inline_data.data));
