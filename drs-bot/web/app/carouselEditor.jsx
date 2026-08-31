@@ -23,6 +23,13 @@ function hlHead(text, keyword) {
 const mdGreen = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, `<b style="color:${GREEN}">$1</b>`);
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 
+// Crisp arrow (renders identically in editor + PDF, unlike the unicode →).
+const ArrowRt = ({ size = 16, color = '#fff' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+    <line x1="4" y1="12" x2="19.5" y2="12" /><polyline points="12.5 5 20 12 12.5 19" />
+  </svg>
+);
+
 // Stable (module-level) form field — defined outside render so inputs don't
 // remount on each keystroke (which would drop focus).
 const INP = { width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', boxSizing: 'border-box', marginTop: 2 };
@@ -231,7 +238,7 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
       <div style={{ position: 'absolute', left: -99999, top: 0 }} aria-hidden>
         {doc.slides.map((s, i) => (
           <div key={s.id} ref={(n) => { exportRefs.current[s.id] = n; }}>
-            <Slide slide={s} idx={i} total={doc.slides.length} dw={dw} dh={dh} edit={false} sel={null} setSel={() => {}} imgUrl={doc.images[s.id]} set={() => {}} setBox={() => {}} />
+            <Slide slide={s} idx={i} total={doc.slides.length} dw={dw} dh={dh} edit={false} sel={null} setSel={() => {}} imgUrl={doc.images[s.id]} set={() => {}} setBox={() => {}} bare />
           </div>
         ))}
       </div>
@@ -242,7 +249,7 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
 function slideUsesImage(type) { return ['cover', 'text_image', 'two_block', 'steps', 'sequence', 'stat', 'list'].includes(type); }
 
 // ---------------- one slide ----------------
-function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setBox }) {
+function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setBox, bare }) {
   const dragRef = useRef(null);
   useLayoutEffect(() => {
     if (!edit) return;
@@ -301,7 +308,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   if (has('image')) push('image', imgFill);
   if (has('callout') && slide.callout && slide.callout.trim()) push('callout', (
     <div style={{ width: '100%', height: '100%', display: 'flex', gap: 8, alignItems: 'center', borderRadius: 12, padding: '0 12px', boxSizing: 'border-box', background: (slide.calloutStyle === 'outline') ? 'transparent' : GREEN, border: (slide.calloutStyle === 'outline') ? `2px solid ${GREEN}` : 'none' }}>
-      <div style={{ width: 26, height: 26, borderRadius: '50%', background: (slide.calloutStyle === 'outline') ? GREEN : '#fff', color: (slide.calloutStyle === 'outline') ? '#fff' : GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>→</div>
+      <div style={{ width: 26, height: 26, borderRadius: '50%', background: (slide.calloutStyle === 'outline') ? GREEN : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ArrowRt size={14} color={(slide.calloutStyle === 'outline') ? '#fff' : GREEN} /></div>
       <Fit editable={edit} onBlur={eText('callout')} html={esc(slide.callout)} maxFs={dw * 0.04} weight={700} color={(slide.calloutStyle === 'outline') ? '#111' : '#fff'} extra={{ display: 'flex', alignItems: 'center' }} />
     </div>
   ));
@@ -337,7 +344,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
             <div style={{ width: '100%', aspectRatio: '1', borderRadius: 10, background: imgUrl ? `center/cover no-repeat url(${imgUrl})` : '#EAF6F1', border: imgUrl ? 'none' : `1px dashed ${GREEN}55` }} />
             <div style={{ fontSize: dw * 0.028, fontWeight: 700, color: GREEN, textTransform: 'uppercase', marginTop: 5 }}>{q.label}</div>
           </div>
-          {i < slide.seq.length - 1 && <div style={{ color: GREEN, fontSize: 20, fontWeight: 800 }}>→</div>}
+          {i < slide.seq.length - 1 && <div style={{ flexShrink: 0 }}><ArrowRt size={20} color={GREEN} /></div>}
         </React.Fragment>
       ))}
     </div>
@@ -358,7 +365,8 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
 
   return (
     <div>
-      <div onPointerDown={() => edit && setSel(null)} style={{ width: dw, height: dh, background: '#fff', borderRadius: 16, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, system-ui, sans-serif', boxShadow: '0 6px 24px rgba(10,20,40,.14)', boxSizing: 'border-box' }}>
+      {/* bare = the exact exported artwork: square full-bleed, no shadow (matches the IG/LinkedIn slide). Editor preview keeps a rounded card + shadow. */}
+      <div onPointerDown={() => edit && setSel(null)} style={{ width: dw, height: dh, background: '#fff', borderRadius: bare ? 0 : 14, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, system-ui, sans-serif', boxShadow: bare ? 'none' : '0 6px 24px rgba(10,20,40,.14)', boxSizing: 'border-box' }}>
         {/* header (reserved) */}
         <div style={{ position: 'absolute', left: PAD, top: PAD, display: 'flex', alignItems: 'center', gap: 7 }}>
           <img src="/recykal-mark.png" alt="" style={{ height: 22, width: 'auto' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
@@ -368,7 +376,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
         {els}
         {/* footer (reserved) */}
         <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: 11, color: '#111', fontWeight: 500 }}>www.recykal.com</div>
-        {!isLast && <div style={{ position: 'absolute', right: PAD, bottom: PAD, width: 30, height: 30, borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>→</div>}
+        {!isLast && <div style={{ position: 'absolute', right: PAD, bottom: PAD, width: 32, height: 32, borderRadius: '50%', background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowRt size={17} color="#fff" /></div>}
         <div style={{ position: 'absolute', left: 0, bottom: 0, width: dw * 0.22, height: 5, background: '#111' }} />
       </div>
     </div>
