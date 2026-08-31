@@ -2479,7 +2479,7 @@ export default function App() {
           </div>
         </div>
         {/* CAROUSEL MAKER — DRS green, multi-slide, AI-planned */}
-        <div className="card" style={{ marginBottom: 14, borderColor: '#049769', borderWidth: 1 }}>
+        <div className="card" style={{ marginBottom: 14, border: '1px solid #049769' }}>
           <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>🎠 Carousel maker <span style={{ fontSize: 10.5, background: '#E7F6F0', color: '#049769', padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>DRS · green</span></div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <input value={carouselTopic} onChange={(e) => setCarouselTopic(e.target.value)} placeholder="Topic / brief — what's the carousel about?" style={{ flex: 1, minWidth: 240, padding: '8px 11px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13 }} onKeyDown={(e) => { if (e.key === 'Enter') generateCarousel(); }} />
