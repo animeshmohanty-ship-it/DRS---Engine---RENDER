@@ -84,6 +84,13 @@ export default function CreativeEditor({
   const docRef = useRef(doc);
   useEffect(() => { docRef.current = doc; }, [doc]);
 
+  // When an AI scene or real photo becomes available, SHOW it automatically
+  // (switch the card background to the image). Runs only when the image URL
+  // actually changes, so the manual "Gradient" toggle still works.
+  useEffect(() => {
+    if (imageUrl && docRef.current.bgType !== 'image') commit({ ...docRef.current, bgType: 'image' });
+  }, [imageUrl]);
+
   const startDrag = (e, key) => {
     if (typing) return;
     setSel(key);
