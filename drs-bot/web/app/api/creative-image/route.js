@@ -5,11 +5,8 @@ import * as gemini from '../../../lib/llm/gemini.js';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
-// AI background for a creative. POST { prompt, aspectRatio } → { ok, dataUrl }.
-// Uses Vertex Imagen (real quota); falls back to the AI-Studio image model only
-// if Vertex isn't configured. On any failure the client keeps the brand gradient.
-// Strip any hardware/product references a copy brief may contain — we must never
-// render an invented machine/kiosk. Replace with a neutral action phrase.
+// Strip any hardware/product references a brief may contain — we never render an
+// invented machine/kiosk. Replace with a neutral action phrase.
 function sanitizeBrief(s) {
   let t = String(s || '');
   const hardware = /\b(reverse[- ]?vending|vending machine|rvm|kiosk|machine|collection (?:point|bin|unit|kiosk)|bin|device|hardware|dispenser|terminal|booth structure)\b/gi;
@@ -17,21 +14,55 @@ function sanitizeBrief(s) {
   return t.trim();
 }
 
+// Turn a short/vague brief into a vivid, SPECIFIC photographic prompt so the
+// image is relatable to the slide (the "smart" step). Falls back to the brief.
+async function enhancePrompt(brief, place) {
+  const ask = `You are an art director. Turn the idea below into ONE vivid, specific prompt for a PHOTOREALISTIC editorial lifestyle photograph for a beverage-container Deposit Refund Scheme campaign in ${place}.
+
+Idea: "${brief}"
+
+The prompt must specify: a specific relatable person or people (age, everyday clothing appropriate to ${place}), a specific real everyday setting in ${place} (name the kind of place — a local kirana store, a busy market street, a home kitchen, a college campus, a beach cleanup, etc.), and a clear action involving returning/collecting empty plastic bottles or aluminium cans. Style cues: shot on a 35mm lens, natural daylight, candid documentary feel, shallow depth of field, warm optimistic mood, subtle teal/green tones in the surroundings, and generous clean empty space on one side for text overlay.
+Hard rules: NO reverse-vending machines, kiosks, bins, devices or hardware of any kind; NO text or typography in the image; NO logos or watermarks; single natural scene, not a collage.
+Return ONLY the final prompt, one or two sentences, no preamble.`;
+  try {
+    const { text } = await vertex.generateGrounded(ask, { grounding: false, temperature: 0.6 });
+    const out = (text || '').trim().replace(/^["']|["']$/g, '');
+    return out.length > 30 ? out : null;
+  } catch { return null; }
+}
+
+// Try Nano Banana Pro (Gemini 3 Pro Image) first for quality, then 2.5 Flash
+// Image, then AI-Studio. Each model id is configurable via env.
+async function generateWithChain(prompt, aspectRatio) {
+  const pro = process.env.VERTEX_IMAGE_MODEL_PRO || 'gemini-3-pro-image';
+  const flash = process.env.VERTEX_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const notes = [];
+  for (const model of [pro, flash]) {
+    try { const { dataUrl } = await vertex.generateImage(prompt, { aspectRatio, customModel: model }); return { dataUrl, via: `vertex:${model}`, notes }; }
+    catch (e) { notes.push(`${model}: ${e.message}`); }
+  }
+  const { dataUrl } = await gemini.generateImage(prompt); // last resort
+  return { dataUrl, via: 'gemini', notes };
+}
+
+// POST { prompt, aspectRatio, market, enhance? } → { ok, dataUrl, via }
 export async function POST(req) {
   try {
-    const { prompt = '', aspectRatio = '1:1', market = '' } = (await req.json().catch(() => ({}))) || {};
+    const { prompt = '', aspectRatio = '1:1', market = '', enhance = true } = (await req.json().catch(() => ({}))) || {};
     if (!prompt.trim()) return NextResponse.json({ ok: false, error: 'prompt required' }, { status: 400 });
     const place = market && !/goa/i.test(market) ? market : (market || 'India');
     const clean = sanitizeBrief(prompt);
-    const styled = `${clean}. Clean, modern, optimistic lifestyle/advertising photograph about a beverage-container Deposit Refund Scheme in ${place}. Show people and place — someone returning empty bottles or cans, everyday circular-economy moments, a bright clean street/market. Blue-and-green (Recykal) palette, bright natural light, plenty of empty negative space for text overlay. ABSOLUTELY NO reverse-vending machines, kiosks, bins, devices or any product/hardware; NO text; NO logos or brand marks; NO watermarks.`;
-    try {
-      const { dataUrl } = await vertex.generateImage(styled, { aspectRatio });
-      return NextResponse.json({ ok: true, dataUrl, via: 'vertex' });
-    } catch (ve) {
-      // Fallback to AI-Studio image model if Vertex creds/quota aren't available.
-      const { dataUrl } = await gemini.generateImage(styled);
-      return NextResponse.json({ ok: true, dataUrl, via: 'gemini', note: `vertex: ${ve.message}` });
-    }
+
+    // 1) smart prompt enhancement
+    let scene = clean;
+    if (enhance) { const better = await enhancePrompt(clean, place); if (better) scene = sanitizeBrief(better); }
+
+    // 2) technical wrapper (kept short so the enhanced scene leads)
+    const styled = `${scene} — photorealistic, high detail, natural lighting, editorial advertising quality. No text, no logos, no watermarks, no machines or kiosks.`;
+
+    // 3) model chain (Pro → Flash → AI-Studio)
+    const { dataUrl, via, notes } = await generateWithChain(styled, aspectRatio);
+    return NextResponse.json({ ok: true, dataUrl, via, enhanced: scene !== clean, note: notes.join(' | ') || undefined });
   } catch (e) {
     return NextResponse.json({ ok: false, error: e.message }, { status: 500 });
   }
