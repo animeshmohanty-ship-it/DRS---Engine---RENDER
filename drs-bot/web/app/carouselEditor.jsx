@@ -121,7 +121,8 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
   const addSlide = (type) => { const s = { id: newId(), type, headline: type === 'cover' ? 'New headline' : type === 'cta' ? 'Your call to action' : 'New slide', keyword: '', sub: '', body: 'Edit this text.', callout: '', calloutStyle: 'filled', bullets: ['Point one', 'Point two', 'Point three'], steps: [{ text: 'Step one', keyword: '' }, { text: 'Step two', keyword: '' }, { text: 'Step three', keyword: '' }], seq: [{ label: 'NOTICE' }, { label: 'ACT' }, { label: 'REPEAT' }], value: '100', unit: '', caption: '', quote: 'A short quote.', attribution: '', ctaLabel: 'Learn more', imageBrief: '' }; const slides = [...doc.slides]; const at = cur + 1; slides.splice(at, 0, s); commit({ ...doc, slides }); setCur(at); setSel(null); };
   const delSlide = (idx) => { if (doc.slides.length <= 1) return; commit({ ...doc, slides: doc.slides.filter((_, i) => i !== idx) }); setCur(Math.max(0, idx - 1)); setSel(null); };
   const move = (idx, dir) => { const j = idx + dir; if (j < 0 || j >= doc.slides.length) return; const slides = [...doc.slides]; [slides[idx], slides[j]] = [slides[j], slides[idx]]; commit({ ...doc, slides }); setCur(j); };
-  const resetLayout = (idx) => { setSlide(idx, { layout: {} }); };
+  const dupSlide = (idx) => { const src = doc.slides[idx]; const nid = newId(); const slides = [...doc.slides]; slides.splice(idx + 1, 0, { ...src, id: nid }); const images = { ...doc.images }; if (doc.images[src.id]) images[nid] = doc.images[src.id]; commit({ ...doc, slides, images }); setCur(idx + 1); setSel(null); };
+  const resetLayout = (idx) => { setSlide(idx, { layout: {}, hidden: {} }); };
 
   const pxRatio = 1080 / dw;
   const exportPNG = async (slide) => { const node = exportRefs.current[slide.id]; if (!node) return; try { const { toPng } = await import('html-to-image'); const url = await toPng(node, { pixelRatio: pxRatio, cacheBust: true }); const a = document.createElement('a'); a.href = url; a.download = `recykal-carousel-${cur + 1}.png`; a.click(); } catch (e) { onError?.('PNG export failed: ' + e.message); } };
@@ -200,14 +201,27 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
                 {doc.images[slide.id] && <button onClick={() => setImage(slide.id, null)} style={btn}>✕ clear image</button>}
               </>}
 
+              {/* restore any deleted elements */}
+              {Object.keys(slide.hidden || {}).filter((k) => slide.hidden[k]).length > 0 && (
+                <div style={{ marginTop: 4 }}>
+                  <div style={{ fontSize: 10, color: 'var(--ink-soft)', marginBottom: 3 }}>Deleted elements — tap to restore:</div>
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                    {Object.keys(slide.hidden).filter((k) => slide.hidden[k]).map((k) => (
+                      <button key={k} onClick={() => S({ hidden: { ...slide.hidden, [k]: false } })} style={{ ...btn, fontSize: 11, padding: '3px 8px' }}>+ {k}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase', marginTop: 6 }}>slide</div>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => move(cur, -1)} disabled={cur === 0} style={{ ...btn, flex: 1 }}><ChevronLeft size={13} /></button>
-                <button onClick={() => move(cur, 1)} disabled={cur === doc.slides.length - 1} style={{ ...btn, flex: 1 }}><ChevronRight size={13} /></button>
-                <button onClick={() => resetLayout(cur)} title="reset layout" style={{ ...btn, flex: 1 }}>↺</button>
-                <button onClick={() => delSlide(cur)} disabled={doc.slides.length <= 1} style={{ ...btn, flex: 1, color: '#b45309' }}><Trash2 size={12} /></button>
+                <button onClick={() => move(cur, -1)} disabled={cur === 0} title="move left" style={{ ...btn, flex: 1 }}><ChevronLeft size={13} /></button>
+                <button onClick={() => move(cur, 1)} disabled={cur === doc.slides.length - 1} title="move right" style={{ ...btn, flex: 1 }}><ChevronRight size={13} /></button>
+                <button onClick={() => dupSlide(cur)} title="duplicate slide" style={{ ...btn, flex: 1 }}>⧉</button>
+                <button onClick={() => resetLayout(cur)} title="reset layout & restore elements" style={{ ...btn, flex: 1 }}>↺</button>
+                <button onClick={() => delSlide(cur)} disabled={doc.slides.length <= 1} title="delete whole slide" style={{ ...btn, flex: 1, color: '#b45309' }}><Trash2 size={12} /></button>
               </div>
-              <div style={{ fontSize: 10, color: 'var(--ink-soft)', lineHeight: 1.4 }}>Edit copy here (exact text used on the slide). On the slide, turn on Edit to drag/resize elements.</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-soft)', lineHeight: 1.4 }}>Edit exact copy above. On the slide (Edit on): click an element → drag to move, ◢ to resize, ✕ to delete just that element. The 🗑 here deletes the whole slide.</div>
             </div>
           );
         })()}
@@ -253,13 +267,15 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
 
   const startDrag = (e, key, mode) => { if (!edit) return; e.stopPropagation(); setSel(key); dragRef.current = { key, mode, sx: e.clientX, sy: e.clientY, box: boxOf(key) }; };
 
-  // one positioned, draggable, resizable element box
+  const hideEl = (k) => set({ hidden: { ...(slide.hidden || {}), [k]: true } });
+  // one positioned, draggable, resizable element box (with per-element delete)
   const Box = ({ k, children }) => {
     const [x, y, w, h] = boxOf(k);
     const active = edit && sel === k;
     return (
       <div onPointerDown={(e) => startDrag(e, k, 'move')} style={{ position: 'absolute', left: x * dw, top: y * dh, width: w * dw, height: h * dh, outline: active ? `2px solid ${GREEN}` : (edit ? '1px dashed rgba(4,151,105,.35)' : 'none'), outlineOffset: 2, borderRadius: 6, cursor: edit ? 'grab' : 'default' }}>
         {children}
+        {active && <div title="Delete this element" onPointerDown={(e) => { e.stopPropagation(); hideEl(k); setSel(null); }} style={{ position: 'absolute', right: -9, top: -9, width: 18, height: 18, background: '#fff', border: '2px solid #d1483a', color: '#d1483a', borderRadius: '50%', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>✕</div>}
         {active && <div onPointerDown={(e) => { e.stopPropagation(); startDrag(e, k, 'resize'); }} style={{ position: 'absolute', right: -6, bottom: -6, width: 13, height: 13, background: '#fff', border: `2px solid ${GREEN}`, borderRadius: 3, cursor: 'nwse-resize' }} />}
       </div>
     );
@@ -274,7 +290,8 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
 
   const els = [];
   const L = LAYOUTS[slide.type] || {};
-  const has = (k) => k in L || k in layout;
+  const hidden = slide.hidden || {};
+  const has = (k) => (k in L || k in layout) && !hidden[k];
   const push = (k, node) => els.push(<Box key={k} k={k}>{node}</Box>);
 
   if (has('headline')) push('headline', <Fit editable={edit} onBlur={eText('headline')} html={hlHead(slide.type === 'two_block' && slide.headTop ? `${slide.headTop} ${slide.headBottom || ''}`.trim() : slide.headline, slide.keyword)} maxFs={dw * (slide.type === 'cta' ? 0.085 : slide.type === 'cover' ? 0.078 : 0.06)} weight={800} />);
@@ -282,7 +299,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   if (has('sub')) push('sub', <Fit editable={edit} onBlur={eText('sub')} html={mdGreen(slide.sub)} maxFs={dw * 0.04} color={slide.type === 'steps' || slide.type === 'sequence' ? '#555' : '#222'} lh={1.45} />);
   if (has('caption')) push('caption', <Fit editable={edit} onBlur={eText('caption')} html={mdGreen(slide.caption)} maxFs={dw * 0.034} color="#777" />);
   if (has('image')) push('image', imgFill);
-  if (has('callout') && (slide.callout || edit)) push('callout', (
+  if (has('callout') && slide.callout && slide.callout.trim()) push('callout', (
     <div style={{ width: '100%', height: '100%', display: 'flex', gap: 8, alignItems: 'center', borderRadius: 12, padding: '0 12px', boxSizing: 'border-box', background: (slide.calloutStyle === 'outline') ? 'transparent' : GREEN, border: (slide.calloutStyle === 'outline') ? `2px solid ${GREEN}` : 'none' }}>
       <div style={{ width: 26, height: 26, borderRadius: '50%', background: (slide.calloutStyle === 'outline') ? GREEN : '#fff', color: (slide.calloutStyle === 'outline') ? '#fff' : GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, flexShrink: 0 }}>→</div>
       <Fit editable={edit} onBlur={eText('callout')} html={esc(slide.callout)} maxFs={dw * 0.04} weight={700} color={(slide.calloutStyle === 'outline') ? '#111' : '#fff'} extra={{ display: 'flex', alignItems: 'center' }} />
@@ -335,7 +352,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   if (has('attribution')) push('attribution', <Fit editable={edit} onBlur={eText('attribution')} html={esc(slide.attribution)} maxFs={dw * 0.036} weight={600} color={GREEN} />);
   if (has('cta')) push('cta', (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center' }}>
-      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('ctaLabel')} style={{ display: 'inline-block', background: GREEN, color: '#fff', fontSize: dw * 0.042, fontWeight: 700, padding: '11px 22px', borderRadius: 30, outline: 'none' }}>{slide.ctaLabel || 'Learn more'}</span>
+      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('ctaLabel')} style={{ display: 'inline-block', background: GREEN, color: '#fff', fontSize: dw * 0.042, fontWeight: 700, padding: '11px 22px', borderRadius: 30, outline: 'none' }}>{(slide.ctaLabel && slide.ctaLabel.trim()) ? slide.ctaLabel : 'Learn more'}</span>
     </div>
   ));
 
