@@ -78,18 +78,32 @@ function Field({ label, value, onChange, area, rows = 2, placeholder, format }) 
   );
 }
 
-// Default element boxes per slide type — fractions of the card (x,y,w,h).
-// Content lives inside the safe band y∈[0.14,0.86]; header/footer own the rest.
+// AUTO-FLOW model: each slide has a text STACK box (elements flow top→down with
+// a FIXED gap, so head↔body spacing is identical on every slide) and an optional
+// IMAGE box. Both are draggable/resizable units. Fractions of the card (x,y,w,h);
+// content lives in the safe band y∈[0.14,0.86].
 const LAYOUTS = {
-  cover:      { headline: [.06, .15, .5, .45], sub: [.06, .68, .5, .16], image: [.60, .17, .34, .58] },
-  text_image: { headline: [.06, .15, .52, .16], body: [.06, .33, .52, .35], image: [.60, .16, .34, .46], callout: [.06, .72, .88, .13] },
-  two_block:  { body: [.06, .14, .88, .2], headline: [.06, .4, .5, .28], image: [.6, .42, .34, .28], callout: [.06, .74, .88, .12] },
-  steps:      { headline: [.06, .14, .88, .12], sub: [.06, .27, .88, .08], steps: [.06, .37, .56, .48], image: [.66, .4, .28, .42] },
-  sequence:   { headline: [.06, .14, .88, .12], sub: [.06, .27, .88, .08], seq: [.06, .38, .88, .36], callout: [.06, .74, .88, .12] },
-  stat:       { stat: [.06, .18, .5, .28], headline: [.06, .48, .5, .2], caption: [.06, .69, .5, .14], image: [.6, .18, .34, .58] },
-  quote:      { quote: [.08, .22, .84, .42], attribution: [.08, .68, .84, .1] },
-  list:       { headline: [.06, .14, .88, .14], bullets: [.06, .3, .56, .54], image: [.66, .34, .28, .42] },
-  cta:        { headline: [.06, .22, .88, .3], sub: [.06, .55, .74, .16], cta: [.06, .74, .6, .1] },
+  cover:      { stack: [.06, .15, .5, .64],  image: [.60, .17, .34, .58] },
+  text_image: { stack: [.06, .15, .5, .7],   image: [.58, .18, .36, .5] },
+  two_block:  { stack: [.06, .15, .5, .7],   image: [.58, .2, .36, .44] },
+  steps:      { stack: [.06, .15, .56, .7],  image: [.66, .34, .28, .42] },
+  sequence:   { stack: [.06, .15, .88, .7] },
+  stat:       { stack: [.06, .16, .5, .66],  image: [.6, .18, .34, .58] },
+  quote:      { stack: [.08, .2, .84, .55] },
+  list:       { stack: [.06, .15, .56, .7],  image: [.66, .32, .28, .42] },
+  cta:        { stack: [.06, .2, .82, .6] },
+};
+// Ordered elements inside each type's stack.
+const FLOW = {
+  cover: ['headline', 'divider', 'sub'],
+  text_image: ['headline', 'body', 'callout'],
+  two_block: ['body', 'divider', 'headline', 'callout'],
+  steps: ['headline', 'sub', 'steps'],
+  sequence: ['headline', 'sub', 'seq', 'callout'],
+  stat: ['stat', 'headline', 'caption'],
+  quote: ['quote', 'attribution'],
+  list: ['headline', 'bullets'],
+  cta: ['headline', 'sub', 'cta'],
 };
 
 // Auto-fit text: fill the box, shrink font-size until it fits (aligned first cut).
@@ -266,7 +280,7 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
                 <button onClick={() => resetLayout(cur)} title="reset layout & restore elements" style={{ ...btn, flex: 1 }}>↺</button>
                 <button onClick={() => delSlide(cur)} disabled={doc.slides.length <= 1} title="delete whole slide" style={{ ...btn, flex: 1, color: '#b45309' }}><Trash2 size={12} /></button>
               </div>
-              <div style={{ fontSize: 10, color: 'var(--ink-soft)', lineHeight: 1.4 }}>Edit exact copy above. On the slide (Edit on): click an element → drag to move, ◢ to resize, ✕ to delete just that element. The 🗑 here deletes the whole slide.</div>
+              <div style={{ fontSize: 10, color: 'var(--ink-soft)', lineHeight: 1.4 }}>Text auto-flows with a fixed, consistent gap on every slide. On the slide (Edit on): drag the text block or image to move, ◢ to resize, double-click text to edit, ✕ on an element to delete it. The 🗑 here deletes the whole slide.</div>
             </div>
           );
         })()}
@@ -289,6 +303,7 @@ function slideUsesImage(type) { return ['cover', 'text_image', 'two_block', 'ste
 // ---------------- one slide ----------------
 function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setBox, bare }) {
   const dragRef = useRef(null);
+  const [editingKey, setEditingKey] = useState(null);
   useLayoutEffect(() => {
     if (!edit) return;
     const mv = (e) => {
@@ -312,95 +327,123 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
 
   const startDrag = (e, key, mode) => { if (!edit) return; e.stopPropagation(); setSel(key); dragRef.current = { key, mode, sx: e.clientX, sy: e.clientY, box: boxOf(key) }; };
 
-  const hideEl = (k) => set({ hidden: { ...(slide.hidden || {}), [k]: true } });
-  // one positioned, draggable, resizable element box (with per-element delete)
+  const hidden = slide.hidden || {};
+  const LAY = LAYOUTS[slide.type] || LAYOUTS.text_image;
+  const flow = FLOW[slide.type] || FLOW.text_image;
+  const gapPx = Math.round(dh * 0.026);   // FIXED gap between stacked elements → identical head↔body spacing on every slide
+  const base = dw * 0.024;                 // 1em ≈ body size (22–26 @1080); the whole stack auto-fits from here
+  const hideEl = (k) => set({ hidden: { ...hidden, [k]: true } });
+
+  // draggable / resizable UNIT box (the text stack, or the image)
   const Box = ({ k, children }) => {
     const [x, y, w, h] = boxOf(k);
     const active = edit && sel === k;
     return (
-      <div onPointerDown={(e) => startDrag(e, k, 'move')} style={{ position: 'absolute', left: x * dw, top: y * dh, width: w * dw, height: h * dh, outline: active ? `2px solid ${GREEN}` : (edit ? '1px dashed rgba(4,151,105,.35)' : 'none'), outlineOffset: 2, borderRadius: 6, cursor: edit ? 'grab' : 'default' }}>
+      <div onPointerDown={(e) => { if (e.target.isContentEditable) return; startDrag(e, k, 'move'); }}
+        style={{ position: 'absolute', left: x * dw, top: y * dh, width: w * dw, height: h * dh, outline: active ? `2px solid ${GREEN}` : (edit ? '1px dashed rgba(4,151,105,.35)' : 'none'), outlineOffset: 2, borderRadius: 6, cursor: edit ? 'grab' : 'default' }}>
         {children}
-        {active && <div title="Delete this element" onPointerDown={(e) => { e.stopPropagation(); hideEl(k); setSel(null); }} style={{ position: 'absolute', right: -9, top: -9, width: 18, height: 18, background: '#fff', border: '2px solid #d1483a', color: '#d1483a', borderRadius: '50%', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>✕</div>}
-        {active && <div onPointerDown={(e) => { e.stopPropagation(); startDrag(e, k, 'resize'); }} style={{ position: 'absolute', right: -6, bottom: -6, width: 13, height: 13, background: '#fff', border: `2px solid ${GREEN}`, borderRadius: 3, cursor: 'nwse-resize' }} />}
+        {active && <div onPointerDown={(e) => { e.stopPropagation(); startDrag(e, k, 'resize'); }} style={{ position: 'absolute', right: -6, bottom: -6, width: 13, height: 13, background: '#fff', border: `2px solid ${GREEN}`, borderRadius: 3, cursor: 'nwse-resize', zIndex: 5 }} />}
       </div>
     );
   };
 
-  const eText = (field) => edit ? (e) => set({ [field]: e.currentTarget.innerText }) : undefined;
   const imgFill = (
     <div style={{ width: '100%', height: '100%', borderRadius: dw * 0.02, overflow: 'hidden', background: imgUrl ? `center/cover no-repeat url(${imgUrl})` : '#EAF6F1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: imgUrl ? 'none' : `1px dashed ${GREEN}55` }}>
       {!imgUrl && <span style={{ color: GREEN, fontSize: 10, opacity: .7 }}>image</span>}
     </div>
   );
 
-  const els = [];
-  const L = LAYOUTS[slide.type] || {};
-  const hidden = slide.hidden || {};
-  const has = (k) => (k in L || k in layout) && !hidden[k];
-  const push = (k, node) => els.push(<Box key={k} k={k}>{node}</Box>);
+  // a flow element wrapped with a per-element delete ✕ (in edit mode)
+  const wrap = (k, node, deletable = true) => (
+    <div key={k} style={{ position: 'relative', width: '100%' }}>
+      {node}
+      {edit && deletable && <div title="Delete this element" onPointerDown={(e) => { e.stopPropagation(); hideEl(k); }} style={{ position: 'absolute', right: -8, top: -8, width: 16, height: 16, background: '#fff', border: '2px solid #d1483a', color: '#d1483a', borderRadius: '50%', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4 }}>✕</div>}
+    </div>
+  );
+  // editable text element (em-sized; scales with the stack's auto-fit)
+  const T = (k, html, { em = 1, weight = 400, color = '#111', align = 'left', lh = 1.3, field = k } = {}) => wrap(k,
+    <div contentEditable={edit && editingKey === k} suppressContentEditableWarning
+      onDoubleClick={() => edit && setEditingKey(k)}
+      onBlur={(e) => { setEditingKey(null); set({ [field]: e.currentTarget.innerText }); }}
+      style={{ fontSize: `${em}em`, fontWeight: weight, color, textAlign: align, lineHeight: lh, outline: editingKey === k ? `1px solid ${GREEN}` : 'none', cursor: edit ? 'text' : 'default' }}
+      dangerouslySetInnerHTML={{ __html: html }} />
+  );
 
-  // Type scale per Recykal Social Media Guidelines (@1080: main 44-52, secondary 32-40, body 22-26, labels 14-18)
-  if (has('headline')) push('headline', <Fit editable={edit} onBlur={eText('headline')} html={richHead(slide.type === 'two_block' && slide.headTop ? `${slide.headTop} ${slide.headBottom || ''}`.trim() : slide.headline, slide.keyword)} maxFs={dw * ((slide.type === 'cover' || slide.type === 'cta') ? 0.048 : 0.037)} weight={800} />);
-  if (has('body')) push('body', <Fit editable={edit} onBlur={eText('body')} html={mdGreen(slide.body)} maxFs={dw * 0.024} weight={400} lh={1.5} />);
-  if (has('sub')) push('sub', <Fit editable={edit} onBlur={eText('sub')} html={mdGreen(slide.sub)} maxFs={dw * 0.023} color={slide.type === 'steps' || slide.type === 'sequence' ? '#555' : '#222'} lh={1.45} />);
-  if (has('caption')) push('caption', <Fit editable={edit} onBlur={eText('caption')} html={mdGreen(slide.caption)} maxFs={dw * 0.016} color="#777" />);
-  if (has('image')) push('image', imgFill);
-  if (has('callout') && slide.callout && slide.callout.trim()) push('callout', (
-    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 8, alignItems: 'center', borderRadius: dw * 0.02, padding: '0 12px', boxSizing: 'border-box', background: (slide.calloutStyle === 'outline') ? 'transparent' : GREEN, border: (slide.calloutStyle === 'outline') ? `2px solid ${GREEN}` : 'none' }}>
-      <div style={{ width: 26, height: 26, borderRadius: '50%', background: (slide.calloutStyle === 'outline') ? GREEN : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ArrowRt size={14} color={(slide.calloutStyle === 'outline') ? '#fff' : GREEN} /></div>
-      <Fit editable={edit} onBlur={eText('callout')} html={esc(slide.callout)} maxFs={dw * 0.024} weight={700} color={(slide.calloutStyle === 'outline') ? '#111' : '#fff'} extra={{ display: 'flex', alignItems: 'center' }} />
-    </div>
-  ));
-  if (has('steps')) push('steps', (
-    <Fit maxFs={dw * 0.024} extra={{ background: '#F4F6F5', borderRadius: dw * 0.02, padding: 10, boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
-        {(slide.steps || []).map((st, i) => (
-          <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
-            <div style={{ width: '1.7em', height: '1.7em', borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0, fontSize: '.9em' }}>{i + 1}</div>
-            <div style={{ fontWeight: 600, lineHeight: 1.25 }} dangerouslySetInnerHTML={{ __html: hlHead(st.text, st.keyword) }} />
-          </div>
-        ))}
-      </div>
-    </Fit>
-  ));
-  if (has('bullets')) push('bullets', (
-    <Fit maxFs={dw * 0.024}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
-        {(slide.bullets || []).filter(Boolean).map((bl, i) => (
-          <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
-            <div style={{ width: '1.3em', height: '1.3em', borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '.8em', marginTop: 2 }}>✓</div>
-            <div style={{ lineHeight: 1.3 }} dangerouslySetInnerHTML={{ __html: mdGreen(bl) }} />
-          </div>
-        ))}
-      </div>
-    </Fit>
-  ));
-  if (has('seq')) push('seq', (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-      {(slide.seq || []).map((q, i) => (
-        <React.Fragment key={i}>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ width: '100%', aspectRatio: '1', borderRadius: 10, background: imgUrl ? `center/cover no-repeat url(${imgUrl})` : '#EAF6F1', border: imgUrl ? 'none' : `1px dashed ${GREEN}55` }} />
-            <div style={{ fontSize: dw * 0.028, fontWeight: 700, color: GREEN, textTransform: 'uppercase', marginTop: 5 }}>{q.label}</div>
-          </div>
-          {i < slide.seq.length - 1 && <div style={{ flexShrink: 0 }}><ArrowRt size={20} color={GREEN} /></div>}
-        </React.Fragment>
-      ))}
-    </div>
-  ));
-  if (has('stat')) push('stat', (
-    <Fit maxFs={dw * 0.17} extra={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('value')} style={{ fontWeight: 800, color: GREEN, outline: 'none' }}>{slide.value}</span>
-      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('unit')} style={{ fontSize: '.35em', fontWeight: 700, color: GREEN, outline: 'none' }}>{slide.unit}</span>
-    </Fit>
-  ));
-  if (has('quote')) push('quote', <Fit editable={edit} onBlur={eText('quote')} html={`<span style="color:${GREEN};font-size:1.6em">&ldquo;</span> ` + esc(slide.quote)} maxFs={dw * 0.045} weight={700} lh={1.3} />);
-  if (has('attribution')) push('attribution', <Fit editable={edit} onBlur={eText('attribution')} html={esc(slide.attribution)} maxFs={dw * 0.016} weight={600} color={GREEN} />);
-  if (has('cta')) push('cta', (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center' }}>
-      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('ctaLabel')} style={{ display: 'inline-block', background: GREEN, color: '#fff', fontSize: dw * 0.024, fontWeight: 700, padding: '10px 20px', borderRadius: 30, outline: 'none' }}>{(slide.ctaLabel && slide.ctaLabel.trim()) ? slide.ctaLabel : 'Learn more'}</span>
-    </div>
-  ));
+  const flowNode = (k) => {
+    if (hidden[k]) return null;
+    switch (k) {
+      case 'headline': {
+        const txt = slide.type === 'two_block' ? [slide.headTop, slide.headBottom].filter(Boolean).join(' ') : slide.headline;
+        if (!txt && !edit) return null;
+        return T('headline', richHead(txt, slide.keyword), { em: (slide.type === 'cover' || slide.type === 'cta') ? 2.0 : 1.55, weight: 800, lh: 1.12, field: slide.type === 'two_block' ? 'headTop' : 'headline' });
+      }
+      case 'body': return (slide.body || edit) ? T('body', mdGreen(slide.body), { em: 1, lh: 1.5 }) : null;
+      case 'sub': return (slide.sub || edit) ? T('sub', mdGreen(slide.sub), { em: 0.92, color: (slide.type === 'steps' || slide.type === 'sequence') ? '#555' : '#222', lh: 1.45 }) : null;
+      case 'caption': return (slide.caption || edit) ? T('caption', mdGreen(slide.caption), { em: 0.66, color: '#777' }) : null;
+      case 'quote': return T('quote', `<span style="color:${GREEN};font-size:1.5em">&ldquo;</span> ` + esc(slide.quote), { em: 1.55, weight: 700, lh: 1.3 });
+      case 'attribution': return (slide.attribution || edit) ? T('attribution', esc(slide.attribution), { em: 0.66, weight: 600, color: GREEN }) : null;
+      case 'divider': return <div key="divider" style={{ width: dw * 0.12, height: 4, background: GREEN, borderRadius: 2, margin: '2px 0' }} />;
+      case 'callout': return (slide.callout && slide.callout.trim()) ? wrap('callout', (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', borderRadius: dw * 0.02, padding: '8px 12px', background: slide.calloutStyle === 'outline' ? 'transparent' : GREEN, border: slide.calloutStyle === 'outline' ? `2px solid ${GREEN}` : 'none' }}>
+          <div style={{ width: 26, height: 26, borderRadius: '50%', background: slide.calloutStyle === 'outline' ? GREEN : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ArrowRt size={14} color={slide.calloutStyle === 'outline' ? '#fff' : GREEN} /></div>
+          <div contentEditable={edit && editingKey === 'callout'} suppressContentEditableWarning onDoubleClick={() => edit && setEditingKey('callout')} onBlur={(e) => { setEditingKey(null); set({ callout: e.currentTarget.innerText }); }} style={{ fontSize: '0.92em', fontWeight: 700, color: slide.calloutStyle === 'outline' ? '#111' : '#fff', outline: 'none' }} dangerouslySetInnerHTML={{ __html: esc(slide.callout) }} />
+        </div>
+      )) : null;
+      case 'stat': return wrap('stat', (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+          <span contentEditable={edit && editingKey === 'stat'} suppressContentEditableWarning onDoubleClick={() => edit && setEditingKey('stat')} onBlur={(e) => { setEditingKey(null); set({ value: e.currentTarget.innerText }); }} style={{ fontSize: '3.6em', fontWeight: 800, color: GREEN, lineHeight: 1, outline: 'none' }}>{slide.value}</span>
+          <span contentEditable={edit && editingKey === 'stat'} suppressContentEditableWarning onBlur={(e) => set({ unit: e.currentTarget.innerText })} style={{ fontSize: '1.2em', fontWeight: 700, color: GREEN, outline: 'none' }}>{slide.unit}</span>
+        </div>
+      ));
+      case 'steps': return wrap('steps', (
+        <div style={{ background: '#F4F6F5', borderRadius: dw * 0.02, padding: 10, display: 'flex', flexDirection: 'column', gap: '0.5em' }}>
+          {(slide.steps || []).map((st, i) => (
+            <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+              <div style={{ width: '1.7em', height: '1.7em', borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0, fontSize: '.85em' }}>{i + 1}</div>
+              <div style={{ fontSize: '0.92em', fontWeight: 600, lineHeight: 1.25 }} dangerouslySetInnerHTML={{ __html: hlHead(st.text, st.keyword) }} />
+            </div>
+          ))}
+        </div>
+      ));
+      case 'bullets': return wrap('bullets', (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5em' }}>
+          {(slide.bullets || []).filter(Boolean).map((bl, i) => (
+            <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+              <div style={{ width: '1.3em', height: '1.3em', borderRadius: '50%', background: GREEN, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '.8em', marginTop: 2 }}>✓</div>
+              <div style={{ fontSize: '0.92em', lineHeight: 1.3 }} dangerouslySetInnerHTML={{ __html: mdGreen(bl) }} />
+            </div>
+          ))}
+        </div>
+      ));
+      case 'seq': return wrap('seq', (
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center' }}>
+          {(slide.seq || []).map((q, i) => (
+            <React.Fragment key={i}>
+              <div style={{ textAlign: 'center', flex: 1 }}>
+                <div style={{ width: '100%', aspectRatio: '1', borderRadius: dw * 0.02, background: imgUrl ? `center/cover no-repeat url(${imgUrl})` : '#EAF6F1', border: imgUrl ? 'none' : `1px dashed ${GREEN}55` }} />
+                <div style={{ fontSize: '0.7em', fontWeight: 700, color: GREEN, textTransform: 'uppercase', marginTop: 5 }}>{q.label}</div>
+              </div>
+              {i < slide.seq.length - 1 && <div style={{ flexShrink: 0 }}><ArrowRt size={18} color={GREEN} /></div>}
+            </React.Fragment>
+          ))}
+        </div>
+      ));
+      case 'cta': return wrap('cta', (
+        <span contentEditable={edit && editingKey === 'cta'} suppressContentEditableWarning onDoubleClick={() => edit && setEditingKey('cta')} onBlur={(e) => { setEditingKey(null); set({ ctaLabel: e.currentTarget.innerText }); }} style={{ display: 'inline-block', background: GREEN, color: '#fff', fontSize: '1em', fontWeight: 700, padding: '10px 20px', borderRadius: 30, outline: 'none' }}>{(slide.ctaLabel && slide.ctaLabel.trim()) ? slide.ctaLabel : 'Learn more'}</span>
+      ));
+      default: return null;
+    }
+  };
+
+  const stackChildren = flow.map(flowNode).filter(Boolean);
+  const els = [
+    <Box key="stack" k="stack">
+      <Fit maxFs={base} extra={{ display: 'flex', flexDirection: 'column', gap: gapPx, justifyContent: 'flex-start' }}>
+        {stackChildren}
+      </Fit>
+    </Box>,
+  ];
+  if (LAY.image && !hidden.image) els.push(<Box key="image" k="image">{imgFill}</Box>);
 
   return (
     <div>
