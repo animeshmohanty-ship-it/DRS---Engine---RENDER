@@ -313,17 +313,32 @@ function slideUsesImage(type) { return ['cover', 'text_image', 'two_block', 'ste
 function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setBox, bare }) {
   const dragRef = useRef(null);
   const [editingKey, setEditingKey] = useState(null);
+  const [guides, setGuides] = useState(null);   // { v:[xFrac], h:[yFrac] } smart-alignment lines while dragging
   useLayoutEffect(() => {
     if (!edit) return;
     const mv = (e) => {
       const d = dragRef.current; if (!d) return;
       const nx = (e.clientX - d.sx) / dw, ny = (e.clientY - d.sy) / dh;
       let box = [...d.box];
-      if (d.mode === 'move') { box[0] = Math.max(0, Math.min(1 - box[2], d.box[0] + nx)); box[1] = Math.max(0, Math.min(1 - box[3], d.box[1] + ny)); }
-      else { box[2] = Math.max(0.1, Math.min(1 - box[0], d.box[2] + nx)); box[3] = Math.max(0.06, Math.min(1 - box[1], d.box[3] + ny)); }
+      if (d.mode === 'move') {
+        box[0] = Math.max(0, Math.min(1 - box[2], d.box[0] + nx));
+        box[1] = Math.max(0, Math.min(1 - box[3], d.box[1] + ny));
+        // smart guides + snap (Figma-style): align left/center/right & top/center/bottom
+        const g = { v: [], h: [] };
+        const thx = 7 / dw, thy = 7 / dh;
+        let bx = null, bxd = thx;
+        for (const [pos, off] of [[box[0], 0], [box[0] + box[2] / 2, box[2] / 2], [box[0] + box[2], box[2]]])
+          for (const t of (d.tv || [])) { const dd = Math.abs(pos - t); if (dd < bxd) { bxd = dd; bx = { t, off }; } }
+        if (bx) { box[0] = Math.max(0, Math.min(1 - box[2], bx.t - bx.off)); g.v.push(bx.t); }
+        let by = null, byd = thy;
+        for (const [pos, off] of [[box[1], 0], [box[1] + box[3] / 2, box[3] / 2], [box[1] + box[3], box[3]]])
+          for (const t of (d.th || [])) { const dd = Math.abs(pos - t); if (dd < byd) { byd = dd; by = { t, off }; } }
+        if (by) { box[1] = Math.max(0, Math.min(1 - box[3], by.t - by.off)); g.h.push(by.t); }
+        setGuides(g.v.length || g.h.length ? g : null);
+      } else { box[2] = Math.max(0.1, Math.min(1 - box[0], d.box[2] + nx)); box[3] = Math.max(0.06, Math.min(1 - box[1], d.box[3] + ny)); }
       setBox(d.key, box);
     };
-    const up = () => { dragRef.current = null; };
+    const up = () => { dragRef.current = null; setGuides(null); };
     window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
     return () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
   }, [edit, dw, dh, setBox]);
@@ -334,7 +349,23 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   const layout = slide.layout || {};
   const boxOf = (key) => layout[key] || (LAYOUTS[slide.type] && LAYOUTS[slide.type][key]) || [.06, .15, .5, .3];
 
-  const startDrag = (e, key, mode) => { if (!edit) return; e.stopPropagation(); setSel(key); dragRef.current = { key, mode, sx: e.clientX, sy: e.clientY, box: boxOf(key) }; };
+  // Snap targets: every OTHER box's left/center/right (→ vertical lines) and
+  // top/center/bottom (→ horizontal lines), plus the card edges/center/margins.
+  const snapTargets = (exceptKey) => {
+    const LAY0 = LAYOUTS[slide.type] || LAYOUTS.text_image;
+    const flow0 = FLOW[slide.type] || FLOW.text_image;
+    const hid = slide.hidden || {}; const lay = slide.layout || {};
+    const keys = ['stack'];
+    if (LAY0.image && !hid.image) keys.push('image');
+    flow0.forEach((k) => { if (lay[k] && !hid[k]) keys.push(k); });
+    const tv = [0, .06, .5, .94, 1], th = [0, .06, .5, .94, 1];
+    keys.filter((k) => k !== exceptKey).forEach((k) => {
+      const [x, y, w, h] = lay[k] || LAY0[k] || [.06, .15, .5, .3];
+      tv.push(x, x + w / 2, x + w); th.push(y, y + h / 2, y + h);
+    });
+    return { tv, th };
+  };
+  const startDrag = (e, key, mode) => { if (!edit) return; e.stopPropagation(); setSel(key); const t = mode === 'move' ? snapTargets(key) : {}; dragRef.current = { key, mode, sx: e.clientX, sy: e.clientY, box: boxOf(key), tv: t.tv, th: t.th }; };
 
   const hidden = slide.hidden || {};
   const sz = (k) => (slide.size && slide.size[k]) || 1;   // per-element text-size multiplier
@@ -352,7 +383,8 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
     const cr = card.getBoundingClientRect(), r = wrapEl.getBoundingClientRect();
     const box = [Math.max(0, (r.left - cr.left) / dw), Math.max(0, (r.top - cr.top) / dh), Math.min(0.9, r.width / dw), Math.max(0.06, r.height / dh)];
     setBox(k, box); setSel(k);
-    dragRef.current = { key: k, mode: 'move', sx: e.clientX, sy: e.clientY, box };
+    const t = snapTargets(k);
+    dragRef.current = { key: k, mode: 'move', sx: e.clientX, sy: e.clientY, box, tv: t.tv, th: t.th };
   };
   const reflow = (k) => { const l = { ...(slide.layout || {}) }; delete l[k]; set({ layout: l }); setSel(null); };
 
@@ -482,6 +514,9 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
         <img src="/logo-dark.png" alt="recykal" crossOrigin="anonymous" style={{ position: 'absolute', left: PAD, top: PAD, height: dw * 0.088, width: 'auto' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         {/* content element boxes */}
         {els}
+        {/* smart alignment guides (while dragging) */}
+        {edit && guides && guides.v.map((x, i) => <div key={'gv' + i} style={{ position: 'absolute', left: x * dw, top: 0, width: 1, height: dh, background: '#FF2D8A', pointerEvents: 'none', zIndex: 20 }} />)}
+        {edit && guides && guides.h.map((y, i) => <div key={'gh' + i} style={{ position: 'absolute', top: y * dh, left: 0, height: 1, width: dw, background: '#FF2D8A', pointerEvents: 'none', zIndex: 20 }} />)}
         {/* footer (reserved) — small label scale (14-18 @1080) */}
         <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: dw * 0.016, color: '#111', fontWeight: 500 }}>www.recykal.com</div>
         {!isLast && <div style={{ position: 'absolute', right: PAD, bottom: PAD, width: 32, height: 32, borderRadius: '50%', background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowRt size={17} color="#fff" /></div>}
