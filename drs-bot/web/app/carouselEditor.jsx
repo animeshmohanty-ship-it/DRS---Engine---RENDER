@@ -20,13 +20,14 @@ function hlHead(text, keyword) {
   if (i < 0) return t;
   return t.slice(0, i) + `<span style="color:${GREEN}">` + t.slice(i, i + k.length) + '</span>' + t.slice(i + k.length);
 }
-// Inline markup: **x** = green + bold (highlight), __x__ = plain bold (black).
+// Inline markup: **x** = green+bold, __x__ = plain bold, ==x== = green highlighter.
 const mdGreen = (text) => esc(text)
+  .replace(/==(.+?)==/g, `<span style="background:rgba(4,151,105,.20);border-radius:3px;padding:0 .12em">$1</span>`)
   .replace(/\*\*(.+?)\*\*/g, `<b style="color:${GREEN}">$1</b>`)
   .replace(/__(.+?)__/g, '<b>$1</b>')
   .replace(/\n/g, '<br>');
 // Headline that honors inline markers if present, else greens the keyword.
-const richHead = (text, keyword) => (/(\*\*|__)/.test(text || '') ? mdGreen(text) : hlHead(text, keyword));
+const richHead = (text, keyword) => (/(\*\*|__|==)/.test(text || '') ? mdGreen(text) : hlHead(text, keyword));
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 
 // Pick the closest standard image aspect ratio to a box's width/height, so a
@@ -44,7 +45,7 @@ const ArrowRt = ({ size = 16, color = '#fff' }) => (
 // Stable (module-level) form field — defined outside render so inputs don't
 // remount on each keystroke (which would drop focus).
 const INP = { width: '100%', fontSize: 12, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', boxSizing: 'border-box', marginTop: 2 };
-function Field({ label, value, onChange, area, rows = 2, placeholder, format }) {
+function Field({ label, value, onChange, area, rows = 2, placeholder, format, onSize, size }) {
   const ref = useRef(null);
   // wrap the current selection in a marker (** = green+bold, __ = bold)
   const wrap = (m) => {
@@ -55,23 +56,29 @@ function Field({ label, value, onChange, area, rows = 2, placeholder, format }) 
   };
   const clearFmt = () => {
     const ta = ref.current; const v = value || '';
-    const strip = (t) => t.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1');
+    const strip = (t) => t.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1').replace(/==(.+?)==/g, '$1');
     if (!ta || ta.selectionStart == null || ta.selectionStart === ta.selectionEnd) { onChange(strip(v)); return; }
     const s = ta.selectionStart, e = ta.selectionEnd;
     onChange(v.slice(0, s) + strip(v.slice(s, e)) + v.slice(e));
   };
-  const fb = { fontSize: 10, padding: '2px 8px', border: '1px solid var(--line)', borderRadius: 6, cursor: 'pointer', background: 'var(--bg)', color: 'var(--ink)' };
+  const fb = { fontSize: 10, padding: '2px 7px', border: '1px solid var(--line)', borderRadius: 6, cursor: 'pointer', background: 'var(--bg)', color: 'var(--ink)' };
   const stop = (e) => e.preventDefault(); // keep the field's selection when clicking a button
   return (
     <label style={{ display: 'block', fontSize: 10, color: 'var(--ink-soft)', marginBottom: 6 }}>{label}
       {area
         ? <textarea ref={ref} value={value || ''} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} style={{ ...INP, resize: 'vertical' }} />
         : <input ref={ref} value={value || ''} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={INP} />}
-      {format && (
-        <div style={{ display: 'flex', gap: 4, marginTop: 3 }}>
-          <button type="button" onMouseDown={stop} onClick={() => wrap('**')} style={{ ...fb, color: GREEN, fontWeight: 700 }} title="Select text, then make it green + bold">Green</button>
-          <button type="button" onMouseDown={stop} onClick={() => wrap('__')} style={{ ...fb, fontWeight: 700 }} title="Select text, then make it bold">Bold</button>
-          <button type="button" onMouseDown={stop} onClick={clearFmt} style={fb} title="Remove formatting from the selection (or all if none selected)">Clear</button>
+      {(format || onSize) && (
+        <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+          {onSize && <><button type="button" onMouseDown={stop} onClick={() => onSize(0.1)} style={{ ...fb, fontWeight: 700 }} title="Bigger text">A+</button>
+            <button type="button" onMouseDown={stop} onClick={() => onSize(-0.1)} style={{ ...fb, fontSize: 8, fontWeight: 700 }} title="Smaller text">A−</button>
+            {typeof size === 'number' && Math.abs(size - 1) > 0.001 && <span style={{ fontSize: 9, color: 'var(--ink-soft)' }}>{Math.round(size * 100)}%</span>}</>}
+          {format && <>
+            <button type="button" onMouseDown={stop} onClick={() => wrap('**')} style={{ ...fb, color: GREEN, fontWeight: 700 }} title="Select text → green + bold">Green</button>
+            <button type="button" onMouseDown={stop} onClick={() => wrap('__')} style={{ ...fb, fontWeight: 700 }} title="Select text → bold">Bold</button>
+            <button type="button" onMouseDown={stop} onClick={() => wrap('==')} style={{ ...fb, background: 'rgba(4,151,105,.20)' }} title="Select text → highlight">Highlight</button>
+            <button type="button" onMouseDown={stop} onClick={clearFmt} style={fb} title="Remove formatting from the selection (or all)">Clear</button>
+          </>}
         </div>
       )}
     </label>
@@ -228,6 +235,8 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
         <Slide slide={slide} idx={cur} total={doc.slides.length} dw={dw} dh={dh} edit={edit} sel={sel} setSel={setSel} imgUrl={doc.images[slide?.id]} set={(patch) => setSlide(cur, patch)} setBox={(key, box) => setLayout(cur, key, box)} />
         {slide && (() => {
           const S = (patch) => setSlide(cur, patch);
+          const sizer = (key) => (d) => S({ size: { ...(slide.size || {}), [key]: Math.max(0.6, Math.min(2, (((slide.size || {})[key]) || 1) + d)) } });
+          const szOf = (key) => ((slide.size || {})[key]) || 1;
           const F = Field;
           const arr = (key, i, field) => (v) => S({ [key]: (slide[key] || []).map((it, j) => (j === i ? (field ? { ...it, [field]: v } : v) : it)) });
           const t = slide.type;
@@ -235,11 +244,11 @@ export default function CarouselEditor({ id, market = '', model, doc: docProp, o
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: 240, maxHeight: dh + 40, overflowY: 'auto', paddingRight: 4 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>{t} · content</div>
               {/* per-slide EXACT copy fields */}
-              {t === 'two_block' ? <><F label="Heading (top)" value={slide.headTop} onChange={(v) => S({ headTop: v })} format /><F label="Heading (bottom)" value={slide.headBottom} onChange={(v) => S({ headBottom: v })} format /></>
-                : t !== 'quote' ? <F label="Headline" value={slide.headline} onChange={(v) => S({ headline: v })} format /> : null}
+              {t === 'two_block' ? <><F label="Heading (top)" value={slide.headTop} onChange={(v) => S({ headTop: v })} format onSize={sizer('headline')} size={szOf('headline')} /><F label="Heading (bottom)" value={slide.headBottom} onChange={(v) => S({ headBottom: v })} format /></>
+                : t !== 'quote' ? <F label="Headline" value={slide.headline} onChange={(v) => S({ headline: v })} format onSize={sizer('headline')} size={szOf('headline')} /> : null}
               {t !== 'quote' && t !== 'stat' && <F label="Green keyword (optional — or use Green button)" value={slide.keyword} onChange={(v) => S({ keyword: v })} />}
-              {['cover', 'steps', 'sequence', 'cta'].includes(t) && <F label="Subtext" value={slide.sub} onChange={(v) => S({ sub: v })} area format />}
-              {['text_image', 'two_block'].includes(t) && <F label="Body" value={slide.body} onChange={(v) => S({ body: v })} area format />}
+              {['cover', 'steps', 'sequence', 'cta'].includes(t) && <F label="Subtext" value={slide.sub} onChange={(v) => S({ sub: v })} area format onSize={sizer('sub')} size={szOf('sub')} />}
+              {['text_image', 'two_block'].includes(t) && <F label="Body" value={slide.body} onChange={(v) => S({ body: v })} area format onSize={sizer('body')} size={szOf('body')} />}
               {['text_image', 'two_block', 'sequence'].includes(t) && <F label="Callout" value={slide.callout} onChange={(v) => S({ callout: v })} format />}
               {t === 'steps' && (slide.steps || []).map((st, i) => <F key={i} label={`Step ${i + 1}`} value={st.text} onChange={arr('steps', i, 'text')} />)}
               {t === 'sequence' && (slide.seq || []).map((q, i) => <F key={i} label={`Label ${i + 1}`} value={q.label} onChange={arr('seq', i, 'label')} />)}
@@ -328,6 +337,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   const startDrag = (e, key, mode) => { if (!edit) return; e.stopPropagation(); setSel(key); dragRef.current = { key, mode, sx: e.clientX, sy: e.clientY, box: boxOf(key) }; };
 
   const hidden = slide.hidden || {};
+  const sz = (k) => (slide.size && slide.size[k]) || 1;   // per-element text-size multiplier
   const LAY = LAYOUTS[slide.type] || LAYOUTS.text_image;
   const flow = FLOW[slide.type] || FLOW.text_image;
   const gapPx = Math.round(dh * 0.026);   // FIXED gap between stacked elements → identical head↔body spacing on every slide
@@ -390,12 +400,12 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
       case 'headline': {
         const txt = slide.type === 'two_block' ? [slide.headTop, slide.headBottom].filter(Boolean).join(' ') : slide.headline;
         if (!txt && !edit) return null;
-        return T('headline', richHead(txt, slide.keyword), { em: (slide.type === 'cover' || slide.type === 'cta') ? 2.0 : 1.55, weight: 800, lh: 1.12, field: slide.type === 'two_block' ? 'headTop' : 'headline' });
+        return T('headline', richHead(txt, slide.keyword), { em: ((slide.type === 'cover' || slide.type === 'cta') ? 2.0 : 1.55) * sz('headline'), weight: 800, lh: 1.12, field: slide.type === 'two_block' ? 'headTop' : 'headline' });
       }
-      case 'body': return (slide.body || edit) ? T('body', mdGreen(slide.body), { em: 1, lh: 1.5 }) : null;
-      case 'sub': return (slide.sub || edit) ? T('sub', mdGreen(slide.sub), { em: 0.92, color: (slide.type === 'steps' || slide.type === 'sequence') ? '#555' : '#222', lh: 1.45 }) : null;
-      case 'caption': return (slide.caption || edit) ? T('caption', mdGreen(slide.caption), { em: 0.66, color: '#777' }) : null;
-      case 'quote': return T('quote', `<span style="color:${GREEN};font-size:1.5em">&ldquo;</span> ` + esc(slide.quote), { em: 1.55, weight: 700, lh: 1.3 });
+      case 'body': return (slide.body || edit) ? T('body', mdGreen(slide.body), { em: 1 * sz('body'), lh: 1.5 }) : null;
+      case 'sub': return (slide.sub || edit) ? T('sub', mdGreen(slide.sub), { em: 0.92 * sz('sub'), color: (slide.type === 'steps' || slide.type === 'sequence') ? '#555' : '#222', lh: 1.45 }) : null;
+      case 'caption': return (slide.caption || edit) ? T('caption', mdGreen(slide.caption), { em: 0.66 * sz('caption'), color: '#777' }) : null;
+      case 'quote': return T('quote', `<span style="color:${GREEN};font-size:1.5em">&ldquo;</span> ` + esc(slide.quote), { em: 1.55 * sz('quote'), weight: 700, lh: 1.3 });
       case 'attribution': return (slide.attribution || edit) ? T('attribution', esc(slide.attribution), { em: 0.66, weight: 600, color: GREEN }) : null;
       case 'divider': return <div key="divider" style={{ width: dw * 0.12, height: 4, background: GREEN, borderRadius: 2, margin: '2px 0' }} />;
       case 'callout': return (slide.callout && slide.callout.trim()) ? wrap('callout', (
