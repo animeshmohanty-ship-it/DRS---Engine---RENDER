@@ -298,7 +298,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
 
   const eText = (field) => edit ? (e) => set({ [field]: e.currentTarget.innerText }) : undefined;
   const imgFill = (
-    <div style={{ width: '100%', height: '100%', borderRadius: 12, overflow: 'hidden', background: imgUrl ? `center/cover no-repeat url(${imgUrl})` : '#EAF6F1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: imgUrl ? 'none' : `1px dashed ${GREEN}55` }}>
+    <div style={{ width: '100%', height: '100%', borderRadius: dw * 0.02, overflow: 'hidden', background: imgUrl ? `center/cover no-repeat url(${imgUrl})` : '#EAF6F1', display: 'flex', alignItems: 'center', justifyContent: 'center', border: imgUrl ? 'none' : `1px dashed ${GREEN}55` }}>
       {!imgUrl && <span style={{ color: GREEN, fontSize: 10, opacity: .7 }}>image</span>}
     </div>
   );
@@ -309,19 +309,20 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   const has = (k) => (k in L || k in layout) && !hidden[k];
   const push = (k, node) => els.push(<Box key={k} k={k}>{node}</Box>);
 
-  if (has('headline')) push('headline', <Fit editable={edit} onBlur={eText('headline')} html={hlHead(slide.type === 'two_block' && slide.headTop ? `${slide.headTop} ${slide.headBottom || ''}`.trim() : slide.headline, slide.keyword)} maxFs={dw * (slide.type === 'cta' ? 0.085 : slide.type === 'cover' ? 0.078 : 0.06)} weight={800} />);
-  if (has('body')) push('body', <Fit editable={edit} onBlur={eText('body')} html={mdGreen(slide.body)} maxFs={dw * 0.046} weight={400} lh={1.5} />);
-  if (has('sub')) push('sub', <Fit editable={edit} onBlur={eText('sub')} html={mdGreen(slide.sub)} maxFs={dw * 0.04} color={slide.type === 'steps' || slide.type === 'sequence' ? '#555' : '#222'} lh={1.45} />);
-  if (has('caption')) push('caption', <Fit editable={edit} onBlur={eText('caption')} html={mdGreen(slide.caption)} maxFs={dw * 0.034} color="#777" />);
+  // Type scale per Recykal Social Media Guidelines (@1080: main 44-52, secondary 32-40, body 22-26, labels 14-18)
+  if (has('headline')) push('headline', <Fit editable={edit} onBlur={eText('headline')} html={hlHead(slide.type === 'two_block' && slide.headTop ? `${slide.headTop} ${slide.headBottom || ''}`.trim() : slide.headline, slide.keyword)} maxFs={dw * ((slide.type === 'cover' || slide.type === 'cta') ? 0.048 : 0.037)} weight={800} />);
+  if (has('body')) push('body', <Fit editable={edit} onBlur={eText('body')} html={mdGreen(slide.body)} maxFs={dw * 0.024} weight={400} lh={1.5} />);
+  if (has('sub')) push('sub', <Fit editable={edit} onBlur={eText('sub')} html={mdGreen(slide.sub)} maxFs={dw * 0.023} color={slide.type === 'steps' || slide.type === 'sequence' ? '#555' : '#222'} lh={1.45} />);
+  if (has('caption')) push('caption', <Fit editable={edit} onBlur={eText('caption')} html={mdGreen(slide.caption)} maxFs={dw * 0.016} color="#777" />);
   if (has('image')) push('image', imgFill);
   if (has('callout') && slide.callout && slide.callout.trim()) push('callout', (
-    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 8, alignItems: 'center', borderRadius: 12, padding: '0 12px', boxSizing: 'border-box', background: (slide.calloutStyle === 'outline') ? 'transparent' : GREEN, border: (slide.calloutStyle === 'outline') ? `2px solid ${GREEN}` : 'none' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', gap: 8, alignItems: 'center', borderRadius: dw * 0.02, padding: '0 12px', boxSizing: 'border-box', background: (slide.calloutStyle === 'outline') ? 'transparent' : GREEN, border: (slide.calloutStyle === 'outline') ? `2px solid ${GREEN}` : 'none' }}>
       <div style={{ width: 26, height: 26, borderRadius: '50%', background: (slide.calloutStyle === 'outline') ? GREEN : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><ArrowRt size={14} color={(slide.calloutStyle === 'outline') ? '#fff' : GREEN} /></div>
-      <Fit editable={edit} onBlur={eText('callout')} html={esc(slide.callout)} maxFs={dw * 0.04} weight={700} color={(slide.calloutStyle === 'outline') ? '#111' : '#fff'} extra={{ display: 'flex', alignItems: 'center' }} />
+      <Fit editable={edit} onBlur={eText('callout')} html={esc(slide.callout)} maxFs={dw * 0.024} weight={700} color={(slide.calloutStyle === 'outline') ? '#111' : '#fff'} extra={{ display: 'flex', alignItems: 'center' }} />
     </div>
   ));
   if (has('steps')) push('steps', (
-    <Fit maxFs={dw * 0.04} extra={{ background: '#F4F6F5', borderRadius: 12, padding: 10, boxSizing: 'border-box' }}>
+    <Fit maxFs={dw * 0.024} extra={{ background: '#F4F6F5', borderRadius: dw * 0.02, padding: 10, boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
         {(slide.steps || []).map((st, i) => (
           <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
@@ -333,7 +334,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
     </Fit>
   ));
   if (has('bullets')) push('bullets', (
-    <Fit maxFs={dw * 0.042}>
+    <Fit maxFs={dw * 0.024}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
         {(slide.bullets || []).filter(Boolean).map((bl, i) => (
           <div key={i} style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
@@ -363,11 +364,11 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
       <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('unit')} style={{ fontSize: '.35em', fontWeight: 700, color: GREEN, outline: 'none' }}>{slide.unit}</span>
     </Fit>
   ));
-  if (has('quote')) push('quote', <Fit editable={edit} onBlur={eText('quote')} html={`<span style="color:${GREEN};font-size:1.6em">&ldquo;</span> ` + esc(slide.quote)} maxFs={dw * 0.062} weight={700} lh={1.3} />);
-  if (has('attribution')) push('attribution', <Fit editable={edit} onBlur={eText('attribution')} html={esc(slide.attribution)} maxFs={dw * 0.036} weight={600} color={GREEN} />);
+  if (has('quote')) push('quote', <Fit editable={edit} onBlur={eText('quote')} html={`<span style="color:${GREEN};font-size:1.6em">&ldquo;</span> ` + esc(slide.quote)} maxFs={dw * 0.045} weight={700} lh={1.3} />);
+  if (has('attribution')) push('attribution', <Fit editable={edit} onBlur={eText('attribution')} html={esc(slide.attribution)} maxFs={dw * 0.016} weight={600} color={GREEN} />);
   if (has('cta')) push('cta', (
     <div style={{ height: '100%', display: 'flex', alignItems: 'center' }}>
-      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('ctaLabel')} style={{ display: 'inline-block', background: GREEN, color: '#fff', fontSize: dw * 0.042, fontWeight: 700, padding: '11px 22px', borderRadius: 30, outline: 'none' }}>{(slide.ctaLabel && slide.ctaLabel.trim()) ? slide.ctaLabel : 'Learn more'}</span>
+      <span contentEditable={edit} suppressContentEditableWarning onBlur={eText('ctaLabel')} style={{ display: 'inline-block', background: GREEN, color: '#fff', fontSize: dw * 0.024, fontWeight: 700, padding: '10px 20px', borderRadius: 30, outline: 'none' }}>{(slide.ctaLabel && slide.ctaLabel.trim()) ? slide.ctaLabel : 'Learn more'}</span>
     </div>
   ));
 
@@ -375,15 +376,12 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
     <div>
       {/* bare = the exact exported artwork: square full-bleed, no shadow (matches the IG/LinkedIn slide). Editor preview keeps a rounded card + shadow. */}
       <div onPointerDown={() => edit && setSel(null)} style={{ width: dw, height: dh, background: '#fff', borderRadius: bare ? 0 : 14, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, system-ui, sans-serif', boxShadow: bare ? 'none' : '0 6px 24px rgba(10,20,40,.14)', boxSizing: 'border-box' }}>
-        {/* header (reserved) */}
-        <div style={{ position: 'absolute', left: PAD, top: PAD, display: 'flex', alignItems: 'center', gap: 7 }}>
-          <img src="/recykal-mark.png" alt="" style={{ height: 22, width: 'auto' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-          <div style={{ lineHeight: 1 }}><div style={{ fontWeight: 800, fontSize: 17, color: '#111' }}>recykal</div><div style={{ fontSize: 8.5, color: '#333', marginTop: 1 }}>Sustainable Circularity</div></div>
-        </div>
+        {/* header — official logo lockup, top-left, fixed size (no effects) */}
+        <img src="/logo-dark.png" alt="recykal" crossOrigin="anonymous" style={{ position: 'absolute', left: PAD, top: PAD, height: dw * 0.088, width: 'auto' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         {/* content element boxes */}
         {els}
-        {/* footer (reserved) */}
-        <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: 11, color: '#111', fontWeight: 500 }}>www.recykal.com</div>
+        {/* footer (reserved) — small label scale (14-18 @1080) */}
+        <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: dw * 0.016, color: '#111', fontWeight: 500 }}>www.recykal.com{total > 1 ? `   ·   ${idx + 1}/${total}` : ''}</div>
         {!isLast && <div style={{ position: 'absolute', right: PAD, bottom: PAD, width: 32, height: 32, borderRadius: '50%', background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowRt size={17} color="#fff" /></div>}
         <div style={{ position: 'absolute', left: 0, bottom: 0, width: dw * 0.22, height: 5, background: '#111' }} />
       </div>
