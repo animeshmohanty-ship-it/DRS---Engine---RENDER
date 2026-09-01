@@ -473,7 +473,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
         {/* content element boxes */}
         {els}
         {/* footer (reserved) — small label scale (14-18 @1080) */}
-        <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: dw * 0.016, color: '#111', fontWeight: 500 }}>www.recykal.com{total > 1 ? `   ·   ${idx + 1}/${total}` : ''}</div>
+        <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: dw * 0.016, color: '#111', fontWeight: 500 }}>www.recykal.com</div>
         {!isLast && <div style={{ position: 'absolute', right: PAD, bottom: PAD, width: 32, height: 32, borderRadius: '50%', background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowRt size={17} color="#fff" /></div>}
         <div style={{ position: 'absolute', left: 0, bottom: 0, width: dw * 0.22, height: 5, background: '#111' }} />
       </div>
