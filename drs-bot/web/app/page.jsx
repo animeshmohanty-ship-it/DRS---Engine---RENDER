@@ -2328,15 +2328,56 @@ export default function App() {
     runAssetGen(id, spec);
   };
   const retryAsset = (a) => runAssetGen(a.id, { channel: a.channel, format: a.format, hook: a.hook, objective: a.objective });
+  // Split pasted approved copy into slides DETERMINISTICALLY (no AI): each block
+  // = one slide (split on "Slide N" or blank lines), line 1 = headline, rest =
+  // body. **bold** markers are preserved and render bold+green. Nothing dropped
+  // or reordered.
+  const parseApprovedCopy = (text) => {
+    const raw = String(text || '').replace(/\r/g, '').trim();
+    const blocks = /^\s*slide\s*\d+/im.test(raw) ? raw.split(/^\s*slide\s*\d+\s*[:.)-]?\s*$/im) : raw.split(/\n\s*\n/);
+    return blocks.map((b) => {
+      const lines = b.split('\n').map((l) => l.trim()).filter((l) => l && !/^slide\s*\d+\s*[:.)-]?\s*$/i.test(l));
+      return { headline: lines[0] || '', body: lines.slice(1).join('\n') };
+    }).filter((x) => x.headline);
+  };
+
+  // Preserve bold when pasting from Chat/Docs: convert pasted HTML <b>/<strong>/
+  // bold-styled spans (and plain *x* / **x**) into **markdown** so bold->green survives.
+  const domToMd = (node) => {
+    let out = '';
+    node.childNodes.forEach((ch) => {
+      if (ch.nodeType === 3) { out += ch.textContent; return; }
+      if (ch.nodeType !== 1) return;
+      if (ch.tagName === 'BR') { out += '\n'; return; }
+      const fw = ch.style && ch.style.fontWeight;
+      const bold = ch.tagName === 'B' || ch.tagName === 'STRONG' || fw === 'bold' || parseInt(fw) >= 600;
+      let inner = domToMd(ch);
+      if (bold && inner.trim()) inner = '**' + inner.trim() + '**';
+      out += inner;
+      if (/^(P|DIV|LI|TR|H[1-6])$/.test(ch.tagName)) out += '\n';
+    });
+    return out;
+  };
+  const pasteApprovedCopy = (e) => {
+    const cd = e.clipboardData; if (!cd) return;
+    const html = cd.getData('text/html');
+    let md;
+    if (html) { try { md = domToMd(new DOMParser().parseFromString(html, 'text/html').body).replace(/\n{3,}/g, '\n\n').trim(); } catch { md = null; } }
+    if (md == null) { const plain = cd.getData('text/plain') || ''; md = /\*\*/.test(plain) ? plain : plain.replace(/\*([^*\n]+)\*/g, '**$1**'); }
+    e.preventDefault();
+    const ta = e.target; const s = ta.selectionStart ?? ta.value.length; const en = ta.selectionEnd ?? ta.value.length;
+    setCarouselCopy(ta.value.slice(0, s) + md + ta.value.slice(en));
+  };
+
   // Generate a full DRS carousel (multi-slide) and add it to the library.
-  // Pass { approvedCopy } to lay out FINAL copy verbatim instead of AI-writing it.
+  // Pass { approvedCopy } to lay out FINAL copy verbatim (deterministic, no AI).
   const generateCarousel = async ({ approvedCopy = '' } = {}) => {
     const fromCopy = !!approvedCopy.trim();
     if ((!fromCopy && !carouselTopic.trim()) || carouselBusy) return;
     setActiveTab('creative');
     setCarouselBusy(true);
     const id = 'c' + Date.now() + Math.floor(Math.random() * 1000);
-    const hook = fromCopy ? (approvedCopy.trim().split('\n').find((l) => l.trim()) || 'Approved copy').slice(0, 60) : carouselTopic;
+    const hook = fromCopy ? (approvedCopy.trim().split('\n').find((l) => l.trim() && !/^slide\s*\d+/i.test(l.trim())) || 'Approved copy').slice(0, 60) : carouselTopic;
     // ensure the scope's library is loaded so the new carousel prepends onto it
     if (loadedScopeRef.current !== creativeScope) {
       loadedScopeRef.current = creativeScope;
@@ -2347,11 +2388,30 @@ export default function App() {
       setCreativeAssets((prev) => [{ id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook, loading: true }, ...prev]);
     }
     try {
+      if (fromCopy) {
+        // DETERMINISTIC — build slides straight from the copy, no LLM.
+        const parsed = parseApprovedCopy(approvedCopy);
+        if (!parsed.length) throw new Error('No slide blocks found — separate slides with a blank line or "Slide 1", "Slide 2"…');
+        const slides = parsed.map((p, i) => ({
+          id: 's' + i + Math.random().toString(36).slice(2, 6),
+          type: i === 0 ? 'cover' : 'text_image',
+          headline: p.headline, keyword: '',
+          sub: i === 0 ? p.body : '',
+          body: i === 0 ? '' : p.body,
+          callout: '', calloutStyle: 'filled', imageBrief: '', imagePrompt: '',
+        }));
+        const doc = { ratio: carouselRatio, slides, images: {} };
+        const merged = { id, kind: 'carousel', channel: 'carousel', format: carouselRatio, hook, title: hook, doc };
+        setCreativeAssets((prev) => prev.map((a) => (a.id === id ? { ...a, loading: false, ...merged } : a)));
+        persistAsset(merged);
+        setCarouselBusy(false);
+        return;
+      }
       const gtm = projectStages?.gtm || {};
       const narrative = Array.isArray(gtm.narrative) ? gtm.narrative.map((b) => `${b.block}: ${b.content}`).join(' | ').slice(0, 600) : '';
       const res = await fetch('/api/carousel', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: carouselTopic, slides: carouselSlides, approvedCopy, market: state ? `${state}, ${country}` : (country || 'India'), narrative, model: selectedModel }),
+        body: JSON.stringify({ topic: carouselTopic, slides: carouselSlides, market: state ? `${state}, ${country}` : (country || 'India'), narrative, model: selectedModel }),
       }).then((r) => r.json()).catch(() => null);
       if (res?.ok && res.carousel?.slides?.length) {
         const slides = res.carousel.slides.map((s, i) => ({ id: 's' + i + Math.random().toString(36).slice(2, 6), ...s }));
@@ -2505,7 +2565,8 @@ export default function App() {
             </div>
           ) : (
             <div>
-              <textarea value={carouselCopy} onChange={(e) => setCarouselCopy(e.target.value)} rows={8} placeholder={"Paste the final approved copy. One block per slide — separate slides with a blank line, or label them 'Slide 1', 'Slide 2', …\n\nSlide 1\nThe Hardest Part of Recycling May Not Be Recycling.\nIt may be getting the material back into the recovery system.\n\nSlide 2\n…"} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, lineHeight: 1.5, background: 'var(--bg)', color: 'var(--ink)', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
+              <textarea value={carouselCopy} onChange={(e) => setCarouselCopy(e.target.value)} onPaste={pasteApprovedCopy} rows={8} placeholder={"Paste the final approved copy (bold is kept). One block per slide — separate with a blank line or 'Slide 1', 'Slide 2', …\nFirst line = headline, the rest = body. **Bold** renders bold + green.\n\nSlide 1\nThe Hardest Part of Recycling May Not Be Recycling.\n**It may be getting the material back into the recovery system.**"} style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', fontSize: 13, lineHeight: 1.5, background: 'var(--bg)', color: 'var(--ink)', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
+              <div style={{ fontSize: 10.5, color: 'var(--ink-soft)', marginTop: 4 }}>First line = headline · rest = body · <b style={{ color: '#049769' }}>bold</b> = bold + green. Pasted bold is preserved automatically.</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
                 <button className="btn" onClick={() => generateCarousel({ approvedCopy: carouselCopy })} disabled={!carouselCopy.trim() || carouselBusy} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#049769', borderColor: '#049769' }}>{carouselBusy ? <><span className="spinner" style={{ width: 13, height: 13, display: 'inline-block' }} /> Building…</> : <><Sparkles size={15} /> Build carousel from this copy</>}</button>
                 <span style={{ fontSize: 11, color: 'var(--ink-soft)' }}>Your exact words — kept verbatim, laid out on-brand.</span>

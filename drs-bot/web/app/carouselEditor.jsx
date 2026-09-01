@@ -20,7 +20,9 @@ function hlHead(text, keyword) {
   if (i < 0) return t;
   return t.slice(0, i) + `<span style="color:${GREEN}">` + t.slice(i, i + k.length) + '</span>' + t.slice(i + k.length);
 }
-const mdGreen = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, `<b style="color:${GREEN}">$1</b>`);
+const mdGreen = (text) => esc(text).replace(/\*\*(.+?)\*\*/g, `<b style="color:${GREEN}">$1</b>`).replace(/\n/g, '<br>');
+// Headline that honors **bold→green** markers if present, else greens the keyword.
+const richHead = (text, keyword) => (/\*\*/.test(text || '') ? mdGreen(text) : hlHead(text, keyword));
 const newId = () => 's' + Math.random().toString(36).slice(2, 8);
 
 // Pick the closest standard image aspect ratio to a box's width/height, so a
@@ -52,7 +54,7 @@ function Field({ label, value, onChange, area, rows = 2, placeholder }) {
 // Content lives inside the safe band y∈[0.14,0.86]; header/footer own the rest.
 const LAYOUTS = {
   cover:      { headline: [.06, .15, .5, .45], sub: [.06, .68, .5, .16], image: [.60, .17, .34, .58] },
-  text_image: { body: [.06, .15, .5, .46], image: [.60, .15, .34, .44], callout: [.06, .70, .88, .15] },
+  text_image: { headline: [.06, .15, .52, .16], body: [.06, .33, .52, .35], image: [.60, .16, .34, .46], callout: [.06, .72, .88, .13] },
   two_block:  { body: [.06, .14, .88, .2], headline: [.06, .4, .5, .28], image: [.6, .42, .34, .28], callout: [.06, .74, .88, .12] },
   steps:      { headline: [.06, .14, .88, .12], sub: [.06, .27, .88, .08], steps: [.06, .37, .56, .48], image: [.66, .4, .28, .42] },
   sequence:   { headline: [.06, .14, .88, .12], sub: [.06, .27, .88, .08], seq: [.06, .38, .88, .36], callout: [.06, .74, .88, .12] },
@@ -310,7 +312,7 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   const push = (k, node) => els.push(<Box key={k} k={k}>{node}</Box>);
 
   // Type scale per Recykal Social Media Guidelines (@1080: main 44-52, secondary 32-40, body 22-26, labels 14-18)
-  if (has('headline')) push('headline', <Fit editable={edit} onBlur={eText('headline')} html={hlHead(slide.type === 'two_block' && slide.headTop ? `${slide.headTop} ${slide.headBottom || ''}`.trim() : slide.headline, slide.keyword)} maxFs={dw * ((slide.type === 'cover' || slide.type === 'cta') ? 0.048 : 0.037)} weight={800} />);
+  if (has('headline')) push('headline', <Fit editable={edit} onBlur={eText('headline')} html={richHead(slide.type === 'two_block' && slide.headTop ? `${slide.headTop} ${slide.headBottom || ''}`.trim() : slide.headline, slide.keyword)} maxFs={dw * ((slide.type === 'cover' || slide.type === 'cta') ? 0.048 : 0.037)} weight={800} />);
   if (has('body')) push('body', <Fit editable={edit} onBlur={eText('body')} html={mdGreen(slide.body)} maxFs={dw * 0.024} weight={400} lh={1.5} />);
   if (has('sub')) push('sub', <Fit editable={edit} onBlur={eText('sub')} html={mdGreen(slide.sub)} maxFs={dw * 0.023} color={slide.type === 'steps' || slide.type === 'sequence' ? '#555' : '#222'} lh={1.45} />);
   if (has('caption')) push('caption', <Fit editable={edit} onBlur={eText('caption')} html={mdGreen(slide.caption)} maxFs={dw * 0.016} color="#777" />);
