@@ -333,6 +333,18 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
   const gapPx = Math.round(dh * 0.026);   // FIXED gap between stacked elements → identical head↔body spacing on every slide
   const base = dw * 0.024;                 // 1em ≈ body size (22–26 @1080); the whole stack auto-fits from here
   const hideEl = (k) => set({ hidden: { ...hidden, [k]: true } });
+  // Detach an element from the auto-flow and drag it freely (seed its box from
+  // its current on-screen position so it doesn't jump).
+  const detachDrag = (e, k) => {
+    if (!edit) return; e.stopPropagation();
+    const card = e.currentTarget.closest('[data-card]'); const wrapEl = e.currentTarget.parentElement;
+    if (!card || !wrapEl) return;
+    const cr = card.getBoundingClientRect(), r = wrapEl.getBoundingClientRect();
+    const box = [Math.max(0, (r.left - cr.left) / dw), Math.max(0, (r.top - cr.top) / dh), Math.min(0.9, r.width / dw), Math.max(0.06, r.height / dh)];
+    setBox(k, box); setSel(k);
+    dragRef.current = { key: k, mode: 'move', sx: e.clientX, sy: e.clientY, box };
+  };
+  const reflow = (k) => { const l = { ...(slide.layout || {}) }; delete l[k]; set({ layout: l }); setSel(null); };
 
   // draggable / resizable UNIT box (the text stack, or the image)
   const Box = ({ k, children }) => {
@@ -353,11 +365,14 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
     </div>
   );
 
-  // a flow element wrapped with a per-element delete ✕ (in edit mode)
+  // a flow element wrapped with: a drag grip (✥, detach + move freely), a delete
+  // ✕, and (when it's detached) a reflow ⇤ to snap it back into the stack.
   const wrap = (k, node, deletable = true) => (
     <div key={k} style={{ position: 'relative', width: '100%' }}>
       {node}
-      {edit && deletable && <div title="Delete this element" onPointerDown={(e) => { e.stopPropagation(); hideEl(k); }} style={{ position: 'absolute', right: -8, top: -8, width: 16, height: 16, background: '#fff', border: '2px solid #d1483a', color: '#d1483a', borderRadius: '50%', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 4 }}>✕</div>}
+      {edit && <div title="Drag to place this element freely" onPointerDown={(e) => detachDrag(e, k)} style={{ position: 'absolute', left: -9, top: -9, width: 17, height: 17, background: '#fff', border: `2px solid ${GREEN}`, color: GREEN, borderRadius: 4, fontSize: 10, cursor: 'grab', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>✥</div>}
+      {edit && layout[k] && <div title="Snap back into the flow" onPointerDown={(e) => { e.stopPropagation(); reflow(k); }} style={{ position: 'absolute', left: 13, top: -9, width: 17, height: 17, background: GREEN, color: '#fff', border: '2px solid #fff', borderRadius: '50%', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>⇤</div>}
+      {edit && deletable && <div title="Delete this element" onPointerDown={(e) => { e.stopPropagation(); hideEl(k); }} style={{ position: 'absolute', right: -9, top: -9, width: 17, height: 17, background: '#fff', border: '2px solid #d1483a', color: '#d1483a', borderRadius: '50%', fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>✕</div>}
     </div>
   );
   // editable text element (em-sized; scales with the stack's auto-fit)
@@ -435,20 +450,24 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
     }
   };
 
-  const stackChildren = flow.map(flowNode).filter(Boolean);
+  // elements without a position override auto-flow in the stack; detached ones
+  // (dragged out) render as their own free, draggable boxes.
+  const stackChildren = flow.filter((k) => !layout[k]).map(flowNode).filter(Boolean);
+  const detached = flow.filter((k) => layout[k]).map((k) => { const n = flowNode(k); return n ? <Box key={k} k={k}>{n}</Box> : null; }).filter(Boolean);
   const els = [
     <Box key="stack" k="stack">
       <Fit maxFs={base} extra={{ display: 'flex', flexDirection: 'column', gap: gapPx, justifyContent: 'flex-start' }}>
         {stackChildren}
       </Fit>
     </Box>,
+    ...detached,
   ];
   if (LAY.image && !hidden.image) els.push(<Box key="image" k="image">{imgFill}</Box>);
 
   return (
     <div>
       {/* bare = the exact exported artwork: square full-bleed, no shadow (matches the IG/LinkedIn slide). Editor preview keeps a rounded card + shadow. */}
-      <div onPointerDown={() => edit && setSel(null)} style={{ width: dw, height: dh, background: '#fff', borderRadius: bare ? 0 : 14, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, system-ui, sans-serif', boxShadow: bare ? 'none' : '0 6px 24px rgba(10,20,40,.14)', boxSizing: 'border-box' }}>
+      <div data-card onPointerDown={() => edit && setSel(null)} style={{ width: dw, height: dh, background: '#fff', borderRadius: bare ? 0 : 14, position: 'relative', overflow: 'hidden', fontFamily: 'Poppins, system-ui, sans-serif', boxShadow: bare ? 'none' : '0 6px 24px rgba(10,20,40,.14)', boxSizing: 'border-box' }}>
         {/* header — official logo lockup, top-left, fixed size (no effects) */}
         <img src="/logo-dark.png" alt="recykal" crossOrigin="anonymous" style={{ position: 'absolute', left: PAD, top: PAD, height: dw * 0.088, width: 'auto' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
         {/* content element boxes */}
