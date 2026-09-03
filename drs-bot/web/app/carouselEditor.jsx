@@ -520,7 +520,8 @@ function Slide({ slide, idx, total, dw, dh, edit, sel, setSel, imgUrl, set, setB
         {/* footer (reserved) — small label scale (14-18 @1080) */}
         <div style={{ position: 'absolute', left: PAD, bottom: PAD, fontSize: dw * 0.016, color: '#111', fontWeight: 500 }}>www.recykal.com</div>
         {!isLast && <div style={{ position: 'absolute', right: PAD, bottom: PAD, width: 32, height: 32, borderRadius: '50%', background: GREEN, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowRt size={17} color="#fff" /></div>}
-        <div style={{ position: 'absolute', left: PAD, bottom: Math.round(dw * 0.028), width: dw * 0.34, height: Math.round(dw * 0.022), background: '#111', borderRadius: 4 }} />
+        {/* bottom accent bar — exact match to the DRS deck: flush to the bottom edge, ~4.7% left inset, ~21% wide, thin, square */}
+        <div style={{ position: 'absolute', left: dw * 0.047, bottom: 0, width: dw * 0.208, height: Math.max(3, Math.round(dw * 0.009)), background: '#111', borderRadius: 0 }} />
       </div>
     </div>
   );
