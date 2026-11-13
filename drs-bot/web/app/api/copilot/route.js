@@ -28,7 +28,7 @@ export async function POST(req) {
     // Route dynamically based on selected model/provider
     if (modelLower.startsWith('claude')) {
       activeLlm = claude;
-    } else if (modelLower.startsWith('gemini-3') || modelLower === 'gemini-vertex') {
+    } else if (modelLower.startsWith('gemini-3') || modelLower.startsWith('gemini-4') || modelLower === 'gemini-vertex') {
       activeLlm = vertex;
       vertexModelOverride = selectedModel;
     } else if (modelLower.startsWith('gemini')) {

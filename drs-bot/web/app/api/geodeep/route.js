@@ -70,7 +70,7 @@ export async function POST(req) {
     let llm = getProvider();
     const ml = (selectedModel || '').toLowerCase();
     let override = null;
-    if (ml.startsWith('gemini-3') || ml === 'gemini-vertex') { llm = vertex; override = selectedModel; }
+    if (ml.startsWith('gemini-3') || ml.startsWith('gemini-4') || ml === 'gemini-vertex') { llm = vertex; override = selectedModel; }
     else if (ml.startsWith('gemini')) { llm = gemini; override = selectedModel; }
     else if (ml.startsWith('llama') || ml.startsWith('groq')) { llm = groq; }
 
