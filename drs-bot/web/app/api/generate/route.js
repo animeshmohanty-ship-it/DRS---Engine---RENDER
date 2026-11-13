@@ -277,7 +277,7 @@ export async function POST(req) {
     let geminiModelOverride = null;
     let vertexModelOverride = null;
 
-    if (modelLower.startsWith('gemini-3') || modelLower === 'gemini-vertex') {
+    if (modelLower.startsWith('gemini-3') || modelLower.startsWith('gemini-4') || modelLower === 'gemini-vertex') {
       activeLlm = vertex;
       vertexModelOverride = selectedModel;
     } else if (modelLower.startsWith('gemini')) {
@@ -833,7 +833,7 @@ export async function POST(req) {
       const researchStages = [3, 4, 6, 12];
       const isResearchStage = researchStages.includes(stageNum);
 
-      console.log(`[Stage ${stageNum}] Generating using model ${vertexModelOverride || geminiModelOverride || 'gemini-3.1-pro-preview'} | Grounding: ${isResearchStage}`);
+      console.log(`[Stage ${stageNum}] Generating using model ${vertexModelOverride || geminiModelOverride || 'gemini-4-argon'} | Grounding: ${isResearchStage}`);
 
       const { text, sources } = await callLlmWithFallback(
         activeLlm,

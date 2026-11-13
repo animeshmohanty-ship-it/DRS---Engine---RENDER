@@ -183,14 +183,13 @@ function Badge({ level }) {
 }
 
 
+// Verified live on the vertext-access Vertex project (2026-11-13). Best first.
 const MODEL_OPTIONS = [
+  { value: 'gemini-4-argon', label: 'Gemini 4 Argon (Vertex AI) · Best', icon: 'gemini' },
+  { value: 'gemini-4-hydrogen', label: 'Gemini 4 Hydrogen (Vertex AI) · Fast', icon: 'gemini' },
+  { value: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash (Vertex AI)', icon: 'gemini' },
   { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro (Vertex AI)', icon: 'gemini' },
-  { value: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash (Vertex AI)', icon: 'gemini' },
-  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro (AI Studio)', icon: 'gemini' },
-  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (AI Studio)', icon: 'gemini' },
-  { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro (AI Studio)', icon: 'gemini' },
   { value: 'llama-3.3-70b', label: 'Groq Llama 3.3 (Fast)', icon: 'meta' },
-  { value: 'claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', icon: 'anthropic' }
 ];
 
 const renderModelIcon = (type) => {
@@ -210,10 +209,18 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('history'); // 'history' | 1 to 12
   const [gtmSubTab, setGtmSubTab] = useState('branding'); // 'branding' | 'acquisition' | 'engagement'
   const [selectedModel, setSelectedModel] = useState(() => {
+    const allowed = MODEL_OPTIONS.map((o) => o.value);
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('drs_selected_model') || 'gemini-3.1-pro-preview';
+      // One-time upgrade: move everyone to the new best default (Gemini 4 Argon).
+      if (!localStorage.getItem('drs_model_v2')) {
+        localStorage.setItem('drs_model_v2', '1');
+        localStorage.setItem('drs_selected_model', 'gemini-4-argon');
+        return 'gemini-4-argon';
+      }
+      const saved = localStorage.getItem('drs_selected_model');
+      return allowed.includes(saved) ? saved : 'gemini-4-argon';
     }
-    return 'gemini-2.5-flash';
+    return 'gemini-4-argon';
   });
 
   useEffect(() => {

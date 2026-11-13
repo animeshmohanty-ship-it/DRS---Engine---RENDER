@@ -35,10 +35,11 @@ Return ONLY the final prompt, one or two sentences, no preamble.`;
 // Try Nano Banana Pro (Gemini 3 Pro Image) first for quality, then 2.5 Flash
 // Image, then AI-Studio. Each model id is configurable via env.
 async function generateWithChain(prompt, aspectRatio) {
-  const pro = process.env.VERTEX_IMAGE_MODEL_PRO || 'gemini-3-pro-image';
-  const flash = process.env.VERTEX_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const pro = process.env.VERTEX_IMAGE_MODEL_PRO || 'gemini-nano-banana-2.1';
+  const mid = process.env.VERTEX_IMAGE_MODEL_MID || 'gemini-3-pro-image';
+  const flash = process.env.VERTEX_IMAGE_MODEL || 'gemini-3.1-flash-image';
   const notes = [];
-  for (const model of [pro, flash]) {
+  for (const model of [pro, mid, flash]) {
     try { const { dataUrl } = await vertex.generateImage(prompt, { aspectRatio, customModel: model }); return { dataUrl, via: `vertex:${model}`, notes }; }
     catch (e) { notes.push(`${model}: ${e.message}`); }
   }

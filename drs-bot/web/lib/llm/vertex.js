@@ -52,7 +52,7 @@ function getClient() {
 }
 
 function getModelName() {
-  return process.env.VERTEX_MODEL || 'gemini-3.1-pro-preview';
+  return process.env.VERTEX_MODEL || 'gemini-4-argon';
 }
 
 // Grounded generation. Returns { text, sources:[{title,uri}] }
@@ -103,7 +103,7 @@ export async function generateImage(prompt, { aspectRatio = '1:1', customModel =
   const project = process.env.GCP_PROJECT_ID;
   if (!project) throw new Error('GCP_PROJECT_ID is not set');
   const location = process.env.VERTEX_IMAGE_LOCATION || process.env.GCP_LOCATION || 'global';
-  const model = customModel || process.env.VERTEX_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const model = customModel || process.env.VERTEX_IMAGE_MODEL || 'gemini-nano-banana-2.1';
   const ai = new GoogleGenAI({ vertexai: true, project, location });
   console.log(`[VertexAI] Image model: ${model} @ ${location} | ratio ${aspectRatio}`);
 
